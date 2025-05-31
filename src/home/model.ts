@@ -1,3 +1,4 @@
+
 // Home module - Enhanced Model with session path tracking and secure storage
 import { AuthState, TerminalSession, TerminalCommand, User } from '../core/types';
 import { SecureStorage } from '../core/secureStorage';
@@ -132,3 +133,4 @@ export class HomeModel {
   getSessions(): TerminalSession[] {
     return [...this.authState.sessions];
   }
+}
