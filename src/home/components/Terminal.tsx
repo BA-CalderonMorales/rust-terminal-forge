@@ -59,20 +59,27 @@ export const Terminal: React.FC<TerminalProps> = ({
     ? session.history.slice(lastClearIndex + 1).filter(cmd => cmd.output !== '__CLEAR__')
     : visibleHistory;
 
+  const handleTerminalTap = () => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
   return (
-    <div className="flex-1 bg-black text-green-400 font-mono text-sm flex flex-col">
+    <div className="flex-1 bg-black text-green-400 font-mono flex flex-col touch-manipulation">
       <div 
         ref={terminalRef}
-        className="flex-1 p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-green-600 scrollbar-track-gray-900"
+        className="flex-1 p-3 sm:p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-green-600 scrollbar-track-gray-900"
+        onClick={handleTerminalTap}
       >
         {displayHistory.map((command) => (
-          <div key={command.id} className="mb-2">
-            <div className="text-green-300">
+          <div key={command.id} className="mb-3 sm:mb-2">
+            <div className="text-green-300 text-sm sm:text-base break-all">
               <span className="text-green-500">{getPrompt()}</span>
               <span className="ml-2">{command.command}</span>
             </div>
             {command.output && (
-              <div className={`mt-1 whitespace-pre-wrap ${
+              <div className={`mt-1 whitespace-pre-wrap text-sm sm:text-base break-words ${
                 command.exitCode === 0 ? 'text-green-400' : 'text-red-400'
               }`}>
                 {command.output}
@@ -80,20 +87,27 @@ export const Terminal: React.FC<TerminalProps> = ({
             )}
           </div>
         ))}
+        {/* Spacer to ensure input is always visible */}
+        <div className="h-16 sm:h-0"></div>
       </div>
       
-      <div className="border-t border-green-600 p-4">
+      <div className="border-t border-green-600 p-3 sm:p-4 bg-black sticky bottom-0">
         <form onSubmit={handleSubmit} className="flex items-center">
-          <span className="text-green-500 mr-2">{getPrompt()}</span>
+          <span className="text-green-500 mr-2 text-sm sm:text-base flex-shrink-0">
+            {getPrompt()}
+          </span>
           <input
             ref={inputRef}
             type="text"
             value={currentInput}
             onChange={(e) => setCurrentInput(e.target.value)}
-            className="flex-1 bg-transparent outline-none text-green-400 placeholder-green-600"
+            className="flex-1 bg-transparent outline-none text-green-400 placeholder-green-600 text-base sm:text-sm min-h-[44px] sm:min-h-[auto]"
             placeholder="Type a command..."
             autoComplete="off"
             spellCheck="false"
+            autoCapitalize="off"
+            autoCorrect="off"
+            inputMode="text"
           />
         </form>
       </div>
