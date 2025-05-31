@@ -13,12 +13,27 @@ export class FileSystemCommands extends BaseCommandHandler {
   }
 
   handleLs(args: string[], id: string, command: string, timestamp: string): TerminalCommand {
-    const flags = new Set(args.filter(arg => arg.startsWith('-')));
+    // Collect all flags from arguments
+    const flags = new Set<string>();
+    const nonFlagArgs: string[] = [];
+    
+    for (const arg of args) {
+      if (arg.startsWith('-')) {
+        // Handle combined flags like -lah
+        const flagChars = arg.slice(1);
+        for (const char of flagChars) {
+          flags.add('-' + char);
+        }
+      } else {
+        nonFlagArgs.push(arg);
+      }
+    }
+    
     const showAll = flags.has('-a') || flags.has('-A');
     const longFormat = flags.has('-l');
     const humanReadable = flags.has('-h');
     
-    const targetPath = args.find(arg => !arg.startsWith('-')) || this.fileSystemManager.getCurrentPath();
+    const targetPath = nonFlagArgs[0] || this.fileSystemManager.getCurrentPath();
     const normalizedPath = this.fileSystemManager.normalizePath(targetPath);
     
     if (!this.fileSystemManager.validatePath(normalizedPath)) {
