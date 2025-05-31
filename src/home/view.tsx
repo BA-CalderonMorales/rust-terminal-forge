@@ -21,10 +21,6 @@ export const HomeView: React.FC = () => {
     }
   }, [viewModel]);
 
-  const handleLogout = () => {
-    viewModel.logout();
-  };
-
   const handleExecuteCommand = (command: string) => {
     viewModel.executeCommand(command);
   };
@@ -63,22 +59,6 @@ export const HomeView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-green-400 flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="bg-gray-900 border-b border-green-600 p-3 sm:p-4 flex justify-between items-center flex-shrink-0">
-        <div className="font-mono text-sm sm:text-base">
-          <span className="text-green-300">Rust Terminal - </span>
-          <span className="text-green-400">{currentUser?.username}</span>
-        </div>
-        <Button
-          onClick={handleLogout}
-          variant="ghost"
-          size="sm"
-          className="text-green-400 hover:bg-red-900 hover:text-red-400 font-mono min-h-[44px] sm:min-h-[auto] px-3"
-        >
-          Logout
-        </Button>
-      </div>
-
       {/* Terminal Tabs */}
       <TerminalTabs
         sessions={sessions}
