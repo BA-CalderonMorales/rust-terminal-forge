@@ -32,25 +32,6 @@ export const Terminal: React.FC<TerminalProps> = ({
     return '$';
   };
 
-  const getFullPrompt = () => {
-    const pathParts = currentPath.split('/');
-    const currentDir = pathParts[pathParts.length - 1] || '/';
-    
-    let displayPath;
-    if (currentPath.includes('/home/user')) {
-      if (currentPath === '/home/user') displayPath = '~';
-      else if (currentPath.startsWith('/home/user/')) {
-        const relativePath = currentPath.replace('/home/user/', '');
-        const parts = relativePath.split('/');
-        displayPath = parts.length > 1 ? `~/${parts[parts.length - 1]}` : `~/${relativePath}`;
-      }
-    } else {
-      displayPath = currentDir === '' ? '/' : currentDir;
-    }
-    
-    return `${username}@terminal:${displayPath}$`;
-  };
-
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
@@ -94,7 +75,7 @@ export const Terminal: React.FC<TerminalProps> = ({
         {displayHistory.map((command) => (
           <div key={command.id} className="mb-3 sm:mb-2">
             <div className="text-green-300 text-sm sm:text-base break-all">
-              <span className="text-green-500">{getFullPrompt()}</span>
+              <span className="text-green-500">{getPrompt()}</span>
               <span className="ml-2">{command.command}</span>
             </div>
             {command.output && (
