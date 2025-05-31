@@ -5,19 +5,36 @@ import { SecurityUtils } from '../core/securityUtils';
 
 export class HomeModel {
   private authState: AuthState;
+  private isLoading: boolean = false;
 
   constructor() {
-    this.loadAuthState();
-  }
-
-  private async loadAuthState(): Promise<void> {
-    const saved = await SecureStorage.get<AuthState>('auth');
-    this.authState = saved || {
+    // Initialize with default state immediately
+    this.authState = {
       isAuthenticated: false,
       user: null,
       sessions: [],
       activeSessionId: null
     };
+    
+    // Load saved state asynchronously
+    this.loadAuthState();
+  }
+
+  private async loadAuthState(): Promise<void> {
+    if (this.isLoading) return;
+    this.isLoading = true;
+    
+    try {
+      const saved = await SecureStorage.get<AuthState>('auth');
+      if (saved) {
+        this.authState = saved;
+      }
+    } catch (error) {
+      console.error('Failed to load auth state:', error);
+      // Keep default state on error
+    } finally {
+      this.isLoading = false;
+    }
   }
 
   private async saveAuthState(): Promise<void> {
@@ -115,4 +132,3 @@ export class HomeModel {
   getSessions(): TerminalSession[] {
     return [...this.authState.sessions];
   }
-}
