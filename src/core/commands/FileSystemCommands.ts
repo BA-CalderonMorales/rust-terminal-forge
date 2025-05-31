@@ -196,4 +196,153 @@ export class FileSystemCommands extends BaseCommandHandler {
 
     return this.generateCommand(id, command, content, timestamp);
   }
+
+  handleFind(args: string[], id: string, command: string, timestamp: string): TerminalCommand {
+    if (args.length === 0) {
+      return this.generateCommand(id, command, 'find: missing operand', timestamp, 1);
+    }
+
+    const searchPath = args[0] === '.' ? this.fileSystemManager.getCurrentPath() : args[0];
+    const normalizedPath = this.fileSystemManager.normalizePath(searchPath);
+    
+    if (!this.fileSystemManager.validatePath(normalizedPath)) {
+      return this.generateCommand(id, command, `find: '${searchPath}': Permission denied`, timestamp, 1);
+    }
+
+    // Parse arguments for options like -name, -type
+    let namePattern = '';
+    let typeFilter = '';
+    
+    for (let i = 1; i < args.length; i++) {
+      if (args[i] === '-name' && i + 1 < args.length) {
+        namePattern = args[i + 1].replace(/\*/g, '.*').replace(/\?/g, '.');
+        i++; // Skip the pattern argument
+      } else if (args[i] === '-type' && i + 1 < args.length) {
+        typeFilter = args[i + 1];
+        i++; // Skip the type argument
+      }
+    }
+
+    const results: string[] = [];
+    this.findRecursive(normalizedPath, namePattern, typeFilter, results);
+
+    return this.generateCommand(id, command, results.join('\n'), timestamp);
+  }
+
+  private findRecursive(path: string, namePattern: string, typeFilter: string, results: string[]): void {
+    const contents = this.fileSystemManager.getDirectoryContents(path);
+    if (!contents) return;
+
+    // Add current directory if it matches
+    if (path !== this.fileSystemManager.getCurrentPath()) {
+      results.push(path);
+    }
+
+    for (const item of contents) {
+      const itemPath = `${path}/${item.name}`;
+      
+      // Check if item matches filters
+      let matches = true;
+      
+      if (namePattern) {
+        const regex = new RegExp(namePattern);
+        matches = matches && regex.test(item.name);
+      }
+      
+      if (typeFilter) {
+        matches = matches && ((typeFilter === 'f' && item.type === 'file') || 
+                              (typeFilter === 'd' && item.type === 'directory'));
+      }
+      
+      if (matches) {
+        results.push(itemPath);
+      }
+      
+      // Recursively search directories
+      if (item.type === 'directory') {
+        this.findRecursive(itemPath, namePattern, typeFilter, results);
+      }
+    }
+  }
+
+  handleGrep(args: string[], id: string, command: string, timestamp: string): TerminalCommand {
+    if (args.length === 0) {
+      return this.generateCommand(id, command, 'grep: missing operand', timestamp, 1);
+    }
+
+    if (args.length < 2) {
+      return this.generateCommand(id, command, 'grep: missing file operand', timestamp, 1);
+    }
+
+    const pattern = args[0];
+    const fileName = args[1];
+    
+    // Check for flags
+    const flags = new Set<string>();
+    let patternIndex = 0;
+    let fileIndex = 1;
+    
+    // Handle flags like -i, -n, -v
+    for (let i = 0; i < args.length; i++) {
+      if (args[i].startsWith('-')) {
+        const flagChars = args[i].slice(1);
+        for (const char of flagChars) {
+          flags.add(char);
+        }
+      } else if (patternIndex === i) {
+        patternIndex = i;
+      } else if (fileIndex === i) {
+        fileIndex = i;
+        break;
+      }
+    }
+
+    const actualPattern = args[patternIndex];
+    const actualFileName = args[fileIndex];
+    
+    const currentContents = this.fileSystemManager.getDirectoryContents(this.fileSystemManager.getCurrentPath());
+    const file = currentContents?.find(item => item.name === actualFileName && item.type === 'file');
+    
+    if (!file) {
+      return this.generateCommand(id, command, `grep: ${actualFileName}: No such file or directory`, timestamp, 1);
+    }
+
+    // Get file content (simplified for demo)
+    let content = '';
+    if (actualFileName.endsWith('.rs')) {
+      content = `fn main() {\n    println!("Hello, world!");\n}`;
+    } else if (actualFileName.endsWith('.toml')) {
+      content = `[package]\nname = "rust-project"\nversion = "0.1.0"\nedition = "2021"`;
+    } else if (actualFileName.endsWith('.md')) {
+      content = `# Rust Terminal Forge\n\nA secure terminal emulator built with Rust and React.`;
+    } else {
+      content = `Content of ${actualFileName}`;
+    }
+
+    const lines = content.split('\n');
+    const matchedLines: string[] = [];
+    
+    const caseInsensitive = flags.has('i');
+    const showLineNumbers = flags.has('n');
+    const invertMatch = flags.has('v');
+    
+    const regex = new RegExp(actualPattern, caseInsensitive ? 'i' : '');
+    
+    lines.forEach((line, index) => {
+      const matches = regex.test(line);
+      const shouldInclude = invertMatch ? !matches : matches;
+      
+      if (shouldInclude) {
+        const lineNumber = index + 1;
+        const output = showLineNumbers ? `${lineNumber}:${line}` : line;
+        matchedLines.push(output);
+      }
+    });
+
+    if (matchedLines.length === 0) {
+      return this.generateCommand(id, command, '', timestamp, 1);
+    }
+
+    return this.generateCommand(id, command, matchedLines.join('\n'), timestamp);
+  }
 }
