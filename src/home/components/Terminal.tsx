@@ -1,3 +1,4 @@
+
 // Home module - Main terminal component
 import React, { useState, useRef, useEffect } from 'react';
 import { TerminalSession } from '../../core/types';
@@ -45,6 +46,12 @@ export const Terminal: React.FC<TerminalProps> = ({
   };
 
   const getPrompt = () => {
+    // Much shorter prompt - just $ for mobile
+    return '$';
+  };
+
+  const getFullPrompt = () => {
+    // Full prompt for command history display
     return `${username}@terminal:${getTruncatedPath()}$`;
   };
 
@@ -91,7 +98,7 @@ export const Terminal: React.FC<TerminalProps> = ({
         {displayHistory.map((command) => (
           <div key={command.id} className="mb-3 sm:mb-2">
             <div className="text-green-300 text-sm sm:text-base break-all">
-              <span className="text-green-500">{getPrompt()}</span>
+              <span className="text-green-500">{getFullPrompt()}</span>
               <span className="ml-2">{command.command}</span>
             </div>
             {command.output && (
