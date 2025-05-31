@@ -1,5 +1,5 @@
 
-// Home module - Model layer for terminal data management
+// Home module - Enhanced Model with session path tracking
 import { AuthState, TerminalSession, TerminalCommand, User } from '../core/types';
 import { Storage } from '../core/storage';
 
@@ -74,6 +74,14 @@ export class HomeModel {
     }
   }
 
+  updateSessionPath(sessionId: string, newPath: string): void {
+    const session = this.authState.sessions.find(s => s.id === sessionId);
+    if (session) {
+      session.currentPath = newPath;
+      this.saveAuthState();
+    }
+  }
+
   switchSession(sessionId: string): void {
     this.authState.sessions.forEach(s => s.isActive = s.id === sessionId);
     this.authState.activeSessionId = sessionId;
@@ -89,7 +97,6 @@ export class HomeModel {
         this.authState.activeSessionId = firstSession.id;
         firstSession.isActive = true;
       } else {
-        // No sessions left
         this.authState.activeSessionId = null;
       }
     }

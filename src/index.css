@@ -44,9 +44,19 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
     
-    /* Custom viewport properties */
+    /* Enhanced viewport properties for mobile optimization */
     --visual-viewport-height: 100vh;
+    --visual-viewport-width: 100vw;
     --keyboard-open: 0;
+    --keyboard-height: 0px;
+    --safe-area-top: 0px;
+    --safe-area-bottom: 0px;
+    --viewport-stable: 1;
+    
+    /* Dynamic layout calculations */
+    --tabs-height: 48px;
+    --input-height: 60px;
+    --available-height: calc(var(--visual-viewport-height) - var(--tabs-height) - var(--input-height));
   }
 
   .dark {
@@ -86,6 +96,23 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  /* Modern viewport unit support */
+  @supports (height: 100dvh) {
+    :root {
+      --visual-viewport-height: 100dvh;
+    }
+  }
+
+  /* Safe area support for notched devices */
+  @supports (padding: max(0px)) {
+    :root {
+      --safe-area-top: env(safe-area-inset-top);
+      --safe-area-bottom: env(safe-area-inset-bottom);
+      --tabs-height: calc(48px + env(safe-area-inset-top));
+      --input-height: calc(60px + env(safe-area-inset-bottom));
+    }
+  }
 }
 
 @layer base {
@@ -95,23 +122,41 @@
 
   body {
     @apply bg-background text-foreground;
+    /* Prevent bounce scrolling on iOS */
+    overscroll-behavior: none;
+    /* Prevent zooming on input focus */
+    touch-action: manipulation;
+  }
+
+  /* Prevent text selection in terminal for better mobile experience */
+  .terminal-app {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+  }
+
+  .terminal-content {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    user-select: text;
   }
 }
 
-/* Mobile-first responsive terminal layout */
+/* Enhanced mobile-first responsive terminal layout */
 .terminal-app {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  display: grid;
-  grid-template-rows: auto 1fr;
+  display: flex;
+  flex-direction: column;
   height: var(--visual-viewport-height);
   max-height: 100vh;
   overflow: hidden;
   background: black;
   z-index: 1;
+  contain: layout style size;
 }
 
 .terminal-no-sessions {
@@ -132,41 +177,34 @@
 
 .terminal-tabs {
   position: fixed;
-  top: 0;
+  top: var(--safe-area-top);
   left: 0;
   right: 0;
   background: #1f2937;
   border-bottom: 1px solid #16a34a;
   z-index: 100;
-  height: 48px;
+  height: calc(var(--tabs-height) - var(--safe-area-top));
+  min-height: 48px;
   flex-shrink: 0;
-}
-
-/* Safe area support for notched devices */
-@supports (padding: max(0px)) {
-  .terminal-tabs {
-    padding-top: env(safe-area-inset-top);
-    height: calc(48px + env(safe-area-inset-top));
-  }
+  /* Optimize for mobile performance */
+  will-change: transform;
+  transform: translateZ(0);
+  /* Prevent content from jumping when keyboard opens */
+  transition: none;
 }
 
 .terminal-container {
-  display: grid;
-  grid-template-rows: 1fr auto;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  height: var(--available-height);
   min-height: 0;
   overflow: hidden;
-  margin-top: 48px; /* Account for fixed tabs */
-}
-
-/* Adjust for safe area */
-@supports (padding: max(0px)) {
-  .terminal-container {
-    margin-top: calc(48px + env(safe-area-inset-top));
-  }
+  margin-top: var(--tabs-height);
+  contain: layout style;
 }
 
 .terminal-content {
+  flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
@@ -176,6 +214,11 @@
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Inconsolata, "Roboto Mono", monospace;
   scrollbar-width: thin;
   scrollbar-color: #16a34a #111827;
+  /* Performance optimizations */
+  contain: layout style;
+  content-visibility: auto;
+  /* Smooth scrolling behavior */
+  scroll-behavior: smooth;
 }
 
 .terminal-content::-webkit-scrollbar {
@@ -193,21 +236,20 @@
 
 .terminal-input {
   position: fixed;
-  bottom: 0;
+  bottom: var(--safe-area-bottom);
   left: 0;
   right: 0;
   background: black;
   border-top: 1px solid #16a34a;
   padding: 0.75rem 1rem;
+  padding-bottom: calc(0.75rem + var(--safe-area-bottom));
   z-index: 50;
   flex-shrink: 0;
-}
-
-/* Safe area support for bottom */
-@supports (padding: max(0px)) {
-  .terminal-input {
-    padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
-  }
+  /* Optimize for mobile keyboard */
+  will-change: transform;
+  transform: translateZ(0);
+  /* Maintain position when keyboard opens */
+  transition: transform 0.2s ease-out;
 }
 
 /* Mobile optimizations */
@@ -218,9 +260,10 @@
   
   .terminal-input {
     padding: 0.75rem;
+    padding-bottom: calc(0.75rem + var(--safe-area-bottom));
   }
   
-  /* Prevent zoom on input focus for iOS */
+  /* Prevent zoom on input focus for iOS Safari */
   .terminal-input input {
     font-size: 16px;
   }
@@ -228,11 +271,13 @@
   /* Better touch targets */
   .touch-manipulation {
     touch-action: manipulation;
+    min-height: 44px;
+    min-width: 44px;
   }
   
-  /* Optimize for mobile viewport changes */
-  .terminal-app {
-    height: var(--visual-viewport-height);
+  /* Keyboard-specific optimizations */
+  .terminal-app[data-keyboard-open="1"] .terminal-input {
+    transform: translateY(calc(var(--keyboard-height) * -1));
   }
 }
 
@@ -244,6 +289,7 @@
   
   .terminal-input {
     padding: 1rem;
+    padding-bottom: calc(1rem + var(--safe-area-bottom));
   }
   
   .terminal-input input {
@@ -251,13 +297,70 @@
   }
 }
 
-/* Modern viewport unit support */
-@supports (height: 100dvh) {
-  .terminal-app {
-    height: var(--visual-viewport-height, 100dvh);
+/* Advanced mobile viewport handling */
+@media screen and (max-width: 768px) {
+  /* iOS Safari specific fixes */
+  @supports (-webkit-touch-callout: none) {
+    .terminal-app {
+      height: -webkit-fill-available;
+      height: var(--visual-viewport-height);
+    }
+    
+    .terminal-no-sessions {
+      height: -webkit-fill-available;
+      height: var(--visual-viewport-height);
+    }
+    
+    /* Fix for iOS address bar behavior */
+    .terminal-tabs {
+      position: -webkit-sticky;
+      position: sticky;
+    }
+    
+    /* Prevent rubber band scrolling */
+    .terminal-content {
+      overscroll-behavior-y: none;
+      -webkit-overflow-scrolling: touch;
+    }
   }
   
-  .terminal-no-sessions {
-    height: var(--visual-viewport-height, 100dvh);
+  /* Android Chrome specific fixes */
+  @supports not (-webkit-touch-callout: none) {
+    .terminal-app {
+      height: 100vh;
+      height: var(--visual-viewport-height);
+    }
+  }
+}
+
+/* Performance enhancements */
+.terminal-tabs,
+.terminal-input {
+  /* Enable hardware acceleration */
+  will-change: transform;
+  transform: translateZ(0);
+  /* Optimize repaints */
+  backface-visibility: hidden;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .terminal-content {
+    scroll-behavior: auto;
+  }
+  
+  .terminal-input {
+    transition: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .terminal-content {
+    border: 2px solid #16a34a;
+  }
+  
+  .terminal-tabs {
+    border-bottom: 2px solid #16a34a;
   }
 }

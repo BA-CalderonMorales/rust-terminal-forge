@@ -1,17 +1,17 @@
 
-// Home module - ViewModel layer for terminal business logic
+// Home module - Enhanced ViewModel with secure command processing
 import { HomeModel } from './model';
-import { CommandProcessor } from '../core/commands';
+import { SecureCommandProcessor } from '../core/SecureCommandProcessor';
 import { TerminalSession, TerminalCommand, User } from '../core/types';
 
 export class HomeViewModel {
   private model: HomeModel;
-  private commandProcessor: CommandProcessor;
+  private commandProcessor: SecureCommandProcessor;
   private onStateChangeCallback?: () => void;
 
   constructor() {
     this.model = new HomeModel();
-    this.commandProcessor = new CommandProcessor();
+    this.commandProcessor = new SecureCommandProcessor();
   }
 
   onStateChange(callback: () => void): void {
@@ -45,9 +45,30 @@ export class HomeViewModel {
     const activeSession = this.model.getActiveSession();
     if (!activeSession) return;
 
-    const command = this.commandProcessor.processCommand(input);
-    this.model.addCommandToSession(activeSession.id, command);
-    this.notifyStateChange();
+    try {
+      const command = this.commandProcessor.processCommand(input);
+      this.model.addCommandToSession(activeSession.id, command);
+      
+      // Update session path if cd command was successful
+      if (input.trim().startsWith('cd ') && command.exitCode === 0) {
+        const currentPath = this.commandProcessor.getCurrentPath();
+        this.model.updateSessionPath(activeSession.id, currentPath);
+      }
+      
+      this.notifyStateChange();
+    } catch (error) {
+      // Handle command processing errors gracefully
+      const errorCommand: TerminalCommand = {
+        id: `error-${Date.now()}`,
+        command: input,
+        output: `Error processing command: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: new Date().toISOString(),
+        exitCode: 1
+      };
+      
+      this.model.addCommandToSession(activeSession.id, errorCommand);
+      this.notifyStateChange();
+    }
   }
 
   createNewSession(): TerminalSession {
@@ -85,5 +106,9 @@ export class HomeViewModel {
 
   getCurrentPath(): string {
     return this.commandProcessor.getCurrentPath();
+  }
+
+  getFileSystem() {
+    return this.commandProcessor.getFileSystem();
   }
 }

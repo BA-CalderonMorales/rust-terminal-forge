@@ -1,5 +1,5 @@
 
-// Home module - Main view component
+// Home module - Enhanced main view with improved mobile support
 import React, { useState, useEffect } from 'react';
 import { HomeViewModel } from './viewModel';
 import { TerminalTabs } from './components/TerminalTabs';
@@ -11,7 +11,7 @@ import { useVisualViewport } from '../hooks/useVisualViewport';
 export const HomeView: React.FC = () => {
   const [viewModel] = useState(() => new HomeViewModel());
   const [, forceUpdate] = useState({});
-  const { viewportHeight, isKeyboardOpen } = useVisualViewport();
+  const { viewportHeight, isKeyboardOpen, isStable } = useVisualViewport();
 
   useEffect(() => {
     viewModel.onStateChange(() => {
@@ -24,11 +24,14 @@ export const HomeView: React.FC = () => {
     }
   }, [viewModel]);
 
-  // Update CSS custom properties for dynamic layout
+  // Update terminal app data attributes for CSS targeting
   useEffect(() => {
-    document.documentElement.style.setProperty('--visual-viewport-height', `${viewportHeight}px`);
-    document.documentElement.style.setProperty('--keyboard-open', isKeyboardOpen ? '1' : '0');
-  }, [viewportHeight, isKeyboardOpen]);
+    const terminalApp = document.querySelector('.terminal-app');
+    if (terminalApp) {
+      terminalApp.setAttribute('data-keyboard-open', isKeyboardOpen ? '1' : '0');
+      terminalApp.setAttribute('data-viewport-stable', isStable ? '1' : '0');
+    }
+  }, [isKeyboardOpen, isStable]);
 
   const handleExecuteCommand = (command: string) => {
     viewModel.executeCommand(command);
@@ -71,7 +74,11 @@ export const HomeView: React.FC = () => {
   }
 
   return (
-    <div className="terminal-app">
+    <div 
+      className="terminal-app"
+      data-keyboard-open={isKeyboardOpen ? '1' : '0'}
+      data-viewport-stable={isStable ? '1' : '0'}
+    >
       {/* Terminal Tabs - Fixed at top */}
       <TerminalTabs
         sessions={sessions}
