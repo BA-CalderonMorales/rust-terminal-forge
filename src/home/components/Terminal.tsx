@@ -45,7 +45,16 @@ export const Terminal: React.FC<TerminalProps> = ({
   }, [session.history]);
 
   const visibleHistory = session.history.filter(cmd => cmd.output !== '__CLEAR__');
-  const lastClearIndex = session.history.findLastIndex(cmd => cmd.output === '__CLEAR__');
+  
+  // Find last clear command index using reverse iteration
+  let lastClearIndex = -1;
+  for (let i = session.history.length - 1; i >= 0; i--) {
+    if (session.history[i].output === '__CLEAR__') {
+      lastClearIndex = i;
+      break;
+    }
+  }
+  
   const displayHistory = lastClearIndex >= 0 
     ? session.history.slice(lastClearIndex + 1).filter(cmd => cmd.output !== '__CLEAR__')
     : visibleHistory;
