@@ -85,9 +85,12 @@ export class HomeModel {
     
     if (this.authState.activeSessionId === sessionId) {
       const firstSession = this.authState.sessions[0];
-      this.authState.activeSessionId = firstSession ? firstSession.id : null;
       if (firstSession) {
+        this.authState.activeSessionId = firstSession.id;
         firstSession.isActive = true;
+      } else {
+        // No sessions left
+        this.authState.activeSessionId = null;
       }
     }
     

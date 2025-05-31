@@ -5,6 +5,7 @@ import { HomeViewModel } from './viewModel';
 import { TerminalTabs } from './components/TerminalTabs';
 import { Terminal } from './components/Terminal';
 import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 export const HomeView: React.FC = () => {
   const [viewModel] = useState(() => new HomeViewModel());
@@ -41,17 +42,21 @@ export const HomeView: React.FC = () => {
   const sessions = viewModel.getSessions();
   const activeSession = viewModel.getActiveSession();
 
-  if (!activeSession) {
+  // If no sessions exist, show centered plus icon
+  if (sessions.length === 0) {
     return (
       <div className="min-h-screen bg-black text-green-400 flex items-center justify-center p-4">
         <div className="text-center">
-          <p className="font-mono mb-4 text-base">No terminal sessions available</p>
           <Button
             onClick={handleNewSession}
-            className="bg-green-600 hover:bg-green-700 text-black font-mono min-h-[44px] px-6"
+            variant="ghost"
+            size="lg"
+            className="text-green-400 hover:bg-green-900/30 font-mono border border-green-600 rounded-lg p-8"
+            aria-label="Create new terminal session"
           >
-            Create New Terminal
+            <Plus size={48} />
           </Button>
+          <p className="font-mono mt-4 text-sm text-green-500">Click to create a new terminal</p>
         </div>
       </div>
     );
@@ -62,19 +67,21 @@ export const HomeView: React.FC = () => {
       {/* Terminal Tabs */}
       <TerminalTabs
         sessions={sessions}
-        activeSessionId={activeSession.id}
+        activeSessionId={activeSession?.id || ''}
         onSwitchSession={handleSwitchSession}
         onCloseSession={handleCloseSession}
         onNewSession={handleNewSession}
       />
 
       {/* Terminal */}
-      <Terminal
-        session={activeSession}
-        currentPath={viewModel.getCurrentPath()}
-        onExecuteCommand={handleExecuteCommand}
-        username={currentUser?.username || 'user'}
-      />
+      {activeSession && (
+        <Terminal
+          session={activeSession}
+          currentPath={viewModel.getCurrentPath()}
+          onExecuteCommand={handleExecuteCommand}
+          username={currentUser?.username || 'user'}
+        />
+      )}
     </div>
   );
 };

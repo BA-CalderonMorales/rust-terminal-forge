@@ -21,6 +21,11 @@ export const TerminalTabs: React.FC<TerminalTabsProps> = ({
   onCloseSession,
   onNewSession
 }) => {
+  // If no sessions, don't render the tabs bar
+  if (sessions.length === 0) {
+    return null;
+  }
+
   return (
     <div className="bg-gray-800 border-b border-green-600 flex-shrink-0 sticky top-0 z-10">
       <ScrollArea className="w-full">
@@ -40,18 +45,16 @@ export const TerminalTabs: React.FC<TerminalTabsProps> = ({
               >
                 {session.name}
               </button>
-              {sessions.length > 1 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCloseSession(session.id);
-                  }}
-                  className="px-2 py-2 sm:py-3 text-red-400 hover:text-red-300 transition-colors min-h-[44px] flex items-center"
-                  aria-label="Close session"
-                >
-                  <X size={16} />
-                </button>
-              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCloseSession(session.id);
+                }}
+                className="px-2 py-2 sm:py-3 text-red-400 hover:text-red-300 transition-colors min-h-[44px] flex items-center"
+                aria-label="Close session"
+              >
+                <X size={16} />
+              </button>
             </div>
           ))}
           
