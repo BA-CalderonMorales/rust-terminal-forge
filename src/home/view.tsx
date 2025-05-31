@@ -2,7 +2,6 @@
 // Home module - Main view component
 import React, { useState, useEffect } from 'react';
 import { HomeViewModel } from './viewModel';
-import { LoginForm } from './components/LoginForm';
 import { TerminalTabs } from './components/TerminalTabs';
 import { Terminal } from './components/Terminal';
 import { Button } from '@/components/ui/button';
@@ -15,11 +14,12 @@ export const HomeView: React.FC = () => {
     viewModel.onStateChange(() => {
       forceUpdate({});
     });
-  }, [viewModel]);
 
-  const handleLogin = (username: string) => {
-    viewModel.login(username);
-  };
+    // Auto-login with default user if not authenticated
+    if (!viewModel.isAuthenticated()) {
+      viewModel.login('user');
+    }
+  }, [viewModel]);
 
   const handleLogout = () => {
     viewModel.logout();
@@ -40,10 +40,6 @@ export const HomeView: React.FC = () => {
   const handleCloseSession = (sessionId: string) => {
     viewModel.closeSession(sessionId);
   };
-
-  if (!viewModel.isAuthenticated()) {
-    return <LoginForm onLogin={handleLogin} />;
-  }
 
   const currentUser = viewModel.getCurrentUser();
   const sessions = viewModel.getSessions();
