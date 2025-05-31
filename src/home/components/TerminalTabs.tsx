@@ -22,7 +22,7 @@ export const TerminalTabs: React.FC<TerminalTabsProps> = ({
   onNewSession
 }) => {
   return (
-    <div className="bg-gray-800 border-b border-green-600 flex-shrink-0">
+    <div className="bg-gray-800 border-b border-green-600 flex-shrink-0 sticky top-0 z-10">
       <ScrollArea className="w-full">
         <div className="flex items-center min-w-max">
           {sessions.map((session) => (

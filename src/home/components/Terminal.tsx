@@ -28,31 +28,27 @@ export const Terminal: React.FC<TerminalProps> = ({
     }
   };
 
-  const getTruncatedPath = () => {
-    const pathParts = currentPath.split('/');
-    const currentDir = pathParts[pathParts.length - 1] || '/';
-    
-    // For mobile, show just the current directory with a tilde for home
-    if (currentPath.includes('/home/user')) {
-      if (currentPath === '/home/user') return '~';
-      if (currentPath.startsWith('/home/user/')) {
-        const relativePath = currentPath.replace('/home/user/', '');
-        const parts = relativePath.split('/');
-        return parts.length > 1 ? `~/${parts[parts.length - 1]}` : `~/${relativePath}`;
-      }
-    }
-    
-    return currentDir === '' ? '/' : currentDir;
-  };
-
   const getPrompt = () => {
-    // Much shorter prompt - just $ for mobile
     return '$';
   };
 
   const getFullPrompt = () => {
-    // Full prompt for command history display
-    return `${username}@terminal:${getTruncatedPath()}$`;
+    const pathParts = currentPath.split('/');
+    const currentDir = pathParts[pathParts.length - 1] || '/';
+    
+    let displayPath;
+    if (currentPath.includes('/home/user')) {
+      if (currentPath === '/home/user') displayPath = '~';
+      else if (currentPath.startsWith('/home/user/')) {
+        const relativePath = currentPath.replace('/home/user/', '');
+        const parts = relativePath.split('/');
+        displayPath = parts.length > 1 ? `~/${parts[parts.length - 1]}` : `~/${relativePath}`;
+      }
+    } else {
+      displayPath = currentDir === '' ? '/' : currentDir;
+    }
+    
+    return `${username}@terminal:${displayPath}$`;
   };
 
   useEffect(() => {
@@ -89,11 +85,12 @@ export const Terminal: React.FC<TerminalProps> = ({
   };
 
   return (
-    <div className="flex-1 bg-black text-green-400 font-mono flex flex-col touch-manipulation">
+    <div className="flex-1 bg-black text-green-400 font-mono flex flex-col touch-manipulation overflow-hidden">
       <div 
         ref={terminalRef}
         className="flex-1 p-3 sm:p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-green-600 scrollbar-track-gray-900"
         onClick={handleTerminalTap}
+        style={{ maxHeight: 'calc(100vh - 120px)' }}
       >
         {displayHistory.map((command) => (
           <div key={command.id} className="mb-3 sm:mb-2">
@@ -114,7 +111,7 @@ export const Terminal: React.FC<TerminalProps> = ({
         <div className="h-16 sm:h-0"></div>
       </div>
       
-      <div className="border-t border-green-600 p-3 sm:p-4 bg-black sticky bottom-0">
+      <div className="border-t border-green-600 p-3 sm:p-4 bg-black sticky bottom-0 z-10">
         <form onSubmit={handleSubmit} className="flex items-center">
           <span className="text-green-500 mr-2 text-sm sm:text-base flex-shrink-0">
             {getPrompt()}
