@@ -218,8 +218,9 @@ export class SecureCommandProcessor {
   }
 
   private handleLs(args: string[], id: string, command: string, timestamp: string): TerminalCommand {
-    const showAll = args.includes('-a') || args.includes('-la') || args.includes('-al');
-    const longFormat = args.includes('-l') || args.includes('-la') || args.includes('-al');
+    const showAll = args.includes('-a') || args.includes('-la') || args.includes('-al') || args.includes('-lah') || args.includes('-ahl');
+    const longFormat = args.includes('-l') || args.includes('-la') || args.includes('-al') || args.includes('-lah') || args.includes('-ahl');
+    const humanReadable = args.includes('-h') || args.includes('-lah') || args.includes('-ahl');
     
     const targetPath = args.find(arg => !arg.startsWith('-')) || this.currentPath;
     const normalizedPath = this.normalizePath(targetPath);
@@ -249,13 +250,48 @@ export class SecureCommandProcessor {
     let output: string;
     
     if (longFormat) {
+      const formatSize = (size: number | undefined) => {
+        if (!size) return '     4096';
+        if (humanReadable) {
+          if (size < 1024) return size.toString().padStart(8);
+          if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)}K`.padStart(8);
+          return `${(size / (1024 * 1024)).toFixed(1)}M`.padStart(8);
+        }
+        return size.toString().padStart(8);
+      };
+
       const lines = contents.map(item => {
-        const size = item.size ? item.size.toString().padStart(8) : '     4096';
+        const size = formatSize(item.size);
         return `${item.permissions} 1 user user ${size} ${item.lastModified} ${item.name}`;
       });
-      output = `total ${contents.length}\n${lines.join('\n')}`;
+      
+      const totalSize = contents.reduce((sum, item) => sum + (item.size || 4096), 0);
+      const totalDisplay = humanReadable && totalSize >= 1024 
+        ? `${Math.ceil(totalSize / 1024)}K`
+        : Math.ceil(totalSize / 1024).toString();
+      
+      output = `total ${totalDisplay}\n${lines.join('\n')}`;
     } else {
-      output = contents.map(item => item.name).join('  ');
+      // Simple format - just names in columns
+      const names = contents.map(item => item.name);
+      // For mobile, show 2 columns; for desktop, show more
+      const columns = 4;
+      const rows = Math.ceil(names.length / columns);
+      const columnWidth = Math.max(...names.map(name => name.length)) + 2;
+      
+      const formattedLines: string[] = [];
+      for (let row = 0; row < rows; row++) {
+        const rowItems: string[] = [];
+        for (let col = 0; col < columns; col++) {
+          const index = row + col * rows;
+          if (index < names.length) {
+            rowItems.push(names[index].padEnd(columnWidth));
+          }
+        }
+        formattedLines.push(rowItems.join('').trimEnd());
+      }
+      
+      output = formattedLines.join('\n');
     }
 
     return {
