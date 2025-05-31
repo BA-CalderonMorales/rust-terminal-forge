@@ -1,22 +1,36 @@
 
-// Security utilities for cryptographic operations
+// Enhanced security utilities with comprehensive validation
+import { InputValidator } from './validation';
+
 export class SecurityUtils {
   private static encoder = new TextEncoder();
   private static decoder = new TextDecoder();
 
   /**
-   * Generate cryptographically secure random ID
+   * Generate cryptographically secure random ID with entropy check
    */
   static generateSecureId(): string {
     if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      // Check if we have sufficient entropy
+      const entropyCheck = new Uint8Array(4);
+      crypto.getRandomValues(entropyCheck);
+      
+      if (entropyCheck.every(byte => byte === 0)) {
+        console.warn('Low entropy detected, using fallback');
+        return this.generateFallbackId();
+      }
+
       const array = new Uint8Array(16);
       crypto.getRandomValues(array);
       return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
     }
     
-    // Fallback for environments without crypto API
+    return this.generateFallbackId();
+  }
+
+  private static generateFallbackId(): string {
     console.warn('Crypto API not available, using fallback random generation');
-    return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}-${Math.random().toString(36).substring(2, 15)}`;
   }
 
   /**
@@ -50,100 +64,45 @@ export class SecurityUtils {
   }
 
   /**
-   * Encrypt data using AES-GCM
-   */
-  static async encryptData(data: string, password: string): Promise<string> {
-    if (typeof crypto === 'undefined' || !crypto.subtle) {
-      console.warn('Encryption not available, storing data unencrypted');
-      return data;
-    }
-
-    try {
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-      const key = await this.deriveKey(password, salt);
-      
-      const encrypted = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv },
-        key,
-        this.encoder.encode(data)
-      );
-
-      // Combine salt + iv + encrypted data
-      const combined = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
-      combined.set(salt, 0);
-      combined.set(iv, salt.length);
-      combined.set(new Uint8Array(encrypted), salt.length + iv.length);
-
-      return btoa(String.fromCharCode(...combined));
-    } catch (error) {
-      console.warn('Encryption failed, storing data unencrypted:', error);
-      return data;
-    }
-  }
-
-  /**
-   * Decrypt data using AES-GCM
-   */
-  static async decryptData(encryptedData: string, password: string): Promise<string> {
-    if (typeof crypto === 'undefined' || !crypto.subtle) {
-      return encryptedData;
-    }
-
-    try {
-      const combined = new Uint8Array(
-        atob(encryptedData).split('').map(char => char.charCodeAt(0))
-      );
-
-      const salt = combined.slice(0, 16);
-      const iv = combined.slice(16, 28);
-      const encrypted = combined.slice(28);
-
-      const key = await this.deriveKey(password, salt);
-      
-      const decrypted = await crypto.subtle.decrypt(
-        { name: 'AES-GCM', iv },
-        key,
-        encrypted
-      );
-
-      return this.decoder.decode(decrypted);
-    } catch (error) {
-      console.warn('Decryption failed, returning data as-is:', error);
-      return encryptedData;
-    }
-  }
-
-  /**
-   * Sanitize input to prevent XSS and injection attacks
+   * Enhanced input sanitization using validation schemas
    */
   static sanitizeInput(input: string): string {
-    return input
-      // Remove dangerous characters
-      .replace(/[<>'"&]/g, '')
-      // Remove control characters
-      .replace(/[\x00-\x1f\x7f]/g, '')
-      // Remove path traversal attempts
-      .replace(/\.\./g, '')
-      // Limit length
-      .substring(0, 1000)
-      // Normalize unicode
-      .normalize('NFKC');
+    return InputValidator.sanitizeInput(input);
   }
 
   /**
-   * Validate command input
+   * Validate command input with comprehensive checks
    */
   static validateCommand(command: string): boolean {
-    const sanitized = this.sanitizeInput(command);
-    
-    // Check length
-    if (sanitized.length === 0 || sanitized.length > 1000) {
-      return false;
-    }
+    const validation = InputValidator.validateCommand(command);
+    return validation.isValid;
+  }
 
-    // Allow only alphanumeric, spaces, and common shell characters
-    const allowedPattern = /^[a-zA-Z0-9\s\-_.\/~]+$/;
-    return allowedPattern.test(sanitized);
+  /**
+   * Validate username with security rules
+   */
+  static validateUsername(username: string): boolean {
+    const validation = InputValidator.validateUsername(username);
+    return validation.isValid;
+  }
+
+  /**
+   * Validate file paths to prevent traversal
+   */
+  static validatePath(path: string): boolean {
+    const validation = InputValidator.validatePath(path);
+    return validation.isValid;
+  }
+
+  /**
+   * Security audit log
+   */
+  static logSecurityEvent(event: string, details: any): void {
+    console.warn(`Security Event: ${event}`, {
+      timestamp: new Date().toISOString(),
+      details: details,
+      userAgent: navigator.userAgent,
+      url: window.location.href
+    });
   }
 }

@@ -1,5 +1,4 @@
-
-// Home module - Enhanced main view with improved mobile support
+// Home module - Enhanced main view with secure authentication
 import React, { useState, useEffect } from 'react';
 import { HomeViewModel } from './viewModel';
 import { TerminalTabs } from './components/TerminalTabs';
@@ -11,6 +10,7 @@ import { useVisualViewport } from '../hooks/useVisualViewport';
 export const HomeView: React.FC = () => {
   const [viewModel] = useState(() => new HomeViewModel());
   const [, forceUpdate] = useState({});
+  const [isInitializing, setIsInitializing] = useState(true);
   const { viewportHeight, isKeyboardOpen, isStable } = useVisualViewport();
 
   useEffect(() => {
@@ -19,9 +19,18 @@ export const HomeView: React.FC = () => {
     });
 
     // Auto-login with default user if not authenticated
-    if (!viewModel.isAuthenticated()) {
-      viewModel.login('user');
-    }
+    const initializeAuth = async () => {
+      if (!viewModel.isAuthenticated()) {
+        try {
+          await viewModel.login('user');
+        } catch (error) {
+          console.error('Failed to initialize authentication:', error);
+        }
+      }
+      setIsInitializing(false);
+    };
+
+    initializeAuth();
   }, [viewModel]);
 
   // Update terminal app data attributes for CSS targeting
@@ -37,8 +46,12 @@ export const HomeView: React.FC = () => {
     viewModel.executeCommand(command);
   };
 
-  const handleNewSession = () => {
-    viewModel.createNewSession();
+  const handleNewSession = async () => {
+    try {
+      await viewModel.createNewSession();
+    } catch (error) {
+      console.error('Failed to create new session:', error);
+    }
   };
 
   const handleSwitchSession = (sessionId: string) => {
@@ -69,6 +82,14 @@ export const HomeView: React.FC = () => {
           </Button>
           <p className="font-mono mt-4 text-sm text-green-500">Click to create a new terminal</p>
         </div>
+      </div>
+    );
+  }
+
+  if (isInitializing) {
+    return (
+      <div className="terminal-app flex items-center justify-center">
+        <div className="text-green-400 font-mono">Initializing secure terminal...</div>
       </div>
     );
   }

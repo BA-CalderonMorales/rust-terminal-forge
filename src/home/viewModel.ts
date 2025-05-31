@@ -1,7 +1,9 @@
-// Home module - Enhanced ViewModel with secure command processing
+
+// Home module - Enhanced ViewModel with async security features
 import { HomeModel } from './model';
 import { SecureCommandProcessor } from '../core/SecureCommandProcessor';
 import { TerminalSession, TerminalCommand, User } from '../core/types';
+import { SecurityUtils } from '../core/securityUtils';
 
 export class HomeViewModel {
   private model: HomeModel;
@@ -23,20 +25,25 @@ export class HomeViewModel {
     }
   }
 
-  login(username: string): User {
-    const user = this.model.authenticateUser(username);
-    
-    // Create initial session
-    if (this.model.getSessions().length === 0) {
-      this.model.createSession('Main Terminal');
+  async login(username: string): Promise<User> {
+    try {
+      const user = await this.model.authenticateUser(username);
+      
+      // Create initial session
+      if (this.model.getSessions().length === 0) {
+        await this.model.createSession('Main Terminal');
+      }
+      
+      this.notifyStateChange();
+      return user;
+    } catch (error) {
+      SecurityUtils.logSecurityEvent('login_failed', { username, error });
+      throw error;
     }
-    
-    this.notifyStateChange();
-    return user;
   }
 
-  logout(): void {
-    this.model.logout();
+  async logout(): Promise<void> {
+    await this.model.logout();
     this.notifyStateChange();
   }
 
@@ -57,9 +64,11 @@ export class HomeViewModel {
       
       this.notifyStateChange();
     } catch (error) {
+      SecurityUtils.logSecurityEvent('command_execution_error', { command: input, error });
+      
       // Handle command processing errors gracefully
       const errorCommand: TerminalCommand = {
-        id: `error-${Date.now()}`,
+        id: SecurityUtils.generateSecureId(),
         command: input,
         output: `Error processing command: ${error instanceof Error ? error.message : 'Unknown error'}`,
         timestamp: new Date().toISOString(),
@@ -71,9 +80,9 @@ export class HomeViewModel {
     }
   }
 
-  createNewSession(): TerminalSession {
+  async createNewSession(): Promise<TerminalSession> {
     const sessionCount = this.model.getSessions().length;
-    const session = this.model.createSession(`Terminal ${sessionCount + 1}`);
+    const session = await this.model.createSession(`Terminal ${sessionCount + 1}`);
     this.notifyStateChange();
     return session;
   }

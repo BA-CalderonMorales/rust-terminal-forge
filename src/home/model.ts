@@ -1,8 +1,9 @@
 
-// Home module - Enhanced Model with session path tracking and secure storage
+// Home module - Enhanced Model with secure user-derived encryption
 import { AuthState, TerminalSession, TerminalCommand, User } from '../core/types';
 import { SecureStorage } from '../core/secureStorage';
 import { SecurityUtils } from '../core/securityUtils';
+import { InputValidator } from '../core/validation';
 
 export class HomeModel {
   private authState: AuthState;
@@ -31,6 +32,7 @@ export class HomeModel {
         this.authState = saved;
       }
     } catch (error) {
+      SecurityUtils.logSecurityEvent('auth_load_failed', error);
       console.error('Failed to load auth state:', error);
       // Keep default state on error
     } finally {
@@ -39,35 +41,64 @@ export class HomeModel {
   }
 
   private async saveAuthState(): Promise<void> {
-    await SecureStorage.set('auth', this.authState);
+    try {
+      await SecureStorage.set('auth', this.authState);
+    } catch (error) {
+      SecurityUtils.logSecurityEvent('auth_save_failed', error);
+      console.error('Failed to save auth state:', error);
+    }
   }
 
-  authenticateUser(username: string): User {
+  async authenticateUser(username: string): Promise<User> {
+    // Validate username input
+    const validation = InputValidator.validateUsername(username);
+    if (!validation.isValid) {
+      SecurityUtils.logSecurityEvent('invalid_username', { username, error: validation.error });
+      throw new Error(validation.error || 'Invalid username');
+    }
+
+    // Initialize secure storage for this user
+    await SecureStorage.initializeForUser(validation.value!);
+
     const user: User = {
       id: SecurityUtils.generateSecureId(),
-      username: SecurityUtils.sanitizeInput(username),
+      username: validation.value!,
       createdAt: new Date().toISOString()
     };
 
     this.authState.isAuthenticated = true;
     this.authState.user = user;
-    this.saveAuthState();
+    await this.saveAuthState();
 
+    SecurityUtils.logSecurityEvent('user_authenticated', { username: user.username });
     return user;
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
+    const username = this.authState.user?.username;
+    
     this.authState.isAuthenticated = false;
     this.authState.user = null;
     this.authState.sessions = [];
     this.authState.activeSessionId = null;
-    this.saveAuthState();
+    
+    // Clear secure storage session
+    SecureStorage.clearUserSession();
+    await this.saveAuthState();
+    
+    SecurityUtils.logSecurityEvent('user_logged_out', { username });
   }
 
-  createSession(name: string = 'Terminal'): TerminalSession {
+  async createSession(name: string = 'Terminal'): Promise<TerminalSession> {
+    // Validate session name
+    const validation = InputValidator.validateSessionName(name);
+    if (!validation.isValid) {
+      throw new Error(validation.error || 'Invalid session name');
+    }
+
     const session: TerminalSession = {
       id: SecurityUtils.generateSecureId(),
-      name: SecurityUtils.sanitizeInput(name),
+      name: validation.value!,
       currentPath: '/home/user/project',
       history: [],
       isActive: true,
@@ -79,7 +110,7 @@ export class HomeModel {
     
     this.authState.sessions.push(session);
     this.authState.activeSessionId = session.id;
-    this.saveAuthState();
+    await this.saveAuthState();
 
     return session;
   }
