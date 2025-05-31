@@ -1,4 +1,3 @@
-
 // Home module - Main terminal component
 import React, { useState, useRef, useEffect } from 'react';
 import { TerminalSession } from '../../core/types';
@@ -28,8 +27,25 @@ export const Terminal: React.FC<TerminalProps> = ({
     }
   };
 
+  const getTruncatedPath = () => {
+    const pathParts = currentPath.split('/');
+    const currentDir = pathParts[pathParts.length - 1] || '/';
+    
+    // For mobile, show just the current directory with a tilde for home
+    if (currentPath.includes('/home/user')) {
+      if (currentPath === '/home/user') return '~';
+      if (currentPath.startsWith('/home/user/')) {
+        const relativePath = currentPath.replace('/home/user/', '');
+        const parts = relativePath.split('/');
+        return parts.length > 1 ? `~/${parts[parts.length - 1]}` : `~/${relativePath}`;
+      }
+    }
+    
+    return currentDir === '' ? '/' : currentDir;
+  };
+
   const getPrompt = () => {
-    return `${username}@rust-terminal:${currentPath}$`;
+    return `${username}@terminal:${getTruncatedPath()}$`;
   };
 
   useEffect(() => {
