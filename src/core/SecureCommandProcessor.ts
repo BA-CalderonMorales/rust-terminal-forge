@@ -123,6 +123,16 @@ export class SecureCommandProcessor {
           return this.handleClear(id, command, timestamp);
         case 'help':
           return this.handleHelp(id, command, timestamp);
+        case 'echo':
+          return this.handleEcho(args, id, command, timestamp);
+        case 'whoami':
+          return this.handleWhoami(id, command, timestamp);
+        case 'date':
+          return this.handleDate(id, command, timestamp);
+        case 'env':
+          return this.handleEnv(id, command, timestamp);
+        case 'which':
+          return this.handleWhich(args, id, command, timestamp);
         default:
           return {
             id,
@@ -156,7 +166,23 @@ export class SecureCommandProcessor {
   }
 
   private parseCommand(command: string): string[] {
-    return command.split(/\s+/).filter(part => part.length > 0);
+    // Enhanced parsing to handle combined flags like -lah
+    const parts = command.split(/\s+/).filter(part => part.length > 0);
+    const result: string[] = [];
+    
+    for (const part of parts) {
+      if (part.startsWith('-') && part.length > 2 && !part.includes('=')) {
+        // Split combined flags like -lah into -l, -a, -h
+        const flags = part.slice(1);
+        for (const flag of flags) {
+          result.push(`-${flag}`);
+        }
+      } else {
+        result.push(part);
+      }
+    }
+    
+    return result;
   }
 
   private validatePath(path: string): boolean {
@@ -218,9 +244,11 @@ export class SecureCommandProcessor {
   }
 
   private handleLs(args: string[], id: string, command: string, timestamp: string): TerminalCommand {
-    const showAll = args.includes('-a') || args.includes('-la') || args.includes('-al') || args.includes('-lah') || args.includes('-ahl');
-    const longFormat = args.includes('-l') || args.includes('-la') || args.includes('-al') || args.includes('-lah') || args.includes('-ahl');
-    const humanReadable = args.includes('-h') || args.includes('-lah') || args.includes('-ahl');
+    // Enhanced flag parsing
+    const flags = new Set(args.filter(arg => arg.startsWith('-')));
+    const showAll = flags.has('-a') || flags.has('-A');
+    const longFormat = flags.has('-l');
+    const humanReadable = flags.has('-h');
     
     const targetPath = args.find(arg => !arg.startsWith('-')) || this.currentPath;
     const normalizedPath = this.normalizePath(targetPath);
@@ -274,7 +302,6 @@ export class SecureCommandProcessor {
     } else {
       // Simple format - just names in columns
       const names = contents.map(item => item.name);
-      // For mobile, show 2 columns; for desktop, show more
       const columns = 4;
       const rows = Math.ceil(names.length / columns);
       const columnWidth = Math.max(...names.map(name => name.length)) + 2;
@@ -488,6 +515,91 @@ export class SecureCommandProcessor {
     };
   }
 
+  private handleEcho(args: string[], id: string, command: string, timestamp: string): TerminalCommand {
+    const output = args.join(' ');
+    return {
+      id,
+      command,
+      output,
+      timestamp,
+      exitCode: 0
+    };
+  }
+
+  private handleWhoami(id: string, command: string, timestamp: string): TerminalCommand {
+    return {
+      id,
+      command,
+      output: 'user',
+      timestamp,
+      exitCode: 0
+    };
+  }
+
+  private handleDate(id: string, command: string, timestamp: string): TerminalCommand {
+    const now = new Date();
+    const output = now.toString();
+    return {
+      id,
+      command,
+      output,
+      timestamp,
+      exitCode: 0
+    };
+  }
+
+  private handleEnv(id: string, command: string, timestamp: string): TerminalCommand {
+    const envVars = [
+      'HOME=/home/user',
+      'PATH=/usr/local/bin:/usr/bin:/bin',
+      'USER=user',
+      'SHELL=/bin/bash',
+      'LANG=en_US.UTF-8',
+      'TERM=xterm-256color'
+    ];
+    
+    return {
+      id,
+      command,
+      output: envVars.join('\n'),
+      timestamp,
+      exitCode: 0
+    };
+  }
+
+  private handleWhich(args: string[], id: string, command: string, timestamp: string): TerminalCommand {
+    if (args.length === 0) {
+      return {
+        id,
+        command,
+        output: 'which: missing operand',
+        timestamp,
+        exitCode: 1
+      };
+    }
+
+    const commandName = args[0];
+    const builtinCommands = ['pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'history', 'alias', 'cargo', 'clear', 'help', 'echo', 'whoami', 'date', 'env', 'which'];
+    
+    if (builtinCommands.includes(commandName)) {
+      return {
+        id,
+        command,
+        output: `/usr/bin/${commandName}`,
+        timestamp,
+        exitCode: 0
+      };
+    }
+
+    return {
+      id,
+      command,
+      output: `which: no ${commandName} in (/usr/local/bin:/usr/bin:/bin)`,
+      timestamp,
+      exitCode: 1
+    };
+  }
+
   private handleHistory(id: string, command: string, timestamp: string): TerminalCommand {
     const historyOutput = this.commandHistory
       .slice(-50)
@@ -579,11 +691,16 @@ export class SecureCommandProcessor {
   private handleHelp(id: string, command: string, timestamp: string): TerminalCommand {
     const helpText = `Available commands:
   pwd        - Show current directory
-  ls [-la]   - List directory contents
+  ls [-lah]  - List directory contents
   cd <dir>   - Change directory (supports: ., .., ~, absolute and relative paths)
   mkdir      - Create directory
   touch      - Create or update file
   cat        - Display file contents
+  echo       - Display text
+  whoami     - Show current user
+  date       - Show current date and time
+  env        - Show environment variables
+  which      - Locate a command
   history    - Show command history
   alias      - Show or set command aliases
   cargo      - Rust package manager
@@ -611,7 +728,7 @@ Navigation examples:
   }
 
   private suggestCommand(command: string): string {
-    const commands = ['pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'history', 'alias', 'cargo', 'clear', 'help'];
+    const commands = ['pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'echo', 'whoami', 'date', 'env', 'which', 'history', 'alias', 'cargo', 'clear', 'help'];
     const suggestions = commands.filter(cmd => 
       cmd.includes(command) || 
       this.levenshteinDistance(cmd, command) <= 2
