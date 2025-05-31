@@ -85,10 +85,10 @@ export const Terminal: React.FC<TerminalProps> = ({
   };
 
   return (
-    <div className="terminal-container bg-black text-green-400 font-mono flex flex-col touch-manipulation">
+    <div className="terminal-container">
       <div 
         ref={terminalRef}
-        className="terminal-content flex-1 p-3 sm:p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-green-600 scrollbar-track-gray-900"
+        className="terminal-content"
         onClick={handleTerminalTap}
       >
         {displayHistory.map((command) => (
@@ -106,11 +106,11 @@ export const Terminal: React.FC<TerminalProps> = ({
             )}
           </div>
         ))}
-        {/* Spacer to ensure input is always visible */}
+        {/* Spacer to ensure content is always above input */}
         <div className="h-20"></div>
       </div>
       
-      <div className="terminal-input border-t border-green-600 p-3 sm:p-4 bg-black">
+      <div className="terminal-input">
         <form onSubmit={handleSubmit} className="flex items-center">
           <span className="text-green-500 mr-2 text-sm sm:text-base flex-shrink-0">
             {getPrompt()}
@@ -120,7 +120,7 @@ export const Terminal: React.FC<TerminalProps> = ({
             type="text"
             value={currentInput}
             onChange={(e) => setCurrentInput(e.target.value)}
-            className="flex-1 bg-transparent outline-none text-green-400 placeholder-green-600 text-base sm:text-sm min-h-[44px] sm:min-h-[auto]"
+            className="flex-1 bg-transparent outline-none text-green-400 placeholder-green-600 text-base sm:text-sm"
             placeholder="Type a command..."
             autoComplete="off"
             spellCheck="false"

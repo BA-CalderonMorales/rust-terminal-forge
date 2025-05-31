@@ -27,7 +27,7 @@ export const TerminalTabs: React.FC<TerminalTabsProps> = ({
   }
 
   return (
-    <div className="terminal-tabs bg-gray-800 border-b border-green-600">
+    <div className="terminal-tabs">
       <ScrollArea className="w-full">
         <div className="flex items-center min-w-max">
           {sessions.map((session) => (
@@ -41,7 +41,7 @@ export const TerminalTabs: React.FC<TerminalTabsProps> = ({
             >
               <button
                 onClick={() => onSwitchSession(session.id)}
-                className="px-3 sm:px-4 py-2 sm:py-3 font-mono text-sm sm:text-base transition-colors min-h-[44px] flex items-center whitespace-nowrap"
+                className="px-3 sm:px-4 py-2 sm:py-3 font-mono text-sm sm:text-base transition-colors min-h-[48px] flex items-center whitespace-nowrap touch-manipulation"
               >
                 {session.name}
               </button>
@@ -50,7 +50,7 @@ export const TerminalTabs: React.FC<TerminalTabsProps> = ({
                   e.stopPropagation();
                   onCloseSession(session.id);
                 }}
-                className="px-2 py-2 sm:py-3 text-red-400 hover:text-red-300 transition-colors min-h-[44px] flex items-center"
+                className="px-2 py-2 sm:py-3 text-red-400 hover:text-red-300 transition-colors min-h-[48px] flex items-center touch-manipulation"
                 aria-label="Close session"
               >
                 <X size={16} />
@@ -62,7 +62,7 @@ export const TerminalTabs: React.FC<TerminalTabsProps> = ({
             onClick={onNewSession}
             variant="ghost"
             size="sm"
-            className="text-green-400 hover:bg-green-900/30 font-mono border-0 rounded-none min-h-[44px] px-3 sm:px-4 whitespace-nowrap"
+            className="text-green-400 hover:bg-green-900/30 font-mono border-0 rounded-none min-h-[48px] px-3 sm:px-4 whitespace-nowrap touch-manipulation"
             aria-label="New session"
           >
             <Plus size={16} className="sm:mr-1" />

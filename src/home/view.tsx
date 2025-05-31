@@ -6,10 +6,12 @@ import { TerminalTabs } from './components/TerminalTabs';
 import { Terminal } from './components/Terminal';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { useVisualViewport } from '../hooks/useVisualViewport';
 
 export const HomeView: React.FC = () => {
   const [viewModel] = useState(() => new HomeViewModel());
   const [, forceUpdate] = useState({});
+  const { viewportHeight, isKeyboardOpen } = useVisualViewport();
 
   useEffect(() => {
     viewModel.onStateChange(() => {
@@ -21,6 +23,12 @@ export const HomeView: React.FC = () => {
       viewModel.login('user');
     }
   }, [viewModel]);
+
+  // Update CSS custom properties for dynamic layout
+  useEffect(() => {
+    document.documentElement.style.setProperty('--visual-viewport-height', `${viewportHeight}px`);
+    document.documentElement.style.setProperty('--keyboard-open', isKeyboardOpen ? '1' : '0');
+  }, [viewportHeight, isKeyboardOpen]);
 
   const handleExecuteCommand = (command: string) => {
     viewModel.executeCommand(command);
@@ -45,7 +53,7 @@ export const HomeView: React.FC = () => {
   // If no sessions exist, show centered plus icon
   if (sessions.length === 0) {
     return (
-      <div className="min-h-screen bg-black text-green-400 flex items-center justify-center p-4">
+      <div className="terminal-no-sessions">
         <div className="text-center">
           <Button
             onClick={handleNewSession}
@@ -64,7 +72,7 @@ export const HomeView: React.FC = () => {
 
   return (
     <div className="terminal-app">
-      {/* Terminal Tabs */}
+      {/* Terminal Tabs - Fixed at top */}
       <TerminalTabs
         sessions={sessions}
         activeSessionId={activeSession?.id || ''}
@@ -73,7 +81,7 @@ export const HomeView: React.FC = () => {
         onNewSession={handleNewSession}
       />
 
-      {/* Terminal */}
+      {/* Terminal Content */}
       {activeSession && (
         <Terminal
           session={activeSession}
