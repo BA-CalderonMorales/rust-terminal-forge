@@ -1,5 +1,7 @@
 // Secure command processor with input validation and path traversal protection
 import { TerminalCommand } from './types';
+import { SecurityUtils } from './securityUtils';
+import { RateLimiter } from './rateLimiter';
 
 interface FileSystemNode {
   type: 'file' | 'directory';
@@ -23,6 +25,14 @@ export class SecureCommandProcessor {
     '/home/user/project/target',
     '/home/user/documents',
     '/tmp'
+  ]);
+
+  private rateLimiter = new RateLimiter();
+  private commandHistory: string[] = [];
+  private aliases: Map<string, string> = new Map([
+    ['ll', 'ls -la'],
+    ['la', 'ls -a'],
+    ['..', 'cd ..']
   ]);
 
   private fileSystem: FileSystem = {
@@ -50,21 +60,37 @@ export class SecureCommandProcessor {
     ]
   };
 
-  private commandHistory: string[] = [];
-  private aliases: Map<string, string> = new Map([
-    ['ll', 'ls -la'],
-    ['la', 'ls -a'],
-    ['..', 'cd ..']
-  ]);
+  processCommand(input: string, sessionId: string = 'default'): TerminalCommand {
+    // Rate limiting check
+    if (!this.rateLimiter.isAllowed(sessionId)) {
+      const remaining = this.rateLimiter.getRemainingCommands(sessionId);
+      return {
+        id: SecurityUtils.generateSecureId(),
+        command: input,
+        output: `Rate limit exceeded. Try again later. Remaining commands: ${remaining}`,
+        timestamp: new Date().toISOString(),
+        exitCode: 429
+      };
+    }
 
-  processCommand(input: string): TerminalCommand {
-    const sanitizedInput = this.sanitizeInput(input.trim());
+    // Input validation
+    if (!SecurityUtils.validateCommand(input)) {
+      return {
+        id: SecurityUtils.generateSecureId(),
+        command: input,
+        output: 'Invalid command: contains forbidden characters or exceeds length limit',
+        timestamp: new Date().toISOString(),
+        exitCode: 400
+      };
+    }
+
+    const sanitizedInput = SecurityUtils.sanitizeInput(input.trim());
     const command = this.expandAliases(sanitizedInput);
     const parts = this.parseCommand(command);
     const baseCommand = parts[0];
     const args = parts.slice(1);
 
-    const id = this.generateSecureId();
+    const id = SecurityUtils.generateSecureId();
     const timestamp = new Date().toISOString();
 
     // Add to command history
@@ -117,15 +143,6 @@ export class SecureCommandProcessor {
     }
   }
 
-  private sanitizeInput(input: string): string {
-    // Remove dangerous characters and sequences
-    return input
-      .replace(/[;&|`$(){}[\]]/g, '')
-      .replace(/\.\.\//g, '')
-      .replace(/\/\.\./g, '')
-      .trim();
-  }
-
   private expandAliases(command: string): string {
     const parts = command.split(' ');
     const baseCommand = parts[0];
@@ -139,23 +156,42 @@ export class SecureCommandProcessor {
   }
 
   private parseCommand(command: string): string[] {
-    // Simple command parsing - can be enhanced for complex shell syntax
     return command.split(/\s+/).filter(part => part.length > 0);
-  }
-
-  private generateSecureId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
   }
 
   private validatePath(path: string): boolean {
     const normalizedPath = this.normalizePath(path);
+    
+    // Check if path is in allowed paths or is a subdirectory of an allowed path
     return this.allowedPaths.has(normalizedPath) || 
-           Array.from(this.allowedPaths).some(allowed => normalizedPath.startsWith(allowed + '/'));
+           Array.from(this.allowedPaths).some(allowed => {
+             const resolvedPath = this.resolvePath(normalizedPath);
+             const resolvedAllowed = this.resolvePath(allowed);
+             return resolvedPath.startsWith(resolvedAllowed + '/') || resolvedPath === resolvedAllowed;
+           });
+  }
+
+  private resolvePath(path: string): string {
+    // Implement canonical path resolution to prevent traversal
+    const parts = path.split('/').filter(part => part !== '');
+    const resolved: string[] = [];
+    
+    for (const part of parts) {
+      if (part === '.' || part === '') {
+        continue;
+      } else if (part === '..') {
+        resolved.pop();
+      } else {
+        resolved.push(part);
+      }
+    }
+    
+    return '/' + resolved.join('/');
   }
 
   private normalizePath(path: string): string {
     if (path.startsWith('/')) {
-      return path;
+      return this.resolvePath(path);
     }
     
     if (path === '~') {
@@ -163,23 +199,12 @@ export class SecureCommandProcessor {
     }
     
     if (path.startsWith('~/')) {
-      return path.replace('~', this.homeDirectory);
+      return this.resolvePath(path.replace('~', this.homeDirectory));
     }
     
     // Handle relative paths
-    const parts = this.currentPath.split('/').concat(path.split('/'));
-    const normalized: string[] = [];
-    
-    for (const part of parts) {
-      if (part === '' || part === '.') continue;
-      if (part === '..') {
-        normalized.pop();
-      } else {
-        normalized.push(part);
-      }
-    }
-    
-    return '/' + normalized.join('/').replace(/\/+/g, '/').replace(/\/$/, '') || '/';
+    const fullPath = this.currentPath + '/' + path;
+    return this.resolvePath(fullPath);
   }
 
   private handlePwd(id: string, command: string, timestamp: string): TerminalCommand {
@@ -311,7 +336,6 @@ export class SecureCommandProcessor {
       };
     }
 
-    // Add directory to current path's contents
     if (!this.fileSystem[this.currentPath]) {
       this.fileSystem[this.currentPath] = [];
     }
@@ -334,7 +358,6 @@ export class SecureCommandProcessor {
       lastModified: new Date().toISOString().slice(0, 16).replace('T', ' ')
     });
 
-    // Create empty directory entry
     this.fileSystem[fullPath] = [];
 
     return {
@@ -409,7 +432,6 @@ export class SecureCommandProcessor {
       };
     }
 
-    // Simulate file content based on file type
     let content = '';
     if (fileName.endsWith('.rs')) {
       content = `fn main() {\n    println!("Hello, world!");\n}`;
@@ -432,7 +454,7 @@ export class SecureCommandProcessor {
 
   private handleHistory(id: string, command: string, timestamp: string): TerminalCommand {
     const historyOutput = this.commandHistory
-      .slice(-50) // Show last 50 commands
+      .slice(-50)
       .map((cmd, index) => `${(this.commandHistory.length - 50 + index + 1).toString().padStart(4)}: ${cmd}`)
       .join('\n');
 

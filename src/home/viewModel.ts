@@ -1,4 +1,3 @@
-
 // Home module - Enhanced ViewModel with secure command processing
 import { HomeModel } from './model';
 import { SecureCommandProcessor } from '../core/SecureCommandProcessor';
@@ -46,7 +45,8 @@ export class HomeViewModel {
     if (!activeSession) return;
 
     try {
-      const command = this.commandProcessor.processCommand(input);
+      // Pass session ID for rate limiting
+      const command = this.commandProcessor.processCommand(input, activeSession.id);
       this.model.addCommandToSession(activeSession.id, command);
       
       // Update session path if cd command was successful

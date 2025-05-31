@@ -1,18 +1,18 @@
-
-// Home module - Enhanced Model with session path tracking
+// Home module - Enhanced Model with session path tracking and secure storage
 import { AuthState, TerminalSession, TerminalCommand, User } from '../core/types';
-import { Storage } from '../core/storage';
+import { SecureStorage } from '../core/secureStorage';
+import { SecurityUtils } from '../core/securityUtils';
 
 export class HomeModel {
   private authState: AuthState;
 
   constructor() {
-    this.authState = this.loadAuthState();
+    this.loadAuthState();
   }
 
-  private loadAuthState(): AuthState {
-    const saved = Storage.get<AuthState>('auth');
-    return saved || {
+  private async loadAuthState(): Promise<void> {
+    const saved = await SecureStorage.get<AuthState>('auth');
+    this.authState = saved || {
       isAuthenticated: false,
       user: null,
       sessions: [],
@@ -20,14 +20,14 @@ export class HomeModel {
     };
   }
 
-  private saveAuthState(): void {
-    Storage.set('auth', this.authState);
+  private async saveAuthState(): Promise<void> {
+    await SecureStorage.set('auth', this.authState);
   }
 
   authenticateUser(username: string): User {
     const user: User = {
-      id: Date.now().toString(),
-      username,
+      id: SecurityUtils.generateSecureId(),
+      username: SecurityUtils.sanitizeInput(username),
       createdAt: new Date().toISOString()
     };
 
@@ -48,8 +48,8 @@ export class HomeModel {
 
   createSession(name: string = 'Terminal'): TerminalSession {
     const session: TerminalSession = {
-      id: Date.now().toString(),
-      name,
+      id: SecurityUtils.generateSecureId(),
+      name: SecurityUtils.sanitizeInput(name),
       currentPath: '/home/user/project',
       history: [],
       isActive: true,
@@ -77,7 +77,7 @@ export class HomeModel {
   updateSessionPath(sessionId: string, newPath: string): void {
     const session = this.authState.sessions.find(s => s.id === sessionId);
     if (session) {
-      session.currentPath = newPath;
+      session.currentPath = SecurityUtils.sanitizeInput(newPath);
       this.saveAuthState();
     }
   }
