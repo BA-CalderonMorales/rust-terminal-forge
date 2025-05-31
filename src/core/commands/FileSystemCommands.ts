@@ -1,4 +1,3 @@
-
 import { TerminalCommand } from '../types';
 import { BaseCommandHandler } from './BaseCommandHandler';
 import { FileSystemManager } from '../filesystem/FileSystemManager';
@@ -101,12 +100,20 @@ export class FileSystemCommands extends BaseCommandHandler {
     }
 
     const targetPath = args[0];
+    
+    // Handle special case for "." (current directory)
+    if (targetPath === '.') {
+      // Stay in current directory - no change needed
+      return this.generateCommand(id, command, '', timestamp);
+    }
+    
     const normalizedPath = this.fileSystemManager.normalizePath(targetPath);
     
     if (!this.fileSystemManager.validatePath(normalizedPath)) {
       return this.generateCommand(id, command, `cd: ${targetPath}: Permission denied`, timestamp, 1);
     }
 
+    // Check if the target path exists by trying to get its contents
     const contents = this.fileSystemManager.getDirectoryContents(normalizedPath);
     if (contents === undefined || contents === null) {
       return this.generateCommand(id, command, `cd: ${targetPath}: No such file or directory`, timestamp, 1);
