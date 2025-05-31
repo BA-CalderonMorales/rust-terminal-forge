@@ -63,7 +63,7 @@ export const HomeView: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-green-400 flex flex-col overflow-hidden">
+    <div className="terminal-app">
       {/* Terminal Tabs */}
       <TerminalTabs
         sessions={sessions}

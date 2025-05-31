@@ -85,12 +85,11 @@ export const Terminal: React.FC<TerminalProps> = ({
   };
 
   return (
-    <div className="flex-1 bg-black text-green-400 font-mono flex flex-col touch-manipulation overflow-hidden pt-[44px]">
+    <div className="terminal-container bg-black text-green-400 font-mono flex flex-col touch-manipulation">
       <div 
         ref={terminalRef}
-        className="flex-1 p-3 sm:p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-green-600 scrollbar-track-gray-900"
+        className="terminal-content flex-1 p-3 sm:p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-green-600 scrollbar-track-gray-900"
         onClick={handleTerminalTap}
-        style={{ height: 'calc(100vh - 164px)' }}
       >
         {displayHistory.map((command) => (
           <div key={command.id} className="mb-3 sm:mb-2">
@@ -108,10 +107,10 @@ export const Terminal: React.FC<TerminalProps> = ({
           </div>
         ))}
         {/* Spacer to ensure input is always visible */}
-        <div className="h-16 sm:h-0"></div>
+        <div className="h-20"></div>
       </div>
       
-      <div className="border-t border-green-600 p-3 sm:p-4 bg-black fixed bottom-0 left-0 right-0 z-40">
+      <div className="terminal-input border-t border-green-600 p-3 sm:p-4 bg-black">
         <form onSubmit={handleSubmit} className="flex items-center">
           <span className="text-green-500 mr-2 text-sm sm:text-base flex-shrink-0">
             {getPrompt()}

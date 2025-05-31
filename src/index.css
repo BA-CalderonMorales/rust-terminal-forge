@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -97,5 +98,78 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Mobile-first terminal layout */
+.terminal-app {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
+  overflow: hidden;
+  background: black;
+}
+
+.terminal-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+.terminal-container {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 0; /* Important for grid items */
+  overflow: hidden;
+}
+
+.terminal-content {
+  min-height: 0; /* Important for grid items */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+.terminal-input {
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 50;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .terminal-app {
+    height: 100vh; /* Fallback */
+    height: 100dvh; /* Dynamic viewport height */
+  }
+  
+  /* Ensure touch targets are accessible */
+  .terminal-input input {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+  
+  /* Better scrolling behavior */
+  .terminal-content {
+    overscroll-behavior: contain;
+  }
+}
+
+/* Support for newer viewport units */
+@supports (height: 100dvh) {
+  .terminal-app {
+    height: 100dvh;
+  }
+}
+
+/* Handle safe areas for notched devices */
+@supports (padding: max(0px)) {
+  .terminal-tabs {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .terminal-input {
+    padding-bottom: max(env(safe-area-inset-bottom), 16px);
   }
 }
