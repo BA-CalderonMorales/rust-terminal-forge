@@ -20,6 +20,12 @@ export class FindCommand extends BaseCommandHandler {
       return this.generateCommand(id, command, `find: '${searchPath}': Permission denied`, timestamp, 1);
     }
 
+    // Check if the search path exists
+    const contents = this.fileSystemManager.getDirectoryContents(normalizedPath);
+    if (contents === undefined) {
+      return this.generateCommand(id, command, `find: '${searchPath}': No such file or directory`, timestamp, 1);
+    }
+
     // Parse arguments for options like -name, -type
     let namePattern = '';
     let typeFilter = '';
@@ -35,37 +41,46 @@ export class FindCommand extends BaseCommandHandler {
     }
 
     const results: string[] = [];
+    
+    // Always include the search directory itself
+    if (this.matchesFilters('.', 'directory', namePattern, typeFilter)) {
+      results.push(normalizedPath);
+    }
+    
     this.findRecursive(normalizedPath, namePattern, typeFilter, results);
 
+    if (results.length === 0) {
+      return this.generateCommand(id, command, '', timestamp);
+    }
+
     return this.generateCommand(id, command, results.join('\n'), timestamp);
+  }
+
+  private matchesFilters(name: string, type: string, namePattern: string, typeFilter: string): boolean {
+    let matches = true;
+    
+    if (namePattern) {
+      const regex = new RegExp(`^${namePattern}$`);
+      matches = matches && regex.test(name);
+    }
+    
+    if (typeFilter) {
+      matches = matches && ((typeFilter === 'f' && type === 'file') || 
+                            (typeFilter === 'd' && type === 'directory'));
+    }
+    
+    return matches;
   }
 
   private findRecursive(path: string, namePattern: string, typeFilter: string, results: string[]): void {
     const contents = this.fileSystemManager.getDirectoryContents(path);
     if (!contents) return;
 
-    // Add current directory if it matches
-    if (path !== this.fileSystemManager.getCurrentPath()) {
-      results.push(path);
-    }
-
     for (const item of contents) {
       const itemPath = `${path}/${item.name}`;
       
       // Check if item matches filters
-      let matches = true;
-      
-      if (namePattern) {
-        const regex = new RegExp(namePattern);
-        matches = matches && regex.test(item.name);
-      }
-      
-      if (typeFilter) {
-        matches = matches && ((typeFilter === 'f' && item.type === 'file') || 
-                              (typeFilter === 'd' && item.type === 'directory'));
-      }
-      
-      if (matches) {
+      if (this.matchesFilters(item.name, item.type, namePattern, typeFilter)) {
         results.push(itemPath);
       }
       

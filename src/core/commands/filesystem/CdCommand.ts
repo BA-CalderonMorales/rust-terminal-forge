@@ -24,7 +24,7 @@ export class CdCommand extends BaseCommandHandler {
       if (pathParts.length > 0) {
         pathParts.pop(); // Remove last directory
         const newPath = '/' + pathParts.join('/');
-        const normalizedNewPath = newPath === '/' ? '/home/user' : newPath;
+        const normalizedNewPath = newPath === '/' ? '/home' : newPath;
         
         if (this.fileSystemManager.validatePath(normalizedNewPath)) {
           this.fileSystemManager.setCurrentPath(normalizedNewPath);
@@ -43,7 +43,7 @@ export class CdCommand extends BaseCommandHandler {
         pathParts.pop(); // Remove last directory
         pathParts.pop(); // Remove second-to-last directory
         const newPath = '/' + pathParts.join('/');
-        const normalizedNewPath = newPath === '/' ? '/home/user' : newPath;
+        const normalizedNewPath = newPath === '/' ? '/home' : newPath;
         
         if (this.fileSystemManager.validatePath(normalizedNewPath)) {
           this.fileSystemManager.setCurrentPath(normalizedNewPath);
@@ -51,7 +51,7 @@ export class CdCommand extends BaseCommandHandler {
         }
       } else if (pathParts.length === 1) {
         // If only one level deep, go to root of allowed area
-        const normalizedNewPath = '/home/user';
+        const normalizedNewPath = '/home';
         if (this.fileSystemManager.validatePath(normalizedNewPath)) {
           this.fileSystemManager.setCurrentPath(normalizedNewPath);
           return this.generateCommand(id, command, '', timestamp);

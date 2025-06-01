@@ -15,6 +15,7 @@ export class FileSystemManager {
   private currentPath: string = '/home/user/project';
   private readonly homeDirectory: string = '/home/user';
   private readonly allowedPaths: Set<string> = new Set([
+    '/home',
     '/home/user',
     '/home/user/project',
     '/home/user/project/src',
@@ -24,6 +25,9 @@ export class FileSystemManager {
   ]);
 
   private fileSystem: FileSystem = {
+    '/home': [
+      { type: 'directory', name: 'user', permissions: 'drwxr-xr-x', lastModified: '2024-01-15 10:30' }
+    ],
     '/home/user': [
       { type: 'directory', name: 'project', permissions: 'drwxr-xr-x', lastModified: '2024-01-15 10:30' },
       { type: 'directory', name: 'documents', permissions: 'drwxr-xr-x', lastModified: '2024-01-15 09:15' },
@@ -94,6 +98,16 @@ export class FileSystemManager {
   }
 
   getCurrentPath(): string {
+    return this.currentPath;
+  }
+
+  getDisplayPath(): string {
+    if (this.currentPath === this.homeDirectory) {
+      return '~';
+    }
+    if (this.currentPath.startsWith(this.homeDirectory + '/')) {
+      return '~' + this.currentPath.substring(this.homeDirectory.length);
+    }
     return this.currentPath;
   }
 

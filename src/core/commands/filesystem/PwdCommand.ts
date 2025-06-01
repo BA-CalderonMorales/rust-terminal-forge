@@ -9,6 +9,6 @@ export class PwdCommand extends BaseCommandHandler {
   }
 
   handle(id: string, command: string, timestamp: string): TerminalCommand {
-    return this.generateCommand(id, command, this.fileSystemManager.getCurrentPath(), timestamp);
+    return this.generateCommand(id, command, this.fileSystemManager.getDisplayPath(), timestamp);
   }
 }
