@@ -114,9 +114,13 @@ export const useVisualViewport = (): UseVisualViewportReturn => {
   }, [updateViewport, stableTimeout]);
 
   // Calculate keyboard state and dimensions
-  const screenHeight = typeof window !== 'undefined' ? window.screen.height : 0;
-  const isKeyboardOpen = viewport.height < screenHeight * 0.75;
-  const keyboardHeight = Math.max(0, screenHeight - viewport.height - viewport.offsetTop);
+  const layoutViewportHeight =
+    typeof window !== 'undefined' ? window.innerHeight : 0;
+  const keyboardHeight = Math.max(
+    0,
+    layoutViewportHeight - viewport.height - viewport.offsetTop,
+  );
+  const isKeyboardOpen = keyboardHeight > 0;
   
   // Safe area calculations
   const safeAreaTop = viewport.offsetTop;
