@@ -120,6 +120,11 @@
     @apply border-border;
   }
 
+  html,
+  body {
+    min-height: 100%;
+  }
+
   body {
     @apply bg-background text-foreground;
     /* Prevent bounce scrolling on iOS */
