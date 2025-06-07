@@ -1,6 +1,6 @@
 # Rust Terminal Forge
 
-Rust Terminal Forge is a secure web-based terminal emulator built with React, TypeScript and Tailwind CSS. The project reuses the deployment approach from [Shadow Scroll Blossom](https://github.com/BA-CalderonMorales/shadow-scroll-blossom) to automatically publish the `dist` folder to GitHub Pages using GitHub Actions.
+Rust Terminal Forge is a secure web-based terminal emulator built with React, TypeScript and Tailwind CSS. It automatically publishes the `dist` folder to GitHub Pages using GitHub Actions for both production deploys and preview environments.
 
 <details>
 <summary><strong>Getting Started</strong></summary>
