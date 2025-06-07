@@ -8,8 +8,10 @@ Rust Terminal Forge is a secure web-based terminal emulator built with React, Ty
 Install the dependencies and start the development server:
 
 ```sh
+
 npm install
 npm run dev
+
 ```
 
 Create a production build with:
