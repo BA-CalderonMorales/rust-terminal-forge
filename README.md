@@ -64,6 +64,15 @@ This project is built with:
 
 Simply open [Lovable](https://lovable.dev/projects/8625de05-3749-4001-aedf-b432dd29c710) and click on Share -> Publish.
 
+## GitHub Pages
+
+This repository is configured to publish the site using GitHub Pages.
+
+- `.github/workflows/preview.yml` builds a preview for every pull request and posts the URL as a comment.
+- `.github/workflows/deploy.yml` deploys the `main` branch to GitHub Pages.
+
+Once deployed, your site will be available at `https://<OWNER>.github.io/rust-terminal-forge/`.
+
 ## Can I connect a custom domain to my Lovable project?
 
 Yes, you can!
