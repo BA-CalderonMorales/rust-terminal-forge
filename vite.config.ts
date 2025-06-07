@@ -4,11 +4,9 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-const basePath = process.env.VITE_BASE ||
-  (process.env.GITHUB_PAGES === 'true' ? '/rust-terminal-forge/' : '/');
 
 export default defineConfig(({ mode }) => ({
-  base: basePath,
+  base: mode === 'development' ? '/' : '/rust-terminal-forge/',
   server: {
     host: "::",
     port: 8080,
