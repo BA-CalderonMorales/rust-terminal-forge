@@ -1,4 +1,21 @@
-# Welcome to your Lovable project
+# Rust Terminal Forge
+
+Rust Terminal Forge is a secure web-based terminal emulator built with React, TypeScript and Tailwind CSS. The project reuses the deployment approach from [Shadow Scroll Blossom](https://github.com/BA-CalderonMorales/shadow-scroll-blossom) to automatically publish the `dist` folder to GitHub Pages using GitHub Actions.
+
+## Getting Started
+
+Install the dependencies and start the development server:
+
+```sh
+npm install
+npm run dev
+```
+
+Create a production build with:
+
+```sh
+npm run build
+```
 
 ## Project info
 
@@ -24,16 +41,16 @@ Follow these steps:
 
 ```sh
 # Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+ git clone <YOUR_GIT_URL>
 
 # Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+ cd <YOUR_PROJECT_NAME>
 
 # Step 3: Install the necessary dependencies.
-npm i
+ npm i
 
 # Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+ npm run dev
 ```
 
 **Edit a file directly in GitHub**
@@ -60,16 +77,9 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/8625de05-3749-4001-aedf-b432dd29c710) and click on Share -> Publish.
-
-## GitHub Pages
-
-This repository is configured to publish the site using GitHub Pages.
-
-- `.github/workflows/preview.yml` builds a preview for every pull request and posts the URL as a comment.
-- `.github/workflows/deploy.yml` deploys the `main` branch to GitHub Pages.
+Pushes to `main` automatically deploy to **GitHub Pages** via `.github/workflows/deploy.yml`. Pull requests generate live previews using `.github/workflows/preview.yml`.
 
 Once deployed, your site will be available at `https://<OWNER>.github.io/rust-terminal-forge/`.
 
