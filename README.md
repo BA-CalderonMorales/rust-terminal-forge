@@ -2,7 +2,8 @@
 
 Rust Terminal Forge is a secure web-based terminal emulator built with React, TypeScript and Tailwind CSS. The project reuses the deployment approach from [Shadow Scroll Blossom](https://github.com/BA-CalderonMorales/shadow-scroll-blossom) to automatically publish the `dist` folder to GitHub Pages using GitHub Actions.
 
-## Getting Started
+<details>
+<summary><strong>Getting Started</strong></summary>
 
 Install the dependencies and start the development server:
 
@@ -16,12 +17,16 @@ Create a production build with:
 ```sh
 npm run build
 ```
+</details>
 
-## Project info
+<details>
+<summary><strong>Project info</strong></summary>
 
 **URL**: https://lovable.dev/projects/8625de05-3749-4001-aedf-b432dd29c710
+</details>
 
-## How can I edit this code?
+<details>
+<summary><strong>How can I edit this code?</strong></summary>
 
 There are several ways of editing your application.
 
@@ -67,7 +72,10 @@ Follow these steps:
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
-## What technologies are used for this project?
+</details>
+
+<details>
+<summary><strong>What technologies are used for this project?</strong></summary>
 
 This project is built with:
 
@@ -77,16 +85,24 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## Deployment
+</details>
+
+<details>
+<summary><strong>Deployment</strong></summary>
 
 Pushes to `main` automatically deploy to **GitHub Pages** via `.github/workflows/deploy.yml`. Pull requests generate live previews using `.github/workflows/preview.yml`.
 
 Once deployed, your site will be available at `https://<OWNER>.github.io/rust-terminal-forge/`.
 
-## Can I connect a custom domain to my Lovable project?
+</details>
+
+<details>
+<summary><strong>Can I connect a custom domain to my Lovable project?</strong></summary>
 
 Yes, you can!
 
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+</details>
