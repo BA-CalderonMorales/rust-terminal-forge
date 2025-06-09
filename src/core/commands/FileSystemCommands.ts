@@ -10,6 +10,7 @@ import { TouchCommand } from './filesystem/TouchCommand';
 import { CatCommand } from './filesystem/CatCommand';
 import { FindCommand } from './filesystem/FindCommand';
 import { GrepCommand } from './filesystem/GrepCommand';
+import { VimCommand } from './filesystem/VimCommand';
 
 export class FileSystemCommands extends BaseCommandHandler {
   private pwdCommand: PwdCommand;
@@ -20,6 +21,7 @@ export class FileSystemCommands extends BaseCommandHandler {
   private catCommand: CatCommand;
   private findCommand: FindCommand;
   private grepCommand: GrepCommand;
+  private vimCommand: VimCommand;
 
   constructor(private fileSystemManager: FileSystemManager) {
     super();
@@ -31,6 +33,7 @@ export class FileSystemCommands extends BaseCommandHandler {
     this.catCommand = new CatCommand(fileSystemManager);
     this.findCommand = new FindCommand(fileSystemManager);
     this.grepCommand = new GrepCommand(fileSystemManager);
+    this.vimCommand = new VimCommand(fileSystemManager);
   }
 
   handlePwd(id: string, command: string, timestamp: string): TerminalCommand {
@@ -63,5 +66,9 @@ export class FileSystemCommands extends BaseCommandHandler {
 
   handleGrep(args: string[], id: string, command: string, timestamp: string): TerminalCommand {
     return this.grepCommand.handle(args, id, command, timestamp);
+  }
+
+  handleVim(args: string[], id: string, command: string, timestamp: string): TerminalCommand {
+    return this.vimCommand.handle(args, id, command, timestamp);
   }
 }
