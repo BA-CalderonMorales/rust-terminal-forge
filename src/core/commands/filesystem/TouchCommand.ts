@@ -25,7 +25,8 @@ export class TouchCommand extends BaseCommandHandler {
         name: fileName,
         size: 0,
         permissions: '-rw-r--r--',
-        lastModified: new Date().toISOString().slice(0, 16).replace('T', ' ')
+        lastModified: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        content: ''
       });
     }
 

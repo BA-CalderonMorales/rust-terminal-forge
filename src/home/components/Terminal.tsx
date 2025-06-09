@@ -7,6 +7,7 @@ interface TerminalProps {
   session: TerminalSession;
   currentPath: string;
   onExecuteCommand: (command: string) => void;
+  onOpenEditor: (fileName: string) => void;
   username: string;
 }
 
@@ -14,6 +15,7 @@ export const Terminal: React.FC<TerminalProps> = ({
   session,
   currentPath,
   onExecuteCommand,
+  onOpenEditor,
   username
 }) => {
   const [currentInput, setCurrentInput] = useState('');
@@ -44,7 +46,16 @@ export const Terminal: React.FC<TerminalProps> = ({
     }
   }, [session.history]);
 
-  const visibleHistory = session.history.filter(cmd => cmd.output !== '__CLEAR__');
+  useEffect(() => {
+    const last = session.history[session.history.length - 1];
+    if (last && last.output.startsWith('__OPEN_EDITOR__')) {
+      onOpenEditor(last.output.replace('__OPEN_EDITOR__', ''));
+    }
+  }, [session.history, onOpenEditor]);
+
+  const visibleHistory = session.history.filter(
+    cmd => cmd.output !== '__CLEAR__' && !cmd.output.startsWith('__OPEN_EDITOR__')
+  );
   
   // Find last clear command index using reverse iteration
   let lastClearIndex = -1;

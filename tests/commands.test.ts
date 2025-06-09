@@ -68,6 +68,12 @@ describe('filesystem commands', () => {
     const res = fsCmds.handleVim(['notes.txt'], '1', 'vim notes.txt', ts);
     expect(res.output).toContain('Vim (read-only): notes.txt');
   });
+
+  it('edit returns editor marker', () => {
+    fsCmds.handleCd(['../documents'], '1', 'cd ../documents', ts);
+    const res = fsCmds.handleEdit(['notes.txt'], '1', 'edit notes.txt', ts);
+    expect(res.output).toBe('__OPEN_EDITOR__notes.txt');
+  });
 });
 
 describe('system commands', () => {

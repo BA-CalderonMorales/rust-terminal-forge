@@ -47,9 +47,11 @@ export class HomeViewModel {
     this.notifyStateChange();
   }
 
-  executeCommand(input: string): void {
+  executeCommand(input: string): TerminalCommand {
     const activeSession = this.model.getActiveSession();
-    if (!activeSession) return;
+    if (!activeSession) {
+      throw new Error('No active session');
+    }
 
     try {
       // Pass session ID for rate limiting
@@ -63,6 +65,7 @@ export class HomeViewModel {
       }
       
       this.notifyStateChange();
+      return command;
     } catch (error) {
       SecurityUtils.logSecurityEvent('command_execution_error', { command: input, error });
       
@@ -77,6 +80,7 @@ export class HomeViewModel {
       
       this.model.addCommandToSession(activeSession.id, errorCommand);
       this.notifyStateChange();
+      return errorCommand;
     }
   }
 
@@ -119,5 +123,14 @@ export class HomeViewModel {
 
   getFileSystem() {
     return this.commandProcessor.getFileSystem();
+  }
+
+  readFile(fileName: string): string {
+    return this.commandProcessor.readFile(fileName) ?? '';
+  }
+
+  saveFile(fileName: string, content: string): void {
+    this.commandProcessor.writeFile(fileName, content);
+    this.notifyStateChange();
   }
 }

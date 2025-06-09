@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { HomeViewModel } from './viewModel';
 import { TerminalTabs } from './components/TerminalTabs';
 import { Terminal } from './components/Terminal';
+import { FileEditor } from './components/FileEditor';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useVisualViewport } from '../hooks/useVisualViewport';
@@ -11,6 +12,8 @@ export const HomeView: React.FC = () => {
   const [viewModel] = useState(() => new HomeViewModel());
   const [, forceUpdate] = useState({});
   const [isInitializing, setIsInitializing] = useState(true);
+  const [editorFile, setEditorFile] = useState<string | null>(null);
+  const [editorContent, setEditorContent] = useState('');
   const { viewportHeight, isKeyboardOpen, isStable } = useVisualViewport();
 
   useEffect(() => {
@@ -43,7 +46,12 @@ export const HomeView: React.FC = () => {
   }, [isKeyboardOpen, isStable]);
 
   const handleExecuteCommand = (command: string) => {
-    viewModel.executeCommand(command);
+    const result = viewModel.executeCommand(command);
+    if (result.output.startsWith('__OPEN_EDITOR__')) {
+      const fileName = result.output.replace('__OPEN_EDITOR__', '');
+      setEditorContent(viewModel.readFile(fileName));
+      setEditorFile(fileName);
+    }
   };
 
   const handleNewSession = async () => {
@@ -115,9 +123,25 @@ export const HomeView: React.FC = () => {
           session={activeSession}
           currentPath={viewModel.getCurrentPath()}
           onExecuteCommand={handleExecuteCommand}
+          onOpenEditor={(file) => {
+            setEditorContent(viewModel.readFile(file));
+            setEditorFile(file);
+          }}
           username={currentUser?.username || 'user'}
         />
       )}
+
+      <FileEditor
+        open={editorFile !== null}
+        fileName={editorFile || ''}
+        initialContent={editorContent}
+        onSave={(content) => {
+          if (editorFile) {
+            viewModel.saveFile(editorFile, content);
+          }
+        }}
+        onClose={() => setEditorFile(null)}
+      />
     </div>
   );
 };

@@ -71,6 +71,7 @@ export class UtilityCommands extends BaseCommandHandler {
   mkdir      - Create directory
   touch      - Create or update file
   cat        - Display file contents
+  edit <file> - Edit file in simple editor
   vim <file> - View file in read-only mode
   echo       - Display text
   whoami     - Show current user

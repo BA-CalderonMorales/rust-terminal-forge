@@ -71,6 +71,8 @@ export class SecureCommandProcessor {
           return this.fileSystemCommands.handleFind(args, id, command, timestamp);
         case 'grep':
           return this.fileSystemCommands.handleGrep(args, id, command, timestamp);
+        case 'edit':
+          return this.fileSystemCommands.handleEdit(args, id, command, timestamp);
         case 'vim':
           return this.fileSystemCommands.handleVim(args, id, command, timestamp);
         case 'echo':
@@ -167,5 +169,13 @@ export class SecureCommandProcessor {
 
   getFileSystem() {
     return this.fileSystemManager.getFileSystem();
+  }
+
+  readFile(fileName: string): string | null {
+    return this.fileSystemManager.getFileContent(this.getCurrentPath(), fileName);
+  }
+
+  writeFile(fileName: string, content: string): void {
+    this.fileSystemManager.setFileContent(this.getCurrentPath(), fileName, content);
   }
 }
