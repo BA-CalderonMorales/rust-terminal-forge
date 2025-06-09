@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { HomeViewModel } from './viewModel';
 import { TerminalTabs } from './components/TerminalTabs';
+import { EditorTabs } from './components/EditorTabs';
 import { Terminal } from './components/Terminal';
+import { FileEditor } from './components/FileEditor';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useVisualViewport } from '../hooks/useVisualViewport';
@@ -62,9 +64,27 @@ export const HomeView: React.FC = () => {
     viewModel.closeSession(sessionId);
   };
 
+  const handleOpenEditor = (filePath: string) => {
+    viewModel.openEditor(filePath);
+  };
+
+  const handleSwitchEditor = (sessionId: string) => {
+    viewModel.switchEditor(sessionId);
+  };
+
+  const handleCloseEditor = (sessionId: string) => {
+    viewModel.closeEditor(sessionId);
+  };
+
+  const handleSaveEditor = (sessionId: string, content: string) => {
+    viewModel.updateEditorContent(sessionId, content);
+  };
+
   const currentUser = viewModel.getCurrentUser();
   const sessions = viewModel.getSessions();
   const activeSession = viewModel.getActiveSession();
+  const editorSessions = viewModel.getEditorSessions();
+  const activeEditor = viewModel.getActiveEditor();
 
   // If no sessions exist, show centered plus icon
   if (sessions.length === 0) {
@@ -109,13 +129,28 @@ export const HomeView: React.FC = () => {
         onNewSession={handleNewSession}
       />
 
+      <EditorTabs
+        sessions={editorSessions}
+        activeSessionId={activeEditor?.id || ''}
+        onSwitchSession={handleSwitchEditor}
+        onCloseSession={handleCloseEditor}
+      />
+
       {/* Terminal Content */}
       {activeSession && (
         <Terminal
           session={activeSession}
           currentPath={viewModel.getCurrentPath()}
           onExecuteCommand={handleExecuteCommand}
+          onOpenEditor={handleOpenEditor}
           username={currentUser?.username || 'user'}
+        />
+      )}
+
+      {activeEditor && (
+        <FileEditor
+          session={activeEditor}
+          onSave={(content) => handleSaveEditor(activeEditor.id, content)}
         />
       )}
     </div>

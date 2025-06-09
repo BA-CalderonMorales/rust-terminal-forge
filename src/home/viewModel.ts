@@ -2,13 +2,15 @@
 // Home module - Enhanced ViewModel with async security features
 import { HomeModel } from './model';
 import { SecureCommandProcessor } from '../core/SecureCommandProcessor';
-import { TerminalSession, TerminalCommand, User } from '../core/types';
+import { TerminalSession, TerminalCommand, User, EditorSession } from '../core/types';
 import { SecurityUtils } from '../core/securityUtils';
 
 export class HomeViewModel {
   private model: HomeModel;
   private commandProcessor: SecureCommandProcessor;
   private onStateChangeCallback?: () => void;
+  private editorSessions: EditorSession[] = [];
+  private activeEditorId: string | null = null;
 
   constructor() {
     this.model = new HomeModel();
@@ -97,6 +99,53 @@ export class HomeViewModel {
     this.notifyStateChange();
   }
 
+  openEditor(filePath: string): void {
+    const existing = this.editorSessions.find(e => e.filePath === filePath);
+    if (existing) {
+      this.editorSessions.forEach(e => (e.isActive = e.id === existing.id));
+      this.activeEditorId = existing.id;
+    } else {
+      const content = this.commandProcessor.readFile(filePath) || '';
+      const session: EditorSession = {
+        id: SecurityUtils.generateSecureId(),
+        filePath,
+        name: filePath.split('/').pop() || filePath,
+        content,
+        isActive: true,
+        createdAt: new Date().toISOString()
+      };
+      this.editorSessions.forEach(e => (e.isActive = false));
+      this.editorSessions.push(session);
+      this.activeEditorId = session.id;
+    }
+    this.notifyStateChange();
+  }
+
+  updateEditorContent(sessionId: string, content: string): void {
+    const session = this.editorSessions.find(e => e.id === sessionId);
+    if (session) {
+      session.content = content;
+      this.commandProcessor.writeFile(session.filePath, content);
+      this.notifyStateChange();
+    }
+  }
+
+  switchEditor(sessionId: string): void {
+    this.editorSessions.forEach(e => (e.isActive = e.id === sessionId));
+    this.activeEditorId = sessionId;
+    this.notifyStateChange();
+  }
+
+  closeEditor(sessionId: string): void {
+    this.editorSessions = this.editorSessions.filter(e => e.id !== sessionId);
+    if (this.activeEditorId === sessionId) {
+      const first = this.editorSessions[0];
+      this.activeEditorId = first ? first.id : null;
+      if (first) first.isActive = true;
+    }
+    this.notifyStateChange();
+  }
+
   isAuthenticated(): boolean {
     return this.model.getAuthState().isAuthenticated;
   }
@@ -119,5 +168,13 @@ export class HomeViewModel {
 
   getFileSystem() {
     return this.commandProcessor.getFileSystem();
+  }
+
+  getEditorSessions(): EditorSession[] {
+    return [...this.editorSessions];
+  }
+
+  getActiveEditor(): EditorSession | null {
+    return this.editorSessions.find(e => e.isActive) || null;
   }
 }

@@ -5,6 +5,7 @@ interface FileSystemNode {
   size?: number;
   permissions: string;
   lastModified: string;
+  content?: string;
 }
 
 interface FileSystem {
@@ -31,24 +32,24 @@ export class FileSystemManager {
     '/home/user': [
       { type: 'directory', name: 'project', permissions: 'drwxr-xr-x', lastModified: '2024-01-15 10:30' },
       { type: 'directory', name: 'documents', permissions: 'drwxr-xr-x', lastModified: '2024-01-15 09:15' },
-      { type: 'file', name: '.bashrc', size: 1024, permissions: '-rw-r--r--', lastModified: '2024-01-10 14:20' }
+      { type: 'file', name: '.bashrc', size: 1024, permissions: '-rw-r--r--', lastModified: '2024-01-10 14:20', content: '# .bashrc\necho "welcome"' }
     ],
     '/home/user/project': [
-      { type: 'file', name: 'Cargo.toml', size: 456, permissions: '-rw-r--r--', lastModified: '2024-01-15 10:30' },
+      { type: 'file', name: 'Cargo.toml', size: 456, permissions: '-rw-r--r--', lastModified: '2024-01-15 10:30', content: '[package]\nname = "rust-project"\nversion = "0.1.0"\nedition = "2021"' },
       { type: 'directory', name: 'src', permissions: 'drwxr-xr-x', lastModified: '2024-01-15 10:25' },
       { type: 'directory', name: 'target', permissions: 'drwxr-xr-x', lastModified: '2024-01-15 10:28' },
-      { type: 'file', name: 'README.md', size: 2048, permissions: '-rw-r--r--', lastModified: '2024-01-15 09:45' }
+      { type: 'file', name: 'README.md', size: 2048, permissions: '-rw-r--r--', lastModified: '2024-01-15 09:45', content: '# Rust Terminal Forge\n\nA secure terminal emulator built with Rust and React.' }
     ],
     '/home/user/project/src': [
-      { type: 'file', name: 'main.rs', size: 1536, permissions: '-rw-r--r--', lastModified: '2024-01-15 10:25' },
-      { type: 'file', name: 'lib.rs', size: 512, permissions: '-rw-r--r--', lastModified: '2024-01-15 09:30' }
+      { type: 'file', name: 'main.rs', size: 1536, permissions: '-rw-r--r--', lastModified: '2024-01-15 10:25', content: 'fn main() {\n    println!("Hello, world!");\n}' },
+      { type: 'file', name: 'lib.rs', size: 512, permissions: '-rw-r--r--', lastModified: '2024-01-15 09:30', content: '// library code' }
     ],
     '/home/user/project/target': [
       { type: 'directory', name: 'debug', permissions: 'drwxr-xr-x', lastModified: '2024-01-15 10:28' },
       { type: 'directory', name: 'release', permissions: 'drwxr-xr-x', lastModified: '2024-01-15 10:00' }
     ],
     '/home/user/documents': [
-      { type: 'file', name: 'notes.txt', size: 1024, permissions: '-rw-r--r--', lastModified: '2024-01-14 16:20' }
+      { type: 'file', name: 'notes.txt', size: 1024, permissions: '-rw-r--r--', lastModified: '2024-01-14 16:20', content: 'This is a notes file.' }
     ]
   };
 
@@ -125,6 +126,40 @@ export class FileSystemManager {
 
   getDirectoryContents(path: string): FileSystemNode[] {
     return this.fileSystem[path] || [];
+  }
+
+  readFile(path: string): string | null {
+    const normalized = this.normalizePath(path);
+    const dir = normalized.substring(0, normalized.lastIndexOf('/')) || '/';
+    const name = normalized.substring(normalized.lastIndexOf('/') + 1);
+    const contents = this.fileSystem[dir];
+    const file = contents?.find(item => item.name === name && item.type === 'file');
+    return file?.content ?? null;
+  }
+
+  writeFile(path: string, content: string): void {
+    const normalized = this.normalizePath(path);
+    const dir = normalized.substring(0, normalized.lastIndexOf('/')) || '/';
+    const name = normalized.substring(normalized.lastIndexOf('/') + 1);
+    if (!this.fileSystem[dir]) {
+      this.fileSystem[dir] = [];
+    }
+    let file = this.fileSystem[dir].find(item => item.name === name && item.type === 'file');
+    if (!file) {
+      file = {
+        type: 'file',
+        name,
+        permissions: '-rw-r--r--',
+        size: content.length,
+        lastModified: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        content
+      };
+      this.fileSystem[dir].push(file);
+    } else {
+      file.content = content;
+      file.size = content.length;
+      file.lastModified = new Date().toISOString().slice(0, 16).replace('T', ' ');
+    }
   }
 
   addFileSystemNode(path: string, node: FileSystemNode): void {

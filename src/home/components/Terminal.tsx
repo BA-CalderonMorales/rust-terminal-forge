@@ -1,12 +1,13 @@
 
 // Home module - Main terminal component
 import React, { useState, useRef, useEffect } from 'react';
-import { TerminalSession } from '../../core/types';
+import { TerminalSession, OPEN_EDITOR_PREFIX } from '../../core/types';
 
 interface TerminalProps {
   session: TerminalSession;
   currentPath: string;
   onExecuteCommand: (command: string) => void;
+  onOpenEditor: (filePath: string) => void;
   username: string;
 }
 
@@ -14,6 +15,7 @@ export const Terminal: React.FC<TerminalProps> = ({
   session,
   currentPath,
   onExecuteCommand,
+  onOpenEditor,
   username
 }) => {
   const [currentInput, setCurrentInput] = useState('');
@@ -44,7 +46,16 @@ export const Terminal: React.FC<TerminalProps> = ({
     }
   }, [session.history]);
 
-  const visibleHistory = session.history.filter(cmd => cmd.output !== '__CLEAR__');
+  useEffect(() => {
+    const last = session.history[session.history.length - 1];
+    if (last && last.output.startsWith(OPEN_EDITOR_PREFIX)) {
+      onOpenEditor(last.output.slice(OPEN_EDITOR_PREFIX.length));
+    }
+  }, [session.history, onOpenEditor]);
+
+  const visibleHistory = session.history.filter(
+    cmd => cmd.output !== '__CLEAR__' && !cmd.output.startsWith(OPEN_EDITOR_PREFIX)
+  );
   
   // Find last clear command index using reverse iteration
   let lastClearIndex = -1;
@@ -55,8 +66,8 @@ export const Terminal: React.FC<TerminalProps> = ({
     }
   }
   
-  const displayHistory = lastClearIndex >= 0 
-    ? session.history.slice(lastClearIndex + 1).filter(cmd => cmd.output !== '__CLEAR__')
+  const displayHistory = lastClearIndex >= 0
+    ? session.history.slice(lastClearIndex + 1).filter(cmd => cmd.output !== '__CLEAR__' && !cmd.output.startsWith(OPEN_EDITOR_PREFIX))
     : visibleHistory;
 
   const handleTerminalTap = () => {

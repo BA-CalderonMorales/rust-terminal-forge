@@ -23,6 +23,17 @@ export interface TerminalCommand {
   exitCode: number;
 }
 
+export interface EditorSession {
+  id: string;
+  filePath: string;
+  name: string;
+  content: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export const OPEN_EDITOR_PREFIX = '__OPEN_EDITOR__:';
+
 export interface AuthState {
   isAuthenticated: boolean;
   user: User | null;

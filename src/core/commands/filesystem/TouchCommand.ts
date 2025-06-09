@@ -14,19 +14,16 @@ export class TouchCommand extends BaseCommandHandler {
     }
 
     const fileName = args[0];
-    const currentContents = this.fileSystemManager.getDirectoryContents(this.fileSystemManager.getCurrentPath());
-    const existingFile = currentContents.find(item => item.name === fileName);
-    
-    if (existingFile) {
-      this.fileSystemManager.updateFileTimestamp(this.fileSystemManager.getCurrentPath(), fileName);
+    const filePath = this.fileSystemManager.normalizePath(fileName);
+    const existingContent = this.fileSystemManager.readFile(filePath);
+
+    if (existingContent === null) {
+      this.fileSystemManager.writeFile(filePath, '');
     } else {
-      this.fileSystemManager.addFileSystemNode(this.fileSystemManager.getCurrentPath(), {
-        type: 'file',
-        name: fileName,
-        size: 0,
-        permissions: '-rw-r--r--',
-        lastModified: new Date().toISOString().slice(0, 16).replace('T', ' ')
-      });
+      this.fileSystemManager.updateFileTimestamp(
+        filePath.substring(0, filePath.lastIndexOf('/')) || '/',
+        fileName
+      );
     }
 
     return this.generateCommand(id, command, '', timestamp);

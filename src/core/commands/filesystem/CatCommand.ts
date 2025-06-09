@@ -14,22 +14,11 @@ export class CatCommand extends BaseCommandHandler {
     }
 
     const fileName = args[0];
-    const currentContents = this.fileSystemManager.getDirectoryContents(this.fileSystemManager.getCurrentPath());
-    const file = currentContents?.find(item => item.name === fileName && item.type === 'file');
-    
-    if (!file) {
-      return this.generateCommand(id, command, `cat: ${fileName}: No such file or directory`, timestamp, 1);
-    }
+    const filePath = this.fileSystemManager.normalizePath(fileName);
+    const content = this.fileSystemManager.readFile(filePath);
 
-    let content = '';
-    if (fileName.endsWith('.rs')) {
-      content = `fn main() {\n    println!("Hello, world!");\n}`;
-    } else if (fileName.endsWith('.toml')) {
-      content = `[package]\nname = "rust-project"\nversion = "0.1.0"\nedition = "2021"`;
-    } else if (fileName.endsWith('.md')) {
-      content = `# Rust Terminal Forge\n\nA secure terminal emulator built with Rust and React.`;
-    } else {
-      content = `Content of ${fileName}`;
+    if (content === null) {
+      return this.generateCommand(id, command, `cat: ${fileName}: No such file or directory`, timestamp, 1);
     }
 
     return this.generateCommand(id, command, content, timestamp);

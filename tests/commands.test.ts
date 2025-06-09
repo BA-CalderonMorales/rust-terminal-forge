@@ -3,6 +3,7 @@ import { FileSystemManager } from '../src/core/filesystem/FileSystemManager';
 import { FileSystemCommands } from '../src/core/commands/FileSystemCommands';
 import { SystemCommands } from '../src/core/commands/SystemCommands';
 import { UtilityCommands } from '../src/core/commands/UtilityCommands';
+import { OPEN_EDITOR_PREFIX } from '../src/core/types';
 
 let fsManager: FileSystemManager;
 let fsCmds: FileSystemCommands;
@@ -66,7 +67,7 @@ describe('filesystem commands', () => {
   it('vim displays file with line numbers', () => {
     fsCmds.handleCd(['../documents'], '1', 'cd ../documents', ts);
     const res = fsCmds.handleVim(['notes.txt'], '1', 'vim notes.txt', ts);
-    expect(res.output).toContain('Vim (read-only): notes.txt');
+    expect(res.output).toBe(`${OPEN_EDITOR_PREFIX}/home/user/documents/notes.txt`);
   });
 });
 

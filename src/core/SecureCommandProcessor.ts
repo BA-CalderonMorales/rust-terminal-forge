@@ -165,6 +165,14 @@ export class SecureCommandProcessor {
     return this.fileSystemManager.getCurrentPath();
   }
 
+  readFile(path: string): string | null {
+    return this.fileSystemManager.readFile(path);
+  }
+
+  writeFile(path: string, content: string): void {
+    this.fileSystemManager.writeFile(path, content);
+  }
+
   getFileSystem() {
     return this.fileSystemManager.getFileSystem();
   }
