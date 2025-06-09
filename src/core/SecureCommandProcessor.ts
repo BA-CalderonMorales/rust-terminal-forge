@@ -71,6 +71,8 @@ export class SecureCommandProcessor {
           return this.fileSystemCommands.handleFind(args, id, command, timestamp);
         case 'grep':
           return this.fileSystemCommands.handleGrep(args, id, command, timestamp);
+        case 'vim':
+          return this.fileSystemCommands.handleVim(args, id, command, timestamp);
         case 'echo':
           return this.systemCommands.handleEcho(args, id, command, timestamp);
         case 'whoami':
@@ -130,7 +132,7 @@ export class SecureCommandProcessor {
   }
 
   private suggestCommand(command: string): string {
-    const commands = ['pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'find', 'grep', 'echo', 'whoami', 'date', 'env', 'which', 'history', 'alias', 'cargo', 'clear', 'help'];
+    const commands = ['pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'find', 'grep', 'vim', 'echo', 'whoami', 'date', 'env', 'which', 'history', 'alias', 'cargo', 'clear', 'help'];
     const suggestions = commands.filter(cmd => 
       cmd.includes(command) || 
       this.levenshteinDistance(cmd, command) <= 2

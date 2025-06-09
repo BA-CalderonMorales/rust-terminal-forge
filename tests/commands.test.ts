@@ -62,6 +62,12 @@ describe('filesystem commands', () => {
     const res = fsCmds.handleGrep(['Hello', 'main.rs'], '1', 'grep Hello main.rs', ts);
     expect(res.output).toContain('Hello');
   });
+
+  it('vim displays file with line numbers', () => {
+    fsCmds.handleCd(['../documents'], '1', 'cd ../documents', ts);
+    const res = fsCmds.handleVim(['notes.txt'], '1', 'vim notes.txt', ts);
+    expect(res.output).toContain('Vim (read-only): notes.txt');
+  });
 });
 
 describe('system commands', () => {
