@@ -168,4 +168,12 @@ export class SecureCommandProcessor {
   getFileSystem() {
     return this.fileSystemManager.getFileSystem();
   }
+
+  readFile(fileName: string): string {
+    return this.fileSystemManager.readFile(this.fileSystemManager.getCurrentPath(), fileName);
+  }
+
+  writeFile(fileName: string, content: string): void {
+    this.fileSystemManager.writeFile(this.fileSystemManager.getCurrentPath(), fileName, content);
+  }
 }

@@ -24,6 +24,20 @@ export class FileSystemManager {
     '/tmp'
   ]);
 
+  private fileContents: Record<string, Record<string, string>> = {
+    '/home/user/project': {
+      'Cargo.toml': `[package]\nname = "rust-project"\nversion = "0.1.0"\nedition = "2021"`,
+      'README.md': '# Rust Terminal Forge\n\nA secure terminal emulator built with Rust and React.'
+    },
+    '/home/user/project/src': {
+      'main.rs': 'fn main() {\n    println!("Hello, world!");\n}',
+      'lib.rs': ''
+    },
+    '/home/user/documents': {
+      'notes.txt': 'These are some notes.'
+    }
+  };
+
   private fileSystem: FileSystem = {
     '/home': [
       { type: 'directory', name: 'user', permissions: 'drwxr-xr-x', lastModified: '2024-01-15 10:30' }
@@ -132,6 +146,12 @@ export class FileSystemManager {
       this.fileSystem[path] = [];
     }
     this.fileSystem[path].push(node);
+    if (node.type === 'file') {
+      if (!this.fileContents[path]) {
+        this.fileContents[path] = {};
+      }
+      this.fileContents[path][node.name] = '';
+    }
   }
 
   createDirectory(path: string): void {
@@ -146,5 +166,17 @@ export class FileSystemManager {
         file.lastModified = new Date().toISOString().slice(0, 16).replace('T', ' ');
       }
     }
+  }
+
+  readFile(path: string, fileName: string): string {
+    return this.fileContents[path]?.[fileName] ?? '';
+  }
+
+  writeFile(path: string, fileName: string, content: string): void {
+    if (!this.fileContents[path]) {
+      this.fileContents[path] = {};
+    }
+    this.fileContents[path][fileName] = content;
+    this.updateFileTimestamp(path, fileName);
   }
 }

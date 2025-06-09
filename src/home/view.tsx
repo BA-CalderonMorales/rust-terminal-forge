@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { HomeViewModel } from './viewModel';
 import { TerminalTabs } from './components/TerminalTabs';
 import { Terminal } from './components/Terminal';
+import { FileEditor } from './components/FileEditor';
+import { EditorTabs } from './components/EditorTabs';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useVisualViewport } from '../hooks/useVisualViewport';
@@ -62,9 +64,27 @@ export const HomeView: React.FC = () => {
     viewModel.closeSession(sessionId);
   };
 
+  const handleOpenEditor = (fileName: string) => {
+    viewModel.openEditor(fileName);
+  };
+
+  const handleSwitchEditor = (editorId: string) => {
+    viewModel.switchEditor(editorId);
+  };
+
+  const handleCloseEditor = (editorId: string) => {
+    viewModel.closeEditor(editorId);
+  };
+
+  const handleSaveEditor = (id: string, content: string) => {
+    viewModel.saveEditor(id, content);
+  };
+
   const currentUser = viewModel.getCurrentUser();
   const sessions = viewModel.getSessions();
   const activeSession = viewModel.getActiveSession();
+  const editors = viewModel.getEditors();
+  const activeEditor = viewModel.getActiveEditor();
 
   // If no sessions exist, show centered plus icon
   if (sessions.length === 0) {
@@ -109,14 +129,26 @@ export const HomeView: React.FC = () => {
         onNewSession={handleNewSession}
       />
 
+      <EditorTabs
+        editors={editors}
+        activeEditorId={activeEditor?.id || ''}
+        onSwitchEditor={handleSwitchEditor}
+        onCloseEditor={handleCloseEditor}
+      />
+
       {/* Terminal Content */}
-      {activeSession && (
-        <Terminal
-          session={activeSession}
-          currentPath={viewModel.getCurrentPath()}
-          onExecuteCommand={handleExecuteCommand}
-          username={currentUser?.username || 'user'}
-        />
+      {activeEditor ? (
+        <FileEditor editor={activeEditor} onSave={handleSaveEditor} />
+      ) : (
+        activeSession && (
+          <Terminal
+            session={activeSession}
+            currentPath={viewModel.getCurrentPath()}
+            onExecuteCommand={handleExecuteCommand}
+            username={currentUser?.username || 'user'}
+            onOpenEditor={handleOpenEditor}
+          />
+        )
       )}
     </div>
   );

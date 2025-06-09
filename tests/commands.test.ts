@@ -66,7 +66,7 @@ describe('filesystem commands', () => {
   it('vim displays file with line numbers', () => {
     fsCmds.handleCd(['../documents'], '1', 'cd ../documents', ts);
     const res = fsCmds.handleVim(['notes.txt'], '1', 'vim notes.txt', ts);
-    expect(res.output).toContain('Vim (read-only): notes.txt');
+    expect(res.output).toBe('__OPEN_EDITOR__notes.txt');
   });
 });
 

@@ -2,13 +2,15 @@
 // Home module - Enhanced ViewModel with async security features
 import { HomeModel } from './model';
 import { SecureCommandProcessor } from '../core/SecureCommandProcessor';
-import { TerminalSession, TerminalCommand, User } from '../core/types';
+import { TerminalSession, TerminalCommand, User, EditorSession } from '../core/types';
 import { SecurityUtils } from '../core/securityUtils';
 
 export class HomeViewModel {
   private model: HomeModel;
   private commandProcessor: SecureCommandProcessor;
   private onStateChangeCallback?: () => void;
+  private editors: EditorSession[] = [];
+  private activeEditorId: string | null = null;
 
   constructor() {
     this.model = new HomeModel();
@@ -119,5 +121,56 @@ export class HomeViewModel {
 
   getFileSystem() {
     return this.commandProcessor.getFileSystem();
+  }
+
+  openEditor(fileName: string): EditorSession {
+    const content = this.commandProcessor.readFile(fileName);
+    const editor: EditorSession = {
+      id: SecurityUtils.generateSecureId(),
+      fileName,
+      content,
+      isActive: true,
+      createdAt: new Date().toISOString()
+    };
+
+    this.editors.forEach(e => (e.isActive = false));
+    this.editors.push(editor);
+    this.activeEditorId = editor.id;
+    this.notifyStateChange();
+    return editor;
+  }
+
+  saveEditor(editorId: string, content: string): void {
+    const editor = this.editors.find(e => e.id === editorId);
+    if (editor) {
+      editor.content = content;
+      this.commandProcessor.writeFile(editor.fileName, content);
+      this.notifyStateChange();
+    }
+  }
+
+  closeEditor(editorId: string): void {
+    this.editors = this.editors.filter(e => e.id !== editorId);
+    if (this.activeEditorId === editorId) {
+      this.activeEditorId = this.editors[0]?.id || null;
+      if (this.activeEditorId) {
+        this.editors[0].isActive = true;
+      }
+    }
+    this.notifyStateChange();
+  }
+
+  switchEditor(editorId: string): void {
+    this.editors.forEach(e => (e.isActive = e.id === editorId));
+    this.activeEditorId = editorId;
+    this.notifyStateChange();
+  }
+
+  getEditors(): EditorSession[] {
+    return [...this.editors];
+  }
+
+  getActiveEditor(): EditorSession | null {
+    return this.editors.find(e => e.id === this.activeEditorId) || null;
   }
 }

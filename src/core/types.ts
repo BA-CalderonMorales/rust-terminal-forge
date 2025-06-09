@@ -23,6 +23,14 @@ export interface TerminalCommand {
   exitCode: number;
 }
 
+export interface EditorSession {
+  id: string;
+  fileName: string;
+  content: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface AuthState {
   isAuthenticated: boolean;
   user: User | null;

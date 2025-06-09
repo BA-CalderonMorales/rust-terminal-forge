@@ -27,6 +27,7 @@ export class TouchCommand extends BaseCommandHandler {
         permissions: '-rw-r--r--',
         lastModified: new Date().toISOString().slice(0, 16).replace('T', ' ')
       });
+      this.fileSystemManager.writeFile(this.fileSystemManager.getCurrentPath(), fileName, '');
     }
 
     return this.generateCommand(id, command, '', timestamp);

@@ -8,13 +8,15 @@ interface TerminalProps {
   currentPath: string;
   onExecuteCommand: (command: string) => void;
   username: string;
+  onOpenEditor: (fileName: string) => void;
 }
 
 export const Terminal: React.FC<TerminalProps> = ({
   session,
   currentPath,
   onExecuteCommand,
-  username
+  username,
+  onOpenEditor
 }) => {
   const [currentInput, setCurrentInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -44,7 +46,17 @@ export const Terminal: React.FC<TerminalProps> = ({
     }
   }, [session.history]);
 
-  const visibleHistory = session.history.filter(cmd => cmd.output !== '__CLEAR__');
+  useEffect(() => {
+    const last = session.history[session.history.length - 1];
+    if (last && last.output.startsWith('__OPEN_EDITOR__')) {
+      const file = last.output.replace('__OPEN_EDITOR__', '').trim();
+      onOpenEditor(file);
+    }
+  }, [session.history, onOpenEditor]);
+
+  const visibleHistory = session.history.filter(
+    cmd => cmd.output !== '__CLEAR__' && !cmd.output.startsWith('__OPEN_EDITOR__')
+  );
   
   // Find last clear command index using reverse iteration
   let lastClearIndex = -1;
@@ -55,8 +67,10 @@ export const Terminal: React.FC<TerminalProps> = ({
     }
   }
   
-  const displayHistory = lastClearIndex >= 0 
-    ? session.history.slice(lastClearIndex + 1).filter(cmd => cmd.output !== '__CLEAR__')
+  const displayHistory = lastClearIndex >= 0
+    ? session.history
+        .slice(lastClearIndex + 1)
+        .filter(cmd => cmd.output !== '__CLEAR__' && !cmd.output.startsWith('__OPEN_EDITOR__'))
     : visibleHistory;
 
   const handleTerminalTap = () => {
