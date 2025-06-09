@@ -369,3 +369,17 @@
     border-bottom: 2px solid #16a34a;
   }
 }
+
+.terminal-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1em;
+  background: #4ade80;
+  margin-left: 0.1em;
+  animation: terminal-blink 1s steps(1) infinite;
+}
+
+@keyframes terminal-blink {
+  from, 50% { opacity: 1; }
+  50%, to { opacity: 0; }
+}
