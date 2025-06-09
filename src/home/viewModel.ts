@@ -5,10 +5,19 @@ import { SecureCommandProcessor } from '../core/SecureCommandProcessor';
 import { TerminalSession, TerminalCommand, User } from '../core/types';
 import { SecurityUtils } from '../core/securityUtils';
 
+export interface EditorSession {
+  id: string;
+  filePath: string;
+  fileName: string;
+  content: string;
+}
+
 export class HomeViewModel {
   private model: HomeModel;
   private commandProcessor: SecureCommandProcessor;
   private onStateChangeCallback?: () => void;
+  private editorSessions: EditorSession[] = [];
+  private activeEditorId: string | null = null;
 
   constructor() {
     this.model = new HomeModel();
@@ -95,6 +104,61 @@ export class HomeViewModel {
   closeSession(sessionId: string): void {
     this.model.removeSession(sessionId);
     this.notifyStateChange();
+  }
+
+  openEditor(file: string): EditorSession | null {
+    const fullPath = this.commandProcessor.getCurrentPath() + '/' + file;
+    const content = this.commandProcessor.readFile(fullPath);
+    if (content === null) {
+      return null;
+    }
+    const session: EditorSession = {
+      id: SecurityUtils.generateSecureId(),
+      filePath: fullPath,
+      fileName: file,
+      content,
+    };
+    this.editorSessions.push(session);
+    this.activeEditorId = session.id;
+    this.notifyStateChange();
+    return session;
+  }
+
+  closeEditor(sessionId: string): void {
+    this.editorSessions = this.editorSessions.filter(e => e.id !== sessionId);
+    if (this.activeEditorId === sessionId) {
+      this.activeEditorId = this.editorSessions[0]?.id || null;
+    }
+    this.notifyStateChange();
+  }
+
+  updateEditorContent(sessionId: string, content: string): void {
+    const session = this.editorSessions.find(e => e.id === sessionId);
+    if (session) {
+      session.content = content;
+      this.notifyStateChange();
+    }
+  }
+
+  saveEditor(sessionId: string): void {
+    const session = this.editorSessions.find(e => e.id === sessionId);
+    if (session) {
+      this.commandProcessor.writeFile(session.filePath, session.content);
+      this.notifyStateChange();
+    }
+  }
+
+  setActiveEditor(sessionId: string): void {
+    this.activeEditorId = sessionId;
+    this.notifyStateChange();
+  }
+
+  getEditorSessions(): EditorSession[] {
+    return [...this.editorSessions];
+  }
+
+  getActiveEditor(): EditorSession | null {
+    return this.editorSessions.find(e => e.id === this.activeEditorId) || null;
   }
 
   isAuthenticated(): boolean {

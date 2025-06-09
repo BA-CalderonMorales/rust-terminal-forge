@@ -7,6 +7,7 @@ interface TerminalProps {
   session: TerminalSession;
   currentPath: string;
   onExecuteCommand: (command: string) => void;
+  onOpenEditor?: (file: string) => void;
   username: string;
 }
 
@@ -14,6 +15,7 @@ export const Terminal: React.FC<TerminalProps> = ({
   session,
   currentPath,
   onExecuteCommand,
+  onOpenEditor,
   username
 }) => {
   const [currentInput, setCurrentInput] = useState('');
@@ -23,7 +25,12 @@ export const Terminal: React.FC<TerminalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (currentInput.trim()) {
-      onExecuteCommand(currentInput);
+      const cmd = currentInput.trim();
+      onExecuteCommand(cmd);
+      if (cmd.startsWith('vim ') && onOpenEditor) {
+        const file = cmd.slice(4).trim();
+        if (file) onOpenEditor(file);
+      }
       setCurrentInput('');
     }
   };

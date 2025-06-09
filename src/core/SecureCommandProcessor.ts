@@ -168,4 +168,22 @@ export class SecureCommandProcessor {
   getFileSystem() {
     return this.fileSystemManager.getFileSystem();
   }
+
+  readFile(path: string): string | null {
+    const normalized = this.fileSystemManager.normalizePath(path);
+    const parts = normalized.split('/').filter(p => p);
+    const fileName = parts.pop();
+    if (!fileName) return null;
+    const dir = '/' + parts.join('/');
+    return this.fileSystemManager.readFile(dir, fileName);
+  }
+
+  writeFile(path: string, content: string): void {
+    const normalized = this.fileSystemManager.normalizePath(path);
+    const parts = normalized.split('/').filter(p => p);
+    const fileName = parts.pop();
+    if (!fileName) return;
+    const dir = '/' + parts.join('/');
+    this.fileSystemManager.writeFile(dir, fileName, content);
+  }
 }

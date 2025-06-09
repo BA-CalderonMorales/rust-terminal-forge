@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { HomeViewModel } from './viewModel';
 import { TerminalTabs } from './components/TerminalTabs';
+import { EditorTabs } from './components/EditorTabs';
+import { FileEditor } from './components/FileEditor';
 import { Terminal } from './components/Terminal';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -62,9 +64,31 @@ export const HomeView: React.FC = () => {
     viewModel.closeSession(sessionId);
   };
 
+  const handleOpenEditor = (file: string) => {
+    viewModel.openEditor(file);
+  };
+
+  const handleSwitchEditor = (id: string) => {
+    viewModel.setActiveEditor(id);
+  };
+
+  const handleCloseEditor = (id: string) => {
+    viewModel.closeEditor(id);
+  };
+
+  const handleUpdateEditor = (id: string, content: string) => {
+    viewModel.updateEditorContent(id, content);
+  };
+
+  const handleSaveEditor = (id: string) => {
+    viewModel.saveEditor(id);
+  };
+
   const currentUser = viewModel.getCurrentUser();
   const sessions = viewModel.getSessions();
   const activeSession = viewModel.getActiveSession();
+  const editorSessions = viewModel.getEditorSessions();
+  const activeEditor = viewModel.getActiveEditor();
 
   // If no sessions exist, show centered plus icon
   if (sessions.length === 0) {
@@ -109,13 +133,29 @@ export const HomeView: React.FC = () => {
         onNewSession={handleNewSession}
       />
 
+      <EditorTabs
+        sessions={editorSessions}
+        activeId={activeEditor?.id || ''}
+        onSwitch={handleSwitchEditor}
+        onClose={handleCloseEditor}
+      />
+
       {/* Terminal Content */}
       {activeSession && (
         <Terminal
           session={activeSession}
           currentPath={viewModel.getCurrentPath()}
           onExecuteCommand={handleExecuteCommand}
+          onOpenEditor={handleOpenEditor}
           username={currentUser?.username || 'user'}
+        />
+      )}
+
+      {activeEditor && (
+        <FileEditor
+          session={activeEditor}
+          onChange={content => handleUpdateEditor(activeEditor.id, content)}
+          onSave={() => handleSaveEditor(activeEditor.id)}
         />
       )}
     </div>
