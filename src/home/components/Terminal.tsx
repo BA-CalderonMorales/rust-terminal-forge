@@ -96,19 +96,23 @@ export const Terminal: React.FC<TerminalProps> = ({
           <span className="text-green-500 mr-2 text-sm sm:text-base flex-shrink-0">
             {getPrompt()}
           </span>
-          <input
-            ref={inputRef}
-            type="text"
-            value={currentInput}
-            onChange={(e) => setCurrentInput(e.target.value)}
-            className="flex-1 bg-transparent outline-none text-green-400 placeholder-green-600 text-base sm:text-sm"
-            placeholder="Type a command..."
-            autoComplete="off"
-            spellCheck="false"
-            autoCapitalize="off"
-            autoCorrect="off"
-            inputMode="text"
-          />
+          <div className="relative flex-1 font-mono text-green-400">
+            <input
+              ref={inputRef}
+              type="text"
+              value={currentInput}
+              onChange={(e) => setCurrentInput(e.target.value)}
+              className="absolute inset-0 w-full bg-transparent outline-none caret-transparent text-transparent placeholder-green-600 text-base sm:text-sm"
+              placeholder="Type a command..."
+              autoComplete="off"
+              spellCheck="false"
+              autoCapitalize="off"
+              autoCorrect="off"
+              inputMode="text"
+            />
+            <span aria-hidden="true">{currentInput}</span>
+            <span className="terminal-cursor" aria-hidden="true">&nbsp;</span>
+          </div>
         </form>
       </div>
     </div>
