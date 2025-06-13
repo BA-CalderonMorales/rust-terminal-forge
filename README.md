@@ -108,3 +108,14 @@ To connect a domain, navigate to Project > Settings > Domains and click Connect 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
 
 </details>
+
+## Generating audio with SuperCollider
+
+Run the following to create an MP3 file using SuperCollider:
+
+```sh
+sclang -i none generate_audio.scd
+ffmpeg -i output.wav -codec:a libmp3lame -qscale:a 4 output.mp3
+```
+
+You can play the result with `mpg123 output.mp3` if sound hardware is available.
