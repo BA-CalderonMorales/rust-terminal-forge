@@ -11,6 +11,7 @@ Install the dependencies and start the development server:
 
 npm install
 npm run dev
+npm run server
 
 ```
 

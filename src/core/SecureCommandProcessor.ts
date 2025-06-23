@@ -17,7 +17,7 @@ export class SecureCommandProcessor {
   private utilityCommands = new UtilityCommands();
   private cargoCommands = new CargoCommands();
 
-  processCommand(input: string, sessionId: string = 'default'): TerminalCommand {
+  async processCommand(input: string, sessionId: string = 'default'): Promise<TerminalCommand> {
     // Rate limiting check
     if (!this.rateLimiter.isAllowed(sessionId)) {
       const remaining = this.rateLimiter.getRemainingCommands(sessionId);
@@ -92,7 +92,7 @@ export class SecureCommandProcessor {
         case 'help':
           return this.utilityCommands.handleHelp(id, command, timestamp);
         case 'cargo':
-          return this.cargoCommands.handleCargo(args, id, command, timestamp);
+          return await this.cargoCommands.handleCargo(args, id, command, timestamp);
         default:
           return {
             id,
