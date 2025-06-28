@@ -30,9 +30,10 @@ export class UtilityCommands extends BaseCommandHandler {
   }
 
   handleHistory(id: string, command: string, timestamp: string): TerminalCommand {
+    const startIndex = Math.max(0, this.commandHistory.length - 50);
     const historyOutput = this.commandHistory
       .slice(-50)
-      .map((cmd, index) => `${(this.commandHistory.length - 50 + index + 1).toString().padStart(4)}: ${cmd}`)
+      .map((cmd, index) => `${(startIndex + index + 1).toString().padStart(4)}: ${cmd}`)
       .join('\n');
 
     return this.generateCommand(id, command, historyOutput, timestamp);
