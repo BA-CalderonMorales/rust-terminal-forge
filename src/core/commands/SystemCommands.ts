@@ -36,13 +36,17 @@ export class SystemCommands extends BaseCommandHandler {
     return this.generateCommand(id, command, output, timestamp);
   }
 
+  handleHostname(id: string, command: string, timestamp: string): TerminalCommand {
+    return this.generateCommand(id, command, 'terminal-forge', timestamp);
+  }
+
   handleWhich(args: string[], id: string, command: string, timestamp: string): TerminalCommand {
     if (args.length === 0) {
       return this.generateCommand(id, command, 'which: missing operand', timestamp, 1);
     }
 
     const commandName = args[0];
-    const builtinCommands = ['pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'history', 'alias', 'cargo', 'clear', 'help', 'echo', 'whoami', 'date', 'env', 'which', 'uptime'];
+    const builtinCommands = ['pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'history', 'alias', 'cargo', 'clear', 'help', 'echo', 'whoami', 'date', 'env', 'which', 'uptime', 'hostname'];
     
     if (builtinCommands.includes(commandName)) {
       return this.generateCommand(id, command, `/usr/bin/${commandName}`, timestamp);

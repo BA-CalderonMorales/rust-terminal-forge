@@ -101,7 +101,7 @@ Once deployed, your site will be available at `https://<OWNER>.github.io/rust-te
 <details>
 <summary><strong>Common commands</strong></summary>
 
-Use `help` inside the terminal for the full list. Recent addition: the `uptime` command displays how long the system has been running.
+Use `help` inside the terminal for the full list. Recent additions: the `uptime` command displays how long the system has been running and `hostname` shows the server name.
 
 </details>
 
