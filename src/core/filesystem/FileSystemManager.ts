@@ -13,6 +13,7 @@ interface FileSystem {
 
 export class FileSystemManager {
   private currentPath: string = '/home/user/project';
+  private previousPath: string = '/home/user/project';
   private readonly homeDirectory: string = '/home/user';
   private readonly allowedPaths: Set<string> = new Set([
     '/home',
@@ -112,7 +113,12 @@ export class FileSystemManager {
   }
 
   setCurrentPath(path: string): void {
+    this.previousPath = this.currentPath;
     this.currentPath = path;
+  }
+
+  getPreviousPath(): string {
+    return this.previousPath;
   }
 
   getHomeDirectory(): string {

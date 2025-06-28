@@ -33,6 +33,14 @@ describe('filesystem commands', () => {
     expect(fsManager.getCurrentPath()).toBe('/home');
   });
 
+  it('cd - returns to previous directory', () => {
+    fsCmds.handleCd(['src'], '1', 'cd src', ts);
+    fsCmds.handleCd(['-'], '1', 'cd -', ts);
+    expect(fsManager.getCurrentPath()).toBe('/home/user/project');
+    fsCmds.handleCd(['-'], '1', 'cd -', ts);
+    expect(fsManager.getCurrentPath()).toBe('/home/user/project/src');
+  });
+
   it('mkdir creates directory', () => {
     const res = fsCmds.handleMkdir(['newdir'], '1', 'mkdir newdir', ts);
     expect(res.exitCode).toBe(0);

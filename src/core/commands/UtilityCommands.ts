@@ -74,7 +74,7 @@ export class UtilityCommands extends BaseCommandHandler {
     const helpText = `Available commands:
   pwd        - Show current directory
   ls [-lah]  - List directory contents
-  cd <dir>   - Change directory (supports: ., .., ~, absolute and relative paths)
+  cd <dir>   - Change directory (supports: ., .., -, ~, absolute and relative paths)
   mkdir      - Create directory
   touch      - Create or update file
   cat        - Display file contents
@@ -100,6 +100,7 @@ export class UtilityCommands extends BaseCommandHandler {
 Navigation examples:
   cd .       - Stay in current directory
   cd ..      - Go up one level
+  cd -       - Go to previous directory
   cd ~       - Go to home directory
   cd /path   - Go to absolute path
   cd folder  - Go to subfolder`;
