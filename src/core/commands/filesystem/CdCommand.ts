@@ -15,6 +15,12 @@ export class CdCommand extends BaseCommandHandler {
     }
 
     const targetPath = args[0];
+
+    if (targetPath === '-') {
+      const previous = this.fileSystemManager.getPreviousPath();
+      this.fileSystemManager.setCurrentPath(previous);
+      return this.generateCommand(id, command, '', timestamp);
+    }
     
     // Custom behavior: cd . goes up one level, cd .. goes up two levels
     if (targetPath === '.') {
