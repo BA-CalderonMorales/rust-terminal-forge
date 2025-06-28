@@ -83,6 +83,8 @@ export class SecureCommandProcessor {
           return this.systemCommands.handleEnv(id, command, timestamp);
         case 'uptime':
           return this.systemCommands.handleUptime(id, command, timestamp);
+        case 'hostname':
+          return this.systemCommands.handleHostname(id, command, timestamp);
         case 'which':
           return this.systemCommands.handleWhich(args, id, command, timestamp);
         case 'history':
@@ -134,7 +136,7 @@ export class SecureCommandProcessor {
   }
 
   private suggestCommand(command: string): string {
-    const commands = ['pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'find', 'grep', 'vim', 'echo', 'whoami', 'date', 'env', 'uptime', 'which', 'history', 'alias', 'cargo', 'clear', 'help'];
+    const commands = ['pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'find', 'grep', 'vim', 'echo', 'whoami', 'date', 'env', 'uptime', 'hostname', 'which', 'history', 'alias', 'cargo', 'clear', 'help'];
     const suggestions = commands.filter(cmd => 
       cmd.includes(command) || 
       this.levenshteinDistance(cmd, command) <= 2

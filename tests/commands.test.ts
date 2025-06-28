@@ -96,6 +96,11 @@ describe('system commands', () => {
     expect(res.output).toContain('load average');
   });
 
+  it('hostname returns host name', () => {
+    const res = sysCmds.handleHostname('1', 'hostname', ts);
+    expect(res.output).toBe('terminal-forge');
+  });
+
   it('which finds builtin command', () => {
     const res = sysCmds.handleWhich(['ls'], '1', 'which ls', ts);
     expect(res.output).toContain('/usr/bin/ls');
@@ -129,5 +134,6 @@ describe('utility commands', () => {
   it('help shows help text', () => {
     const res = utilCmds.handleHelp('1', 'help', ts);
     expect(res.output).toContain('Available commands');
+    expect(res.output).toContain('hostname');
   });
 });
