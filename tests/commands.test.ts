@@ -91,6 +91,11 @@ describe('system commands', () => {
     expect(res.output).toContain('HOME=/home/user');
   });
 
+  it('uptime displays system uptime', () => {
+    const res = sysCmds.handleUptime('1', 'uptime', ts);
+    expect(res.output).toContain('load average');
+  });
+
   it('which finds builtin command', () => {
     const res = sysCmds.handleWhich(['ls'], '1', 'which ls', ts);
     expect(res.output).toContain('/usr/bin/ls');

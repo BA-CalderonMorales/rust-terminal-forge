@@ -31,13 +31,18 @@ export class SystemCommands extends BaseCommandHandler {
     return this.generateCommand(id, command, envVars.join('\n'), timestamp);
   }
 
+  handleUptime(id: string, command: string, timestamp: string): TerminalCommand {
+    const output = 'up 1 day, 0:00, load average: 0.00, 0.00, 0.00';
+    return this.generateCommand(id, command, output, timestamp);
+  }
+
   handleWhich(args: string[], id: string, command: string, timestamp: string): TerminalCommand {
     if (args.length === 0) {
       return this.generateCommand(id, command, 'which: missing operand', timestamp, 1);
     }
 
     const commandName = args[0];
-    const builtinCommands = ['pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'history', 'alias', 'cargo', 'clear', 'help', 'echo', 'whoami', 'date', 'env', 'which'];
+    const builtinCommands = ['pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'history', 'alias', 'cargo', 'clear', 'help', 'echo', 'whoami', 'date', 'env', 'which', 'uptime'];
     
     if (builtinCommands.includes(commandName)) {
       return this.generateCommand(id, command, `/usr/bin/${commandName}`, timestamp);
