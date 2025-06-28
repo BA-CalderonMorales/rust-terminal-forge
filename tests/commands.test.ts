@@ -104,6 +104,13 @@ describe('utility commands', () => {
     expect(res.output).toContain('ls');
   });
 
+  it('history numbering starts at 1 when less than max entries', () => {
+    utilCmds.addToHistory('cd ..');
+    const res = utilCmds.handleHistory('1', 'history', ts);
+    const firstLine = res.output.split('\n')[0];
+    expect(firstLine.trim().startsWith('1:')).toBe(true);
+  });
+
   it('alias lists existing aliases', () => {
     const res = utilCmds.handleAlias([], '1', 'alias', ts);
     expect(res.output).toContain("alias ll='ls -la'");
