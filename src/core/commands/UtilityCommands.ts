@@ -30,6 +30,12 @@ export class UtilityCommands extends BaseCommandHandler {
   }
 
   handleHistory(id: string, command: string, timestamp: string): TerminalCommand {
+    const args = command.split(/\s+/).slice(1);
+    if (args.includes('-c')) {
+      this.commandHistory = [];
+      return this.generateCommand(id, command, '', timestamp);
+    }
+
     const startIndex = Math.max(0, this.commandHistory.length - 50);
     const historyOutput = this.commandHistory
       .slice(-50)
@@ -81,6 +87,7 @@ export class UtilityCommands extends BaseCommandHandler {
   hostname   - Display host name
   which      - Locate a command
   history    - Show command history
+    -c       - Clear command history
   alias      - Show or set command aliases
   cargo      - Rust package manager
     build    - Compile the current package

@@ -121,6 +121,16 @@ describe('utility commands', () => {
     expect(firstLine.trim().startsWith('1:')).toBe(true);
   });
 
+  it('history -c clears command history', () => {
+    utilCmds.addToHistory('ls');
+    utilCmds.addToHistory('pwd');
+    const clearRes = utilCmds.handleHistory('1', 'history -c', ts);
+    expect(clearRes.exitCode).toBe(0);
+    expect(clearRes.output).toBe('');
+    const res = utilCmds.handleHistory('1', 'history', ts);
+    expect(res.output).toBe('');
+  });
+
   it('alias lists existing aliases', () => {
     const res = utilCmds.handleAlias([], '1', 'alias', ts);
     expect(res.output).toContain("alias ll='ls -la'");
