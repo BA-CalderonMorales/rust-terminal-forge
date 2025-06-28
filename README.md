@@ -99,6 +99,13 @@ Once deployed, your site will be available at `https://<OWNER>.github.io/rust-te
 </details>
 
 <details>
+<summary><strong>Common commands</strong></summary>
+
+Use `help` inside the terminal for the full list. Recent addition: the `uptime` command displays how long the system has been running.
+
+</details>
+
+<details>
 <summary><strong>Can I connect a custom domain to my Lovable project?</strong></summary>
 
 Yes, you can!

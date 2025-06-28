@@ -77,6 +77,7 @@ export class UtilityCommands extends BaseCommandHandler {
   whoami     - Show current user
   date       - Show current date and time
   env        - Show environment variables
+  uptime     - Show how long the system has been running
   which      - Locate a command
   history    - Show command history
   alias      - Show or set command aliases
