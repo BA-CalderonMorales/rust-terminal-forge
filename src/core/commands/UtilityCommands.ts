@@ -36,9 +36,18 @@ export class UtilityCommands extends BaseCommandHandler {
       return this.generateCommand(id, command, '', timestamp);
     }
 
-    const startIndex = Math.max(0, this.commandHistory.length - 50);
+    let count = 50;
+    const nIndex = args.indexOf('-n');
+    if (nIndex !== -1 && args[nIndex + 1]) {
+      const parsed = parseInt(args[nIndex + 1], 10);
+      if (!Number.isNaN(parsed) && parsed > 0) {
+        count = parsed;
+      }
+    }
+
+    const startIndex = Math.max(0, this.commandHistory.length - count);
     const historyOutput = this.commandHistory
-      .slice(-50)
+      .slice(-count)
       .map((cmd, index) => `${(startIndex + index + 1).toString().padStart(4)}: ${cmd}`)
       .join('\n');
 
@@ -88,6 +97,7 @@ export class UtilityCommands extends BaseCommandHandler {
   which      - Locate a command
   history    - Show command history
     -c       - Clear command history
+    -n <num> - Show last <num> entries
   alias      - Show or set command aliases
   cargo      - Rust package manager
     build    - Compile the current package
