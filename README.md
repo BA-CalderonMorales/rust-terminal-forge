@@ -101,7 +101,7 @@ Once deployed, your site will be available at `https://<OWNER>.github.io/rust-te
 <details>
 <summary><strong>Common commands</strong></summary>
 
-Use `help` inside the terminal for the full list. Recent additions: the `uptime` command displays how long the system has been running and `hostname` shows the server name. You can now clear the command history with `history -c` and jump back to the previous directory with `cd -`.
+Use `help` inside the terminal for the full list. Recent additions: the `uptime` command displays how long the system has been running and `hostname` shows the server name. You can now clear the command history with `history -c`, limit output with `history -n <count>`, and jump back to the previous directory with `cd -`.
 
 </details>
 

@@ -139,6 +139,17 @@ describe('utility commands', () => {
     expect(res.output).toBe('');
   });
 
+  it('history -n limits output to the last n entries', () => {
+    for (let i = 0; i < 5; i++) {
+      utilCmds.addToHistory(`cmd${i}`);
+    }
+    const res = utilCmds.handleHistory('1', 'history -n 3', ts);
+    const lines = res.output.split('\n');
+    expect(lines).toHaveLength(3);
+    const firstLineNumber = parseInt(lines[0].split(':')[0], 10);
+    expect(firstLineNumber).toBe(3);
+  });
+
   it('alias lists existing aliases', () => {
     const res = utilCmds.handleAlias([], '1', 'alias', ts);
     expect(res.output).toContain("alias ll='ls -la'");
