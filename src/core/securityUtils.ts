@@ -97,12 +97,14 @@ export class SecurityUtils {
   /**
    * Security audit log
    */
-  static logSecurityEvent(event: string, details: any): void {
-    console.warn(`Security Event: ${event}`, {
+  static logSecurityEvent(event: string, details: Record<string, unknown>): void {
+    const logData = {
       timestamp: new Date().toISOString(),
       details: details,
-      userAgent: navigator.userAgent,
-      url: window.location.href
-    });
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'test-environment',
+      url: typeof window !== 'undefined' ? window.location.href : 'test-environment'
+    };
+    
+    console.warn(`Security Event: ${event}`, logData);
   }
 }

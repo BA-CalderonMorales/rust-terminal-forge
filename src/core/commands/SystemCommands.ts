@@ -46,7 +46,11 @@ export class SystemCommands extends BaseCommandHandler {
     }
 
     const commandName = args[0];
-    const builtinCommands = ['pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'history', 'alias', 'cargo', 'clear', 'help', 'echo', 'whoami', 'date', 'env', 'which', 'uptime', 'hostname'];
+    const builtinCommands = [
+      'pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'history', 'alias', 'clear', 'help', 
+      'echo', 'whoami', 'date', 'env', 'which', 'uptime', 'hostname', 'find', 'grep', 'vim',
+      'cargo', 'rustc', 'rustup', 'rust-dev', 'gemini'
+    ];
     
     if (builtinCommands.includes(commandName)) {
       return this.generateCommand(id, command, `/usr/bin/${commandName}`, timestamp);
