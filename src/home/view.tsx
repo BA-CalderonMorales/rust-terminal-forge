@@ -42,8 +42,8 @@ export const HomeView: React.FC = () => {
     }
   }, [isKeyboardOpen, isStable]);
 
-  const handleExecuteCommand = (command: string) => {
-    viewModel.executeCommand(command);
+  const handleExecuteCommand = async (command: string) => {
+    await viewModel.executeCommand(command);
   };
 
   const handleNewSession = async () => {

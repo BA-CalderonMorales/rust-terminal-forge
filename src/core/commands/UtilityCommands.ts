@@ -99,13 +99,38 @@ export class UtilityCommands extends BaseCommandHandler {
     -c       - Clear command history
     -n <num> - Show last <num> entries
   alias      - Show or set command aliases
+  clear      - Clear terminal
+  help       - Show this help message
+
+Rust Development:
   cargo      - Rust package manager
     build    - Compile the current package
     test     - Run tests
     check    - Check code without building
     clean    - Remove target directory
-  clear      - Clear terminal
-  help       - Show this help message
+    doc      - Generate documentation
+    fmt      - Format code
+    clippy   - Run linter
+  rustc      - Rust compiler
+    --version - Show compiler version
+    --help    - Show compiler help
+  rustup     - Rust toolchain manager
+    show      - Show active toolchain
+    update    - Update toolchains
+  rust-dev   - Extended Rust development tools
+    new       - Create new Rust project
+    init      - Initialize project in current directory
+    fmt       - Format all Rust files
+    clippy    - Run comprehensive linting
+    doc       - Generate documentation
+
+Gemini AI:
+  gemini     - Gemini CLI tool
+    --help    - Show Gemini help
+    --version - Show Gemini version
+    list      - List available models
+    auth      - Manage authentication
+    chat      - Interactive chat with Gemini
 
 Navigation examples:
   cd .       - Stay in current directory
@@ -113,7 +138,11 @@ Navigation examples:
   cd -       - Go to previous directory
   cd ~       - Go to home directory
   cd /path   - Go to absolute path
-  cd folder  - Go to subfolder`;
+  cd folder  - Go to subfolder
+
+Security Notice:
+  All commands run in a secure, sandboxed environment.
+  Real command execution is available for approved tools only.`;
 
     return this.generateCommand(id, command, helpText, timestamp);
   }

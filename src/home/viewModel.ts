@@ -47,13 +47,13 @@ export class HomeViewModel {
     this.notifyStateChange();
   }
 
-  executeCommand(input: string): void {
+  async executeCommand(input: string): Promise<void> {
     const activeSession = this.model.getActiveSession();
     if (!activeSession) return;
 
     try {
       // Pass session ID for rate limiting
-      const command = this.commandProcessor.processCommand(input, activeSession.id);
+      const command = await this.commandProcessor.processCommand(input, activeSession.id);
       this.model.addCommandToSession(activeSession.id, command);
       
       // Update session path if cd command was successful

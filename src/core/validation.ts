@@ -13,7 +13,7 @@ export const ValidationSchemas = {
   command: z.string()
     .min(1, 'Command cannot be empty')
     .max(1000, 'Command too long')
-    .regex(/^[a-zA-Z0-9\s\-_.\/~]+$/, 'Command contains forbidden characters'),
+    .regex(/^[a-zA-Z0-9\s\-_.~:"']+$/, 'Command contains forbidden characters'),
 
   // Path validation
   path: z.string()
@@ -84,7 +84,7 @@ export class InputValidator {
       // Normalize unicode to prevent bypasses
       .normalize('NFKC')
       // Remove dangerous characters
-      .replace(/[<>'"&\x00-\x1f\x7f]/g, '')
+      .replace(/[<>'"&\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
       // Remove path traversal attempts
       .replace(/\.\./g, '')
       // Limit length

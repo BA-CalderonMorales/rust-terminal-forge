@@ -8,6 +8,8 @@ import { FileSystemCommands } from './commands/FileSystemCommands';
 import { SystemCommands } from './commands/SystemCommands';
 import { UtilityCommands } from './commands/UtilityCommands';
 import { CargoCommands } from './commands/CargoCommands';
+import { GeminiCommands } from './commands/GeminiCommands';
+import { RustCommands } from './commands/RustCommands';
 
 export class SecureCommandProcessor {
   private rateLimiter = new RateLimiter();
@@ -16,8 +18,10 @@ export class SecureCommandProcessor {
   private systemCommands = new SystemCommands();
   private utilityCommands = new UtilityCommands();
   private cargoCommands = new CargoCommands();
+  private geminiCommands = new GeminiCommands();
+  private rustCommands = new RustCommands();
 
-  processCommand(input: string, sessionId: string = 'default'): TerminalCommand {
+  async processCommand(input: string, sessionId: string = 'default'): Promise<TerminalCommand> {
     // Rate limiting check
     if (!this.rateLimiter.isAllowed(sessionId)) {
       const remaining = this.rateLimiter.getRemainingCommands(sessionId);
@@ -54,58 +58,7 @@ export class SecureCommandProcessor {
     this.utilityCommands.addToHistory(command);
 
     try {
-      switch (baseCommand) {
-        case 'pwd':
-          return this.fileSystemCommands.handlePwd(id, command, timestamp);
-        case 'ls':
-          return this.fileSystemCommands.handleLs(args, id, command, timestamp);
-        case 'cd':
-          return this.fileSystemCommands.handleCd(args, id, command, timestamp);
-        case 'mkdir':
-          return this.fileSystemCommands.handleMkdir(args, id, command, timestamp);
-        case 'touch':
-          return this.fileSystemCommands.handleTouch(args, id, command, timestamp);
-        case 'cat':
-          return this.fileSystemCommands.handleCat(args, id, command, timestamp);
-        case 'find':
-          return this.fileSystemCommands.handleFind(args, id, command, timestamp);
-        case 'grep':
-          return this.fileSystemCommands.handleGrep(args, id, command, timestamp);
-        case 'vim':
-          return this.fileSystemCommands.handleVim(args, id, command, timestamp);
-        case 'echo':
-          return this.systemCommands.handleEcho(args, id, command, timestamp);
-        case 'whoami':
-          return this.systemCommands.handleWhoami(id, command, timestamp);
-        case 'date':
-          return this.systemCommands.handleDate(id, command, timestamp);
-        case 'env':
-          return this.systemCommands.handleEnv(id, command, timestamp);
-        case 'uptime':
-          return this.systemCommands.handleUptime(id, command, timestamp);
-        case 'hostname':
-          return this.systemCommands.handleHostname(id, command, timestamp);
-        case 'which':
-          return this.systemCommands.handleWhich(args, id, command, timestamp);
-        case 'history':
-          return this.utilityCommands.handleHistory(id, command, timestamp);
-        case 'alias':
-          return this.utilityCommands.handleAlias(args, id, command, timestamp);
-        case 'clear':
-          return this.utilityCommands.handleClear(id, command, timestamp);
-        case 'help':
-          return this.utilityCommands.handleHelp(id, command, timestamp);
-        case 'cargo':
-          return this.cargoCommands.handleCargo(args, id, command, timestamp);
-        default:
-          return {
-            id,
-            command,
-            output: `bash: ${baseCommand}: command not found\n\nDid you mean:\n${this.suggestCommand(baseCommand)}`,
-            timestamp,
-            exitCode: 127
-          };
-      }
+      return await this.executeCommand(baseCommand, args, id, command, timestamp);
     } catch (error) {
       return {
         id,
@@ -114,6 +67,106 @@ export class SecureCommandProcessor {
         timestamp,
         exitCode: 1
       };
+    }
+  }
+
+  private async executeCommand(baseCommand: string, args: string[], id: string, command: string, timestamp: string): Promise<TerminalCommand> {
+    switch (baseCommand) {
+      // File system commands
+      case 'pwd':
+        return this.fileSystemCommands.handlePwd(id, command, timestamp);
+      case 'ls':
+        return this.fileSystemCommands.handleLs(args, id, command, timestamp);
+      case 'cd':
+        return this.fileSystemCommands.handleCd(args, id, command, timestamp);
+      case 'mkdir':
+        return this.fileSystemCommands.handleMkdir(args, id, command, timestamp);
+      case 'touch':
+        return this.fileSystemCommands.handleTouch(args, id, command, timestamp);
+      case 'cat':
+        return this.fileSystemCommands.handleCat(args, id, command, timestamp);
+      case 'find':
+        return this.fileSystemCommands.handleFind(args, id, command, timestamp);
+      case 'grep':
+        return this.fileSystemCommands.handleGrep(args, id, command, timestamp);
+      case 'vim':
+        return this.fileSystemCommands.handleVim(args, id, command, timestamp);
+      
+      // System commands
+      case 'echo':
+        return this.systemCommands.handleEcho(args, id, command, timestamp);
+      case 'whoami':
+        return this.systemCommands.handleWhoami(id, command, timestamp);
+      case 'date':
+        return this.systemCommands.handleDate(id, command, timestamp);
+      case 'env':
+        return this.systemCommands.handleEnv(id, command, timestamp);
+      case 'uptime':
+        return this.systemCommands.handleUptime(id, command, timestamp);
+      case 'hostname':
+        return this.systemCommands.handleHostname(id, command, timestamp);
+      case 'which':
+        return this.systemCommands.handleWhich(args, id, command, timestamp);
+      
+      // Utility commands
+      case 'history':
+        return this.utilityCommands.handleHistory(id, command, timestamp);
+      case 'alias':
+        return this.utilityCommands.handleAlias(args, id, command, timestamp);
+      case 'clear':
+        return this.utilityCommands.handleClear(id, command, timestamp);
+      case 'help':
+        return this.utilityCommands.handleHelp(id, command, timestamp);
+      
+      // Rust development commands
+      case 'cargo':
+        return await this.rustCommands.handleCargo(args, id, command, timestamp);
+      case 'rustc':
+        return await this.rustCommands.handleRustc(args, id, command, timestamp);
+      case 'rustup':
+        return await this.rustCommands.handleRustup(args, id, command, timestamp);
+      case 'rust-dev':
+        return await this.rustCommands.handleRustDev(args, id, command, timestamp);
+      
+      // Gemini CLI commands
+      case 'gemini':
+        return await this.handleGeminiCommand(args, id, command, timestamp);
+      
+      // Legacy cargo support (for backward compatibility)
+      case 'cargo-legacy':
+        return this.cargoCommands.handleCargo(args, id, command, timestamp);
+      
+      default:
+        return {
+          id,
+          command,
+          output: `bash: ${baseCommand}: command not found\n\nDid you mean:\n${this.suggestCommand(baseCommand)}`,
+          timestamp,
+          exitCode: 127
+        };
+    }
+  }
+
+  /**
+   * Handle Gemini command routing
+   */
+  private async handleGeminiCommand(args: string[], id: string, command: string, timestamp: string): Promise<TerminalCommand> {
+    if (args.length === 0 || args.includes('--help')) {
+      return await this.geminiCommands.handleGemini(args, id, command, timestamp);
+    }
+
+    const subCommand = args[0];
+    const subArgs = args.slice(1);
+
+    switch (subCommand) {
+      case 'auth':
+        return await this.geminiCommands.handleGeminiAuth(subArgs, id, command, timestamp);
+      case 'chat':
+        return await this.geminiCommands.handleGeminiChat(subArgs, id, command, timestamp);
+      case 'list':
+        return await this.geminiCommands.handleGeminiList(subArgs, id, command, timestamp);
+      default:
+        return await this.geminiCommands.handleGemini(args, id, command, timestamp);
     }
   }
 
@@ -136,7 +189,12 @@ export class SecureCommandProcessor {
   }
 
   private suggestCommand(command: string): string {
-    const commands = ['pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'find', 'grep', 'vim', 'echo', 'whoami', 'date', 'env', 'uptime', 'hostname', 'which', 'history', 'alias', 'cargo', 'clear', 'help'];
+    const commands = [
+      'pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'find', 'grep', 'vim', 
+      'echo', 'whoami', 'date', 'env', 'uptime', 'hostname', 'which', 
+      'history', 'alias', 'cargo', 'rustc', 'rustup', 'rust-dev',
+      'gemini', 'clear', 'help'
+    ];
     const suggestions = commands.filter(cmd => 
       cmd.includes(command) || 
       this.levenshteinDistance(cmd, command) <= 2

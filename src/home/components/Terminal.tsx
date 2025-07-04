@@ -6,7 +6,7 @@ import { TerminalSession } from '../../core/types';
 interface TerminalProps {
   session: TerminalSession;
   currentPath: string;
-  onExecuteCommand: (command: string) => void;
+  onExecuteCommand: (command: string) => Promise<void>;
   username: string;
 }
 
@@ -20,10 +20,10 @@ export const Terminal: React.FC<TerminalProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const terminalRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (currentInput.trim()) {
-      onExecuteCommand(currentInput);
+      await onExecuteCommand(currentInput);
       setCurrentInput('');
     }
   };
