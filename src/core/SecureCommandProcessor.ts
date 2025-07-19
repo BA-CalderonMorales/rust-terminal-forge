@@ -9,6 +9,9 @@ import { SystemCommands } from './commands/SystemCommands';
 import { UtilityCommands } from './commands/UtilityCommands';
 import { CargoCommands } from './commands/CargoCommands';
 import { GeminiCommands } from './commands/GeminiCommands';
+import { ClaudeCommands } from './commands/ClaudeCommands';
+import { ClaudeCodeCommands } from './commands/ClaudeCodeCommands';
+import { EnvironmentCommands } from './commands/EnvironmentCommands';
 import { RustCommands } from './commands/RustCommands';
 
 export class SecureCommandProcessor {
@@ -19,6 +22,9 @@ export class SecureCommandProcessor {
   private utilityCommands = new UtilityCommands();
   private cargoCommands = new CargoCommands();
   private geminiCommands = new GeminiCommands();
+  private claudeCommands = new ClaudeCommands();
+  private claudeCodeCommands = new ClaudeCodeCommands();
+  private environmentCommands = new EnvironmentCommands();
   private rustCommands = new RustCommands();
 
   async processCommand(input: string, sessionId: string = 'default'): Promise<TerminalCommand> {
@@ -100,7 +106,7 @@ export class SecureCommandProcessor {
       case 'date':
         return this.systemCommands.handleDate(id, command, timestamp);
       case 'env':
-        return this.systemCommands.handleEnv(id, command, timestamp);
+        return await this.environmentCommands.handleEnv(args, id, command, timestamp);
       case 'uptime':
         return this.systemCommands.handleUptime(id, command, timestamp);
       case 'hostname':
@@ -131,6 +137,14 @@ export class SecureCommandProcessor {
       // Gemini CLI commands
       case 'gemini':
         return await this.handleGeminiCommand(args, id, command, timestamp);
+      
+      // Claude CLI commands
+      case 'claude':
+        return await this.handleClaudeCommand(args, id, command, timestamp);
+      
+      // Claude CLI commands (mapped from claude-code)
+      case 'claude-code':
+        return await this.claudeCodeCommands.handleClaude(args, id, command, timestamp);
       
       // Legacy cargo support (for backward compatibility)
       case 'cargo-legacy':
@@ -170,6 +184,40 @@ export class SecureCommandProcessor {
     }
   }
 
+  /**
+   * Handle Claude command routing
+   */
+  private async handleClaudeCommand(args: string[], id: string, command: string, timestamp: string): Promise<TerminalCommand> {
+    if (args.length === 0 || args.includes('--help')) {
+      return await this.claudeCommands.handleClaude(args, id, command, timestamp);
+    }
+
+    const subCommand = args[0];
+    const subArgs = args.slice(1);
+
+    switch (subCommand) {
+      case 'auth':
+        return await this.claudeCommands.handleClaudeAuth(subArgs, id, command, timestamp);
+      case 'chat':
+        return await this.claudeCommands.handleClaudeChat(subArgs, id, command, timestamp);
+      case 'exec':
+        return await this.claudeCommands.handleClaudeExec(subArgs, id, command, timestamp);
+      case 'run':
+        return await this.claudeCommands.handleClaudeRun(subArgs, id, command, timestamp);
+      case 'clear':
+        this.claudeCommands.clearHistory();
+        return {
+          id,
+          command,
+          output: 'Claude conversation history cleared',
+          timestamp,
+          exitCode: 0
+        };
+      default:
+        return await this.claudeCommands.handleClaude(args, id, command, timestamp);
+    }
+  }
+
   private parseCommand(command: string): string[] {
     const parts = command.split(/\s+/).filter(part => part.length > 0);
     const result: string[] = [];
@@ -193,7 +241,7 @@ export class SecureCommandProcessor {
       'pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'find', 'grep', 'vim', 
       'echo', 'whoami', 'date', 'env', 'uptime', 'hostname', 'which', 
       'history', 'alias', 'cargo', 'rustc', 'rustup', 'rust-dev',
-      'gemini', 'clear', 'help'
+      'gemini', 'claude', 'claude-code', 'clear', 'help'
     ];
     const suggestions = commands.filter(cmd => 
       cmd.includes(command) || 

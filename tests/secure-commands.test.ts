@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SecureExecutor } from '../src/core/SecureExecutor';
+import { SecureCommandProcessor } from '../src/core/SecureCommandProcessor';
 import { GeminiCommands } from '../src/core/commands/GeminiCommands';
 import { RustCommands } from '../src/core/commands/RustCommands';
 
@@ -36,9 +37,29 @@ describe('SecureExecutor', () => {
 
   it('gets available commands', () => {
     const commands = SecureExecutor.getAvailableCommands();
-    expect(commands).toHaveLength(4);
+    expect(commands).toHaveLength(7); // Updated count: gemini, rustc, rustup, cargo, claude, claude-code, which
     expect(commands.some(cmd => cmd.command === 'gemini')).toBe(true);
     expect(commands.some(cmd => cmd.command === 'rustc')).toBe(true);
+    expect(commands.some(cmd => cmd.command === 'claude-code')).toBe(true);
+    expect(commands.some(cmd => cmd.command === 'which')).toBe(true);
+  });
+
+  it('allows claude-code command with valid arguments', async () => {
+    const processor = new SecureCommandProcessor();
+    const result = await processor.processCommand('claude-code --help');
+    // Should provide help text regardless of whether real claude-code is installed
+    expect(result.output).toContain('Claude Code');
+    // If claude-code isn't installed, it should provide installation instructions (exit code 1)
+    // If it is installed, it should show help (exit code 0)
+    expect([0, 1]).toContain(result.exitCode);
+  });
+
+  it('handles claude-code version command', async () => {
+    const processor = new SecureCommandProcessor();
+    const result = await processor.processCommand('claude-code --version');
+    // Should handle version command regardless of installation status
+    expect(result.output.length).toBeGreaterThan(0);
+    expect([0, 1]).toContain(result.exitCode);
   });
 });
 

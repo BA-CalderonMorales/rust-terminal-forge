@@ -91,7 +91,11 @@ export class UtilityCommands extends BaseCommandHandler {
   echo       - Display text
   whoami     - Show current user
   date       - Show current date and time
-  env        - Show environment variables
+  env        - Manage environment variables
+    list     - List all variables
+    get VAR  - Get variable value  
+    set VAR VALUE - Set variable
+    unset VAR - Remove variable
   uptime     - Show how long the system has been running
   hostname   - Display host name
   which      - Locate a command
@@ -124,13 +128,28 @@ Rust Development:
     clippy    - Run comprehensive linting
     doc       - Generate documentation
 
-Gemini AI:
+AI Assistants:
   gemini     - Gemini CLI tool
     --help    - Show Gemini help
     --version - Show Gemini version
     list      - List available models
     auth      - Manage authentication
     chat      - Interactive chat with Gemini
+  
+  claude     - Claude Code AI assistant
+    --help    - Show Claude help
+    auth      - Manage Anthropic API authentication
+    chat      - Chat with Claude for code assistance
+    exec      - Execute code with Claude's help
+    clear     - Clear conversation history
+
+  claude-code - Official Claude Code CLI
+    --help    - Show claude-code help
+    --version - Show claude-code version
+    -p "text" - One-shot query
+    -c        - Continue last conversation
+    update    - Update claude-code to latest version
+    mcp       - Configure Model Context Protocol
 
 Navigation examples:
   cd .       - Stay in current directory

@@ -8,11 +8,14 @@ interface RealTerminalProps {
 
 export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) => {
   const terminalRef = useRef<HTMLDivElement>(null);
+  const outputRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [output, setOutput] = useState('');
   const [currentInput, setCurrentInput] = useState('');
   const [showCursor, setShowCursor] = useState(true);
+  const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true);
+  const [isAtBottom, setIsAtBottom] = useState(true);
 
   // Cursor blinking effect
   useEffect(() => {
@@ -22,6 +25,28 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     return () => clearInterval(interval);
   }, []);
 
+  // Smart auto-scroll detection
+  const checkScrollPosition = useCallback(() => {
+    const element = outputRef.current;
+    if (!element) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = element;
+    const nearBottom = (scrollTop + clientHeight) >= (scrollHeight - 50);
+    
+    setIsAtBottom(nearBottom);
+    setIsAutoScrollEnabled(nearBottom);
+  }, []);
+
+  // Smooth scroll to bottom
+  const scrollToBottom = useCallback(() => {
+    if (outputRef.current) {
+      outputRef.current.scrollTo({
+        top: outputRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, []);
+
   // Auto-focus terminal when connected
   useEffect(() => {
     if (isConnected && terminalRef.current) {
@@ -29,7 +54,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     }
   }, [isConnected]);
 
-  // Process terminal output - keep it simple and show everything
+  // Process terminal output with intelligent scrolling
   const processTerminalOutput = useCallback((data: string) => {
     console.log('🔧 Processing terminal data:', {
       length: data.length,
@@ -39,13 +64,13 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     
     setOutput(prev => prev + data);
     
-    // Auto-scroll to bottom
-    setTimeout(() => {
-      if (terminalRef.current) {
-        terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
-      }
-    }, 10);
-  }, []);
+    // Only auto-scroll if user is at bottom
+    if (isAutoScrollEnabled) {
+      requestAnimationFrame(() => {
+        scrollToBottom();
+      });
+    }
+  }, [isAutoScrollEnabled, scrollToBottom]);
 
   // Initialize socket connection
   useEffect(() => {
@@ -175,76 +200,205 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
   }, []);
 
   return (
-    <div className={`bg-black text-white font-mono text-sm ${className}`}>
-      {/* Connection Status */}
-      <div className="px-3 py-1 bg-gray-800 border-b border-gray-600 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-          <span className="text-white text-xs">
-            {isConnected ? 'Terminal' : 'Connecting...'}
+    <div 
+      className={`terminal-container ${className}`}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        backgroundColor: '#1e1e1e',
+        color: '#d4d4d4',
+        fontFamily: 'ui-monospace, "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace',
+        fontSize: '14px',
+        lineHeight: '1.3',
+        letterSpacing: '0.05em',
+        position: 'relative'
+      }}
+    >
+      {/* Professional Terminal Header */}
+      <div 
+        className="terminal-header"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '4px 12px',
+          backgroundColor: '#2d2d30',
+          borderBottom: '1px solid #3c3c3c',
+          fontSize: '12px',
+          minHeight: '28px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div 
+            style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: isConnected ? '#4CAF50' : '#FF5722'
+            }}
+          />
+          <span style={{ color: '#cccccc', fontSize: '11px' }}>
+            Terminal
           </span>
         </div>
-        <div className="text-xs text-gray-400">
-          Rick's Terminal
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {!isAtBottom && (
+            <button
+              onClick={scrollToBottom}
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: 'none',
+                borderRadius: '3px',
+                padding: '2px 6px',
+                color: '#cccccc',
+                fontSize: '11px',
+                cursor: 'pointer'
+              }}
+              title="Scroll to bottom"
+            >
+              ↓
+            </button>
+          )}
+          <span style={{ color: '#8c8c8c', fontSize: '11px' }}>
+            Rick's Terminal
+          </span>
         </div>
       </div>
 
-      {/* Terminal Display */}
+      {/* Main Terminal Area */}
       <div 
         ref={terminalRef}
-        className="relative h-96 bg-black"
+        className="terminal-main"
         onClick={handleTerminalClick}
         onKeyDown={handleKeyDown}
         tabIndex={0}
-        style={{ 
-          fontFamily: '"JetBrains Mono", "Fira Code", "Consolas", "Monaco", "Liberation Mono", "Courier New", monospace',
-          fontSize: '13px',
-          outline: 'none'
+        style={{
+          flex: 1,
+          position: 'relative',
+          outline: 'none',
+          minHeight: 0, // Important for flex child
+          overflow: 'hidden'
         }}
       >
-        {/* Real terminal output */}
+        {/* Terminal Output */}
         <div 
-          className="absolute inset-0 p-3 overflow-y-auto"
-          style={{ 
+          ref={outputRef}
+          className="terminal-output"
+          onScroll={checkScrollPosition}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            padding: '12px',
+            overflowY: 'auto',
+            overflowX: 'hidden',
             whiteSpace: 'pre-wrap',
-            lineHeight: '1.2',
-            color: '#f8f8f2'
+            wordBreak: 'break-word',
+            scrollBehavior: 'smooth',
+            // Hardware acceleration
+            willChange: 'scroll-position',
+            transform: 'translateZ(0)',
+            // Professional text rendering
+            WebkitFontSmoothing: 'antialiased',
+            MozOsxFontSmoothing: 'grayscale',
+            textRendering: 'optimizeSpeed',
+            // Selection styling
+            WebkitUserSelect: 'text',
+            userSelect: 'text',
+            cursor: 'text'
           }}
         >
           {!isConnected && (
-            <div className="text-yellow-400">Connecting to terminal...</div>
+            <div style={{ color: '#FFB74D', opacity: 0.8 }}>
+              Connecting to terminal...
+            </div>
           )}
           {output && <AnsiText>{output}</AnsiText>}
-        </div>
-        
-        {/* Input overlay - positioned at bottom */}
-        {isConnected && (
-          <div 
-            className="absolute bottom-0 left-0 right-0 p-3"
-            style={{
-              background: 'transparent',
-              pointerEvents: currentInput ? 'auto' : 'none'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span style={{ color: '#f8f8f2' }}>{currentInput}</span>
+          
+          {/* Input Line */}
+          {isConnected && (
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                minHeight: '1.3em'
+              }}
+            >
+              <span style={{ color: '#d4d4d4' }}>{currentInput}</span>
               <span 
-                className={`inline-block w-2 bg-white ${showCursor ? 'opacity-100' : 'opacity-0'}`}
-                style={{ 
-                  height: '1.2em',
+                className="terminal-cursor"
+                style={{
+                  display: 'inline-block',
+                  width: '8px',
+                  height: '1.3em',
+                  backgroundColor: showCursor ? '#007ACC' : 'transparent',
                   marginLeft: '1px',
-                  transition: 'opacity 0.1s'
+                  transition: 'background-color 0.1s ease',
+                  animation: showCursor ? 'none' : 'blink 1s linear infinite'
                 }}
               />
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Minimal footer */}
-      <div className="px-3 py-1 border-t border-gray-600 text-xs text-gray-500 bg-gray-900">
-        Click to type • Ctrl+C interrupt • Ctrl+L clear
+      {/* Professional Status Bar */}
+      <div 
+        className="terminal-status"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '2px 12px',
+          backgroundColor: '#007ACC',
+          color: '#ffffff',
+          fontSize: '11px',
+          minHeight: '20px'
+        }}
+      >
+        <div>
+          Terminal Ready
+        </div>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <span>Ctrl+C</span>
+          <span>•</span>
+          <span>Ctrl+L</span>
+        </div>
       </div>
+
+      {/* Add CSS for cursor animation */}
+      <style jsx>{`
+        @keyframes blink {
+          0%, 50% { background-color: #007ACC; }
+          51%, 100% { background-color: transparent; }
+        }
+        
+        .terminal-output::-webkit-scrollbar {
+          width: 8px;
+        }
+        
+        .terminal-output::-webkit-scrollbar-track {
+          background: #2d2d30;
+        }
+        
+        .terminal-output::-webkit-scrollbar-thumb {
+          background: #464647;
+          border-radius: 4px;
+        }
+        
+        .terminal-output::-webkit-scrollbar-thumb:hover {
+          background: #5a5a5a;
+        }
+        
+        .terminal-container {
+          background: linear-gradient(135deg, #1e1e1e 0%, #252526 100%);
+        }
+        
+        .terminal-header {
+          backdrop-filter: blur(10px);
+        }
+      `}</style>
     </div>
   );
 };

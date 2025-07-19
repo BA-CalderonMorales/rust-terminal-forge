@@ -1,6 +1,7 @@
 // Secure command executor with strict allowlisting and validation
 import { TerminalCommand } from './types';
 import { SecurityUtils } from './securityUtils';
+import { ProcessExecutor } from './ProcessExecutor';
 
 export interface ExecutionConfig {
   allowRealExecution: boolean;
@@ -59,6 +60,27 @@ export class SecureExecutor {
       requiresArgs: false,
       maxArgs: 15,
       description: 'Rust package manager'
+    },
+    {
+      command: 'claude',
+      allowedArgs: ['--help', '--version', '-p', '--print', '-c', '--continue', '-r', '--resume', 'update', 'mcp', '--add-dir', '--allowedTools', '--disallowedTools', '--output-format', '--verbose', '--model', '--permission-mode', '--dangerously-skip-permissions'],
+      requiresArgs: false,
+      maxArgs: 20,
+      description: 'Claude Code CLI'
+    },
+    {
+      command: 'claude-code',
+      allowedArgs: ['--help', '--version', '-p', '--print', '-c', '--continue', '-r', '--resume', 'update', 'mcp', '--add-dir', '--allowedTools', '--disallowedTools', '--output-format', '--verbose', '--model', '--permission-mode', '--dangerously-skip-permissions', '--no-color', '--no-confirm', '--stream'],
+      requiresArgs: false,
+      maxArgs: 25,
+      description: 'Claude Code CLI (real binary)'
+    },
+    {
+      command: 'which',
+      allowedArgs: ['claude-code', 'claude', 'node', 'npm', 'cargo', 'rustc', 'rustup', 'gemini'],
+      requiresArgs: true,
+      maxArgs: 1,
+      description: 'Locate command path'
     }
   ];
 
@@ -199,9 +221,47 @@ export class SecureExecutor {
       timestamp
     });
 
-    // In a real implementation, this would use Node.js child_process or similar
-    // For now, we'll simulate enhanced responses that look more realistic
-    return this.executeSimulated(command, args, id, originalCommand, timestamp);
+    try {
+      // Additional security validation for real execution
+      const validation = ProcessExecutor.validateCommand(command, args);
+      if (!validation.isValid) {
+        return {
+          id,
+          command: originalCommand,
+          output: `Security Error: ${validation.reason}`,
+          timestamp,
+          exitCode: 403
+        };
+      }
+
+      // Execute the real command
+      const result = await ProcessExecutor.executeCommand(command, args, {
+        timeout: this.config.timeoutMs,
+        env: this.config.environment
+      });
+
+      // Combine stdout and stderr
+      let output = result.stdout;
+      if (result.stderr) {
+        output += result.stderr ? `\n${result.stderr}` : '';
+      }
+
+      return {
+        id,
+        command: originalCommand,
+        output: output || '(No output)',
+        timestamp,
+        exitCode: result.exitCode
+      };
+    } catch (error) {
+      return {
+        id,
+        command: originalCommand,
+        output: `Execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp,
+        exitCode: 1
+      };
+    }
   }
 
   /**

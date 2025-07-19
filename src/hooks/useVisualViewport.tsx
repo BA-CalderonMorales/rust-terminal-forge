@@ -48,13 +48,13 @@ export const useVisualViewport = (): UseVisualViewportReturn => {
     setIsStable(false);
     
     // Clear existing timeout
-    if (stableTimeout) {
-      clearTimeout(stableTimeout);
-    }
-
-    // Set new timeout for stability detection
-    const timeout = setTimeout(() => setIsStable(true), 300);
-    setStableTimeout(timeout);
+    setStableTimeout(prev => {
+      if (prev) {
+        clearTimeout(prev);
+      }
+      // Set new timeout for stability detection
+      return setTimeout(() => setIsStable(true), 300);
+    });
 
     const newViewport: ViewportState = window.visualViewport ? {
       height: window.visualViewport.height,
@@ -71,7 +71,7 @@ export const useVisualViewport = (): UseVisualViewportReturn => {
     };
 
     setViewport(newViewport);
-  }, [stableTimeout]);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -111,7 +111,7 @@ export const useVisualViewport = (): UseVisualViewportReturn => {
         window.removeEventListener('orientationchange', handleResize);
       }
     };
-  }, [updateViewport, stableTimeout]);
+  }, [updateViewport]);
 
   // Calculate keyboard state and dimensions
   const layoutViewportHeight =
