@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { HomeViewModel } from './viewModel';
 import { TerminalTabs } from './components/TerminalTabs';
 import { Terminal } from './components/Terminal';
+import { RealTerminal } from '@/components/RealTerminal';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useVisualViewport } from '../hooks/useVisualViewport';
@@ -110,14 +111,27 @@ export const HomeView: React.FC = () => {
       />
 
       {/* Terminal Content */}
-      {activeSession && (
-        <Terminal
-          session={activeSession}
-          currentPath={viewModel.getCurrentPath()}
-          onExecuteCommand={handleExecuteCommand}
-          username={currentUser?.username || 'user'}
-        />
-      )}
+      <div className="flex flex-col h-full">
+        {/* Rick's Real PTY Terminal - NOW THE MAIN INTERFACE */}
+        <div className="flex-1">
+          <RealTerminal className="h-full" />
+        </div>
+        
+        {/* Original Terminal - HIDDEN FOR NOW TO AVOID CONFUSION */}
+        {false && activeSession && (
+          <div className="flex-1 border-b border-gray-600" style={{display: 'none'}}>
+            <div className="px-4 py-2 bg-gray-800 text-white text-xs">
+              Original Simulated Terminal (Hidden - Use Real Terminal Above)
+            </div>
+            <Terminal
+              session={activeSession}
+              currentPath={viewModel.getCurrentPath()}
+              onExecuteCommand={handleExecuteCommand}
+              username={currentUser?.username || 'user'}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
