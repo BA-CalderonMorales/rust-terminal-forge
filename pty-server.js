@@ -121,15 +121,7 @@ io.on('connection', (socket) => {
       sessions.delete(socket.id);
     });
 
-    // Send initial welcome message with Claude CLI status
-    const welcomeMessage = claudeAvailable 
-      ? '\r\n# Claude CLI detected! You can run `claude` commands in this terminal.\r\n'
-      : '\r\n# Claude CLI not found. Install it with: npm install -g @anthropic-ai/claude-code\r\n';
-    
-    // Send the welcome message as a comment to avoid execution
-    setTimeout(() => {
-      ptyProcess.write(`echo '${welcomeMessage.replace(/'/g, "'")}'\r`);
-    }, 100);
+    // Don't send welcome message - let the shell show its natural prompt
 
     // Send initial prompt
     socket.emit('terminal-ready', { 
