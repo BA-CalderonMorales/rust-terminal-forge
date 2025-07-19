@@ -55,13 +55,27 @@ export class SecureStorage {
 
       if (!this.userKey || !this.currentUsername) {
         console.warn('No user key available, reading unencrypted data');
-        return JSON.parse(item);
+        try {
+          return JSON.parse(item);
+        } catch (parseError) {
+          console.warn('Invalid JSON in storage, clearing corrupted data for key:', key);
+          this.remove(key);
+          return null;
+        }
       }
 
-      const decrypted = await this.decryptWithUserKey(item);
-      return JSON.parse(decrypted);
+      try {
+        const decrypted = await this.decryptWithUserKey(item);
+        return JSON.parse(decrypted);
+      } catch (decryptError) {
+        console.warn('Failed to decrypt storage data, may be corrupted. Clearing key:', key);
+        this.remove(key);
+        return null;
+      }
     } catch (error) {
       console.error('Failed to read from secure storage:', error);
+      // Clear the potentially corrupted key
+      this.remove(key);
       return null;
     }
   }

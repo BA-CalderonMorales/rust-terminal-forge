@@ -64,6 +64,9 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     }, 10);
   }, []);
 
+  // Current partial line for accumulating output
+  const [partialLine, setPartialLine] = useState('');
+
   // Process terminal output
   const processTerminalOutput = useCallback((data: string) => {
     console.log('🔧 Processing terminal data:', {
@@ -75,22 +78,25 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
       rawBytes: JSON.stringify(data.substring(0, 50))
     });
     
-    // Handle the data more intelligently - some output might not have newlines
-    // but we still want to display it immediately
-    if (data.includes('\n')) {
-      // Split data into lines and add each as a separate line
-      const lines = data.split('\n');
-      lines.forEach((line, index) => {
-        if (line || index < lines.length - 1) { // Include empty lines except the final one if it's empty
-          addLine(line);
-        }
-      });
+    // Accumulate data with any existing partial line
+    const fullData = partialLine + data;
+    
+    if (fullData.includes('\n')) {
+      // Split by newlines
+      const parts = fullData.split('\n');
+      
+      // Add all complete lines (all but the last part)
+      for (let i = 0; i < parts.length - 1; i++) {
+        addLine(parts[i]);
+      }
+      
+      // Keep the last part as partial line (might be empty)
+      setPartialLine(parts[parts.length - 1]);
     } else {
-      // For data without newlines, add as a single line
-      // This handles things like prompts, partial output, etc.
-      addLine(data);
+      // No newlines, accumulate in partial line
+      setPartialLine(fullData);
     }
-  }, [addLine]);
+  }, [addLine, partialLine]);
 
   // Initialize socket connection
   useEffect(() => {
@@ -156,6 +162,17 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
       // Add the command to the terminal display with prompt
       addLine(`$ ${currentInput}`, true);
       
+      // Handle special commands locally for better UX
+      if (currentInput.trim() === 'clear') {
+        // Clear the terminal display immediately for responsive feel
+        setLines([]);
+        setPartialLine('');
+        setCurrentInput('');
+        // Also send to backend for consistency
+        sendInput(currentInput + '\r');
+        return;
+      }
+      
       // Send command to terminal
       sendInput(currentInput + '\r');
       
@@ -181,6 +198,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
       e.preventDefault();
       console.log('🧹 Ctrl+L pressed (clear)');
       setLines([]); // Clear terminal display
+      setPartialLine(''); // Clear partial line
       sendInput('\f'); // Send clear to terminal
       return;
     }
@@ -272,6 +290,13 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
           </div>
         ))}
         
+        {/* Current partial line (output in progress) */}
+        {partialLine && (
+          <div style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
+            <AnsiText>{partialLine}</AnsiText>
+          </div>
+        )}
+        
         {/* Current input line with prompt and cursor */}
         {isConnected && (
           <div style={{ display: 'flex', alignItems: 'center', fontFamily: 'inherit' }}>
@@ -289,19 +314,17 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
         )}
       </div>
 
-      {/* Help text */}
-      <div className="px-4 py-2 border-t border-gray-600 text-xs text-gray-500">
-        💡 Click in terminal to type • Ctrl+C to interrupt • Ctrl+L to clear • Enter to execute
-        {claudeAvailable === false && (
-          <span className="block text-yellow-400 mt-1">
-            📦 Install Claude CLI: npm install -g @anthropic-ai/claude-code
-          </span>
-        )}
-        {claudeAvailable === true && (
-          <span className="block text-blue-400 mt-1">
-            🤖 Try: claude --help
-          </span>
-        )}
+      {/* Compact Help text */}
+      <div className="px-4 py-1 border-t border-gray-600 text-xs text-gray-500 bg-gray-900">
+        <div className="flex items-center justify-between">
+          <span>💡 Click to type • Ctrl+C interrupt • Ctrl+L clear</span>
+          {claudeAvailable === false && (
+            <span className="text-yellow-400">📦 Claude CLI not installed</span>
+          )}
+          {claudeAvailable === true && (
+            <span className="text-blue-400">🤖 Claude CLI ready</span>
+          )}
+        </div>
       </div>
     </div>
   );
