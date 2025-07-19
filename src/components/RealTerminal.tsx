@@ -6,16 +6,65 @@ interface RealTerminalProps {
   className?: string;
 }
 
+interface TerminalLine {
+  id: string;
+  content: string;
+  isPrompt?: boolean;
+  timestamp: number;
+}
+
 export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [output, setOutput] = useState('');
-  const [input, setInput] = useState('');
+  const [lines, setLines] = useState<TerminalLine[]>([]);
+  const [currentInput, setCurrentInput] = useState('');
   const [claudeAvailable, setClaudeAvailable] = useState<boolean | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [showCursor, setShowCursor] = useState(true);
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
-  // Process terminal output with enhanced debugging
+  // Cursor blinking effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowCursor(prev => !prev);
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Auto-focus terminal when connected
+  useEffect(() => {
+    if (isConnected && terminalRef.current) {
+      terminalRef.current.focus();
+      setIsInputFocused(true);
+    }
+  }, [isConnected]);
+
+  // Scroll to bottom when current input changes (while typing)
+  useEffect(() => {
+    if (terminalRef.current) {
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+    }
+  }, [currentInput]);
+
+  // Add new lines to terminal
+  const addLine = useCallback((content: string, isPrompt = false) => {
+    const newLine: TerminalLine = {
+      id: `line-${Date.now()}-${Math.random()}`,
+      content,
+      isPrompt,
+      timestamp: Date.now()
+    };
+    setLines(prev => [...prev, newLine]);
+    
+    // Auto-scroll to bottom when new content is added
+    setTimeout(() => {
+      if (terminalRef.current) {
+        terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+      }
+    }, 10);
+  }, []);
+
+  // Process terminal output
   const processTerminalOutput = useCallback((data: string) => {
     console.log('🔧 Processing terminal data:', {
       length: data.length,
@@ -26,12 +75,22 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
       rawBytes: JSON.stringify(data.substring(0, 50))
     });
     
-    setOutput(prev => {
-      const newOutput = prev + data;
-      console.log('🔧 New total output length:', newOutput.length);
-      return newOutput;
-    });
-  }, []);
+    // Handle the data more intelligently - some output might not have newlines
+    // but we still want to display it immediately
+    if (data.includes('\n')) {
+      // Split data into lines and add each as a separate line
+      const lines = data.split('\n');
+      lines.forEach((line, index) => {
+        if (line || index < lines.length - 1) { // Include empty lines except the final one if it's empty
+          addLine(line);
+        }
+      });
+    } else {
+      // For data without newlines, add as a single line
+      // This handles things like prompts, partial output, etc.
+      addLine(data);
+    }
+  }, [addLine]);
 
   // Initialize socket connection
   useEffect(() => {
@@ -62,24 +121,19 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     socket.on('terminal-ready', (data) => {
       console.log('🎯 Terminal ready:', data);
       setClaudeAvailable(data.claudeAvailable);
-      processTerminalOutput(`Terminal ready (PID: ${data.pid})\r\n`);
+      addLine(`Terminal ready (PID: ${data.pid})`);
+      addLine(''); // Empty line for spacing
     });
 
     socket.on('terminal-output', (data) => {
       console.log('📤 Terminal output:', data);
       processTerminalOutput(data);
-      
-      // Auto-scroll to bottom
-      setTimeout(() => {
-        if (terminalRef.current) {
-          terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
-        }
-      }, 10);
     });
 
     socket.on('terminal-exit', (data) => {
       console.log('🏁 Terminal exited:', data);
-      processTerminalOutput(`\r\nTerminal exited with code: ${data.exitCode}\r\n`);
+      addLine('');
+      addLine(`Terminal exited with code: ${data.exitCode}`);
     });
 
     return () => {
@@ -96,43 +150,70 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     }
   }, [isConnected]);
 
-  // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (input.trim()) {
-      sendInput(input + '\r');
-      setInput('');
+  // Handle command execution
+  const executeCommand = useCallback(() => {
+    if (currentInput.trim()) {
+      // Add the command to the terminal display with prompt
+      addLine(`$ ${currentInput}`, true);
+      
+      // Send command to terminal
+      sendInput(currentInput + '\r');
+      
+      // Clear current input
+      setCurrentInput('');
     }
-  };
+  }, [currentInput, sendInput, addLine]);
 
-  // Handle special key combinations
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  // Handle keyboard input for the unified terminal
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    // Handle special key combinations
     if (e.ctrlKey && e.key === 'c') {
       e.preventDefault();
       console.log('⛔ Ctrl+C pressed');
       if (socketRef.current) {
         socketRef.current.emit('terminal-interrupt');
       }
+      setCurrentInput(''); // Clear current input on interrupt
       return;
     }
 
     if (e.ctrlKey && e.key === 'l') {
       e.preventDefault();
       console.log('🧹 Ctrl+L pressed (clear)');
-      // Clear the local output display
-      setOutput('');
-      // Also send clear to the terminal
-      sendInput('\f'); // Form feed character for clear
+      setLines([]); // Clear terminal display
+      sendInput('\f'); // Send clear to terminal
       return;
     }
-  };
 
-  // Focus input when terminal is clicked
-  const handleTerminalClick = () => {
-    if (inputRef.current) {
-      inputRef.current.focus();
+    // Handle Enter key
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      executeCommand();
+      return;
     }
-  };
+
+    // Handle Backspace
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      setCurrentInput(prev => prev.slice(0, -1));
+      return;
+    }
+
+    // Handle regular character input
+    if (e.key.length === 1) {
+      e.preventDefault();
+      setCurrentInput(prev => prev + e.key);
+      return;
+    }
+  }, [executeCommand, sendInput]);
+
+  // Focus the terminal when clicked
+  const handleTerminalClick = useCallback(() => {
+    setIsInputFocused(true);
+    if (terminalRef.current) {
+      terminalRef.current.focus();
+    }
+  }, []);
 
   return (
     <div className={`bg-black text-white font-mono text-sm ${className}`} style={{ fontFamily: 'Consolas, "Courier New", monospace' }}>
@@ -159,11 +240,13 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
         </div>
       </div>
 
-      {/* Terminal Output */}
+      {/* Unified Terminal Area */}
       <div 
         ref={terminalRef}
         className="h-96 p-4 overflow-y-auto cursor-text bg-black"
         onClick={handleTerminalClick}
+        onKeyDown={handleKeyDown}
+        tabIndex={0}
         style={{ 
           whiteSpace: 'pre-wrap', 
           wordBreak: 'break-word',
@@ -171,8 +254,9 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
           fontFamily: '"JetBrains Mono", "Fira Code", "Consolas", "Monaco", "Liberation Mono", "Courier New", monospace',
           fontSize: '13px',
           minHeight: '24em',
-          color: '#f8f8f2', // Default terminal text color
-          backgroundColor: '#1e1e1e' // Dark terminal background
+          color: '#f8f8f2',
+          backgroundColor: '#1e1e1e',
+          outline: 'none' // Remove focus outline
         }}
       >
         {!isConnected && (
@@ -180,44 +264,45 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
             🔌 Connecting to Rick's PTY server...
           </div>
         )}
-        {output && (
-          <div style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
-            <AnsiText>{output}</AnsiText>
+        
+        {/* Historical output lines */}
+        {lines.map((line) => (
+          <div key={line.id} style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }}>
+            <AnsiText>{line.content}</AnsiText>
+          </div>
+        ))}
+        
+        {/* Current input line with prompt and cursor */}
+        {isConnected && (
+          <div style={{ display: 'flex', alignItems: 'center', fontFamily: 'inherit' }}>
+            <span className="text-green-400">$ </span>
+            <span style={{ color: '#f8f8f2' }}>{currentInput}</span>
+            <span 
+              className={`inline-block w-2 bg-white ${showCursor ? 'opacity-100' : 'opacity-0'}`}
+              style={{ 
+                height: '1.2em',
+                marginLeft: '2px',
+                transition: 'opacity 0.1s'
+              }}
+            />
           </div>
         )}
       </div>
 
-      {/* Input Area */}
-      <form onSubmit={handleSubmit} className="border-t border-gray-600 p-4">
-        <div className="flex items-center space-x-2">
-          <span className="text-green-400">$</span>
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type your command..."
-            className="flex-1 bg-transparent text-white outline-none placeholder-gray-500"
-            style={{ fontFamily: 'Consolas, "Courier New", monospace' }}
-            disabled={!isConnected}
-            autoFocus
-          />
-        </div>
-        <div className="text-xs text-gray-500 mt-2">
-          💡 Ctrl+C to interrupt, Ctrl+L to clear, Enter to execute
-          {claudeAvailable === false && (
-            <span className="block text-yellow-400 mt-1">
-              📦 Install Claude CLI: npm install -g @anthropic-ai/claude-code
-            </span>
-          )}
-          {claudeAvailable === true && (
-            <span className="block text-blue-400 mt-1">
-              🤖 Try: claude --help
-            </span>
-          )}
-        </div>
-      </form>
+      {/* Help text */}
+      <div className="px-4 py-2 border-t border-gray-600 text-xs text-gray-500">
+        💡 Click in terminal to type • Ctrl+C to interrupt • Ctrl+L to clear • Enter to execute
+        {claudeAvailable === false && (
+          <span className="block text-yellow-400 mt-1">
+            📦 Install Claude CLI: npm install -g @anthropic-ai/claude-code
+          </span>
+        )}
+        {claudeAvailable === true && (
+          <span className="block text-blue-400 mt-1">
+            🤖 Try: claude --help
+          </span>
+        )}
+      </div>
     </div>
   );
 };
