@@ -1,0 +1,27 @@
+{
+  "name": "Rust Terminal Forge",
+  "short_name": "Terminal Forge",
+  "description": "Web-based Rust terminal development environment",
+  "start_url": "/?standalone=true",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0f0f0f",
+  "background_color": "#0f0f0f",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "placeholder.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["developer", "productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr"
+}

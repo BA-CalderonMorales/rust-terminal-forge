@@ -14,9 +14,14 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "refactor:session": "./.claude/session-refactor.sh",
+    "track:changes": "node ./.claude/change-tracker.js start",
+    "quality:check": "npm run typecheck && npm run lint && npm run test"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

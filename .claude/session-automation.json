@@ -1,0 +1,53 @@
+{
+  "name": "Terminal Forge Session Automation",
+  "version": "1.0.0",
+  "description": "Automated refactoring and change management for Rust Terminal Forge",
+  "triggers": {
+    "on_session_start": ["check_git_status", "analyze_changes", "suggest_refactors"],
+    "on_file_change": ["validate_syntax", "run_tests", "update_dependencies"],
+    "on_commit": ["run_full_test_suite", "check_security", "update_docs"]
+  },
+  "refactoring_patterns": {
+    "react_components": {
+      "pattern": "src/components/**/*.tsx",
+      "rules": [
+        "extract_reusable_hooks",
+        "optimize_rerenders", 
+        "improve_accessibility",
+        "add_error_boundaries"
+      ]
+    },
+    "rust_backend": {
+      "pattern": "src/**/*.rs",
+      "rules": [
+        "improve_error_handling",
+        "add_logging",
+        "optimize_performance",
+        "enhance_security"
+      ]
+    },
+    "terminal_logic": {
+      "pattern": "src/components/RealTerminal.tsx",
+      "rules": [
+        "optimize_socket_handling",
+        "improve_ansi_parsing",
+        "enhance_keyboard_handling",
+        "add_accessibility_features"
+      ]
+    }
+  },
+  "automation_commands": {
+    "lint": "npm run lint",
+    "typecheck": "npm run typecheck", 
+    "test": "npm run test",
+    "build": "npm run build",
+    "security_check": "cargo audit"
+  },
+  "session_workflow": [
+    "analyze_modified_files",
+    "identify_refactoring_opportunities", 
+    "apply_automated_fixes",
+    "run_quality_checks",
+    "generate_change_summary"
+  ]
+}

@@ -19,49 +19,65 @@ export default {
 		},
 		extend: {
 			colors: {
-				border: 'hsl(var(--border))',
-				input: 'hsl(var(--input))',
-				ring: 'hsl(var(--ring))',
-				background: 'hsl(var(--background))',
-				foreground: 'hsl(var(--foreground))',
+				border: "hsl(var(--border))",
+				input: "hsl(var(--input))",
+				ring: "hsl(var(--ring))",
+				background: "hsl(var(--background))",
+				foreground: "hsl(var(--foreground))",
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					DEFAULT: "hsl(var(--primary))",
+					foreground: "hsl(var(--primary-foreground))",
 				},
 				secondary: {
-					DEFAULT: 'hsl(var(--secondary))',
-					foreground: 'hsl(var(--secondary-foreground))'
+					DEFAULT: "hsl(var(--secondary))",
+					foreground: "hsl(var(--secondary-foreground))",
 				},
 				destructive: {
-					DEFAULT: 'hsl(var(--destructive))',
-					foreground: 'hsl(var(--destructive-foreground))'
+					DEFAULT: "hsl(var(--destructive))",
+					foreground: "hsl(var(--destructive-foreground))",
 				},
 				muted: {
-					DEFAULT: 'hsl(var(--muted))',
-					foreground: 'hsl(var(--muted-foreground))'
+					DEFAULT: "hsl(var(--muted))",
+					foreground: "hsl(var(--muted-foreground))",
 				},
 				accent: {
-					DEFAULT: 'hsl(var(--accent))',
-					foreground: 'hsl(var(--accent-foreground))'
+					DEFAULT: "hsl(var(--accent))",
+					foreground: "hsl(var(--accent-foreground))",
 				},
 				popover: {
-					DEFAULT: 'hsl(var(--popover))',
-					foreground: 'hsl(var(--popover-foreground))'
+					DEFAULT: "hsl(var(--popover))",
+					foreground: "hsl(var(--popover-foreground))",
 				},
 				card: {
-					DEFAULT: 'hsl(var(--card))',
-					foreground: 'hsl(var(--card-foreground))'
+					DEFAULT: "hsl(var(--card))",
+					foreground: "hsl(var(--card-foreground))",
 				},
 				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
-				}
+					DEFAULT: "hsl(var(--sidebar-background))",
+					foreground: "hsl(var(--sidebar-foreground))",
+					primary: "hsl(var(--sidebar-primary))",
+					"primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+					accent: "hsl(var(--sidebar-accent))",
+					"accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+					border: "hsl(var(--sidebar-border))",
+					ring: "hsl(var(--sidebar-ring))",
+				},
+				// New colors from theme.ts
+				"gemini-background": "#1a1b26",
+				"gemini-foreground": "#a9b1d6",
+				"gemini-primary": "#7aa2f7",
+				"gemini-secondary": "#f7768e",
+				"gemini-accent": "#bb9af7",
+				"gemini-border": "#414868",
+				"gemini-text": "#c0caf5",
+				"gemini-text-secondary": "#a9b1d6",
+				"gemini-error": "#f7768e",
+				"gemini-success": "#9ece6a",
+				"gemini-warning": "#e0af68",
+			},
+			fontFamily: {
+				sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+				mono: ["var(--font-mono)", "monospace"],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

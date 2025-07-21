@@ -1,117 +1,58 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
+    --background: 240 10% 2.5%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 2.5%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 2.5%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 158 64% 52%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 158 64% 52%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 158 64% 52%;
     --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
     
-    /* Enhanced viewport properties for mobile optimization */
-    --visual-viewport-height: 100vh;
-    --visual-viewport-width: 100vw;
-    --keyboard-open: 0;
-    --keyboard-height: 0px;
-    --safe-area-top: 0px;
-    --safe-area-bottom: 0px;
-    --viewport-stable: 1;
-    
-    /* Dynamic layout calculations */
-    --tabs-height: 48px;
-    --input-height: 60px;
-    --available-height: calc(var(--visual-viewport-height) - var(--tabs-height) - var(--input-height));
+    /* Terminal specific colors */
+    --terminal-bg: #0a0a0a;
+    --terminal-fg: #e1e1e1;
+    --terminal-accent: #00ff88;
+    --terminal-secondary: #ff4757;
+    --terminal-warning: #ffa502;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 262.1 83.3% 57.8%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  /* Modern viewport unit support */
-  @supports (height: 100dvh) {
-    :root {
-      --visual-viewport-height: 100dvh;
-    }
-  }
-
-  /* Safe area support for notched devices */
-  @supports (padding: max(0px)) {
-    :root {
-      --safe-area-top: env(safe-area-inset-top);
-      --safe-area-bottom: env(safe-area-inset-bottom);
-      --tabs-height: calc(48px + env(safe-area-inset-top));
-      --input-height: calc(60px + env(safe-area-inset-bottom));
-    }
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 262.1 83.3% 57.8%;
   }
 }
 
@@ -131,6 +72,10 @@
     overscroll-behavior: none;
     /* Prevent zooming on input focus */
     touch-action: manipulation;
+    /* Enhanced font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   /* Prevent text selection in terminal for better mobile experience */
@@ -147,7 +92,7 @@
   }
 }
 
-/* Enhanced mobile-first responsive terminal layout */
+/* Modern terminal app layout with cyberpunk aesthetics */
 .terminal-app {
   position: fixed;
   top: 0;
@@ -159,9 +104,13 @@
   height: var(--visual-viewport-height);
   max-height: 100vh;
   overflow: hidden;
-  background: black;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
   z-index: 1;
   contain: layout style size;
+  /* Cyberpunk glow effect */
+  background-attachment: fixed;
+  background-size: 400% 400%;
+  animation: gradientShift 20s ease infinite;
 }
 
 .terminal-no-sessions {
@@ -170,8 +119,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: black;
-  color: #4ade80;
+  background: var(--background);
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -185,8 +134,8 @@
   top: var(--safe-area-top);
   left: 0;
   right: 0;
-  background: #1f2937;
-  border-bottom: 1px solid #16a34a;
+  background: var(--background);
+  border-bottom: 1px solid var(--border);
   z-index: 100;
   height: calc(var(--tabs-height) - var(--safe-area-top));
   min-height: 48px;
@@ -214,11 +163,11 @@
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   padding: 0.75rem 1rem;
-  background: black;
-  color: #4ade80;
+  background: var(--background);
+  color: var(--foreground);
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Inconsolata, "Roboto Mono", monospace;
   scrollbar-width: thin;
-  scrollbar-color: #16a34a #111827;
+  scrollbar-color: var(--primary) var(--background);
   /* Performance optimizations */
   contain: layout style;
   content-visibility: auto;
@@ -231,11 +180,11 @@
 }
 
 .terminal-content::-webkit-scrollbar-track {
-  background: #111827;
+  background: var(--background);
 }
 
 .terminal-content::-webkit-scrollbar-thumb {
-  background: #16a34a;
+  background: var(--primary);
   border-radius: 3px;
 }
 
@@ -244,8 +193,8 @@
   bottom: var(--safe-area-bottom);
   left: 0;
   right: 0;
-  background: black;
-  border-top: 1px solid #16a34a;
+  background: var(--background);
+  border-top: 1px solid var(--border);
   padding: 0.75rem 1rem;
   padding-bottom: calc(0.75rem + var(--safe-area-bottom));
   z-index: 50;
@@ -362,11 +311,11 @@
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   .terminal-content {
-    border: 2px solid #16a34a;
+    border: 2px solid var(--primary);
   }
   
   .terminal-tabs {
-    border-bottom: 2px solid #16a34a;
+    border-bottom: 2px solid var(--primary);
   }
 }
 
@@ -376,12 +325,58 @@
   height: 1em;
   line-height: 1em;
   vertical-align: middle;
-  background: #4ade80;
+  background: var(--terminal-accent);
   margin-left: 0.1em;
+  border-radius: 1px;
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
   animation: terminal-blink 1s steps(1) infinite;
 }
 
 @keyframes terminal-blink {
-  from, 50% { opacity: 1; }
-  50%, to { opacity: 0; }
+  from, 50% { 
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.8);
+  }
+  50%, to { 
+    opacity: 0;
+    box-shadow: none;
+  }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Modern terminal enhancements */
+@media (max-width: 768px) {
+  .terminal-app {
+    animation: none; /* Disable gradient animation on mobile for performance */
+  }
+}
+
+/* Enhanced scroll behavior for terminal */
+.terminal-output {
+  scroll-behavior: smooth;
+}
+
+.terminal-output::-webkit-scrollbar {
+  width: 8px;
+}
+
+.terminal-output::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.terminal-output::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--terminal-accent), #00d4aa);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.terminal-output::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #00ff88, #00ffaa);
+  box-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
 }
