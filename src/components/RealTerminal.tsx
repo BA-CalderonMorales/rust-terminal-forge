@@ -29,6 +29,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
   const terminalRef = useRef<HTMLDivElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
+  
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [output, setOutput] = useState('');
@@ -39,9 +40,9 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
   
   // Mobile-specific state
   const [touchCapabilities] = useState(getTouchCapabilities());
-  const [isVirtualKeyboardVisible, setIsVirtualKeyboardVisible] = useState(false);
+  const [virtualKeyboardVisible, setVirtualKeyboardVisible] = useState(false);
   const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
-  const [showMobileInputOverlay, setShowMobileInputOverlay] = useState(false);
+  
   const [lastTouchTime, setLastTouchTime] = useState(0);
   const [touchStartPos, setTouchStartPos] = useState({ x: 0, y: 0 });
 
@@ -53,71 +54,9 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     return () => clearInterval(interval);
   }, []);
 
-  // Mobile keyboard visibility detection
-  useEffect(() => {
-    if (!touchCapabilities.isMobile) return;
+  
 
-    const handleResize = () => {
-      const currentHeight = window.innerHeight;
-      const heightDifference = viewportHeight - currentHeight;
-      
-      // If height decreased significantly, keyboard is likely open
-      if (heightDifference > 150) {
-        setIsVirtualKeyboardVisible(true);
-        // Adjust terminal layout when keyboard opens
-        if (terminalRef.current) {
-          terminalRef.current.style.paddingBottom = `${heightDifference}px`;
-        }
-      } else {
-        setIsVirtualKeyboardVisible(false);
-        if (terminalRef.current) {
-          terminalRef.current.style.paddingBottom = '0px';
-        }
-      }
-    };
-
-    // Visual viewport API for better keyboard detection (if supported)
-    if ('visualViewport' in window && window.visualViewport) {
-      const visualViewport = window.visualViewport;
-      const handleViewportChange = () => {
-        const keyboardHeight = window.innerHeight - visualViewport.height;
-        setIsVirtualKeyboardVisible(keyboardHeight > 150);
-        
-        if (keyboardHeight > 150) {
-          // Keyboard is visible - adjust layout
-          if (outputRef.current) {
-            outputRef.current.style.paddingBottom = `${keyboardHeight + 20}px`;
-            // Auto-scroll to bottom when keyboard opens
-            setTimeout(() => {
-              if (outputRef.current) {
-                outputRef.current.scrollTo({
-                  top: outputRef.current.scrollHeight,
-                  behavior: 'smooth'
-                });
-              }
-            }, 300);
-          }
-        } else {
-          // Keyboard is hidden
-          if (outputRef.current) {
-            outputRef.current.style.paddingBottom = '16px';
-          }
-        }
-      };
-      
-      visualViewport.addEventListener('resize', handleViewportChange);
-      return () => visualViewport.removeEventListener('resize', handleViewportChange);
-    } else {
-      // Fallback to window resize events
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-    }
-  }, [touchCapabilities.isMobile, viewportHeight]);
-
-  // Update viewport height on mount
-  useEffect(() => {
-    setViewportHeight(window.innerHeight);
-  }, []);
+  
 
   // Smart auto-scroll detection
   const checkScrollPosition = useCallback(() => {
@@ -254,57 +193,35 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     }
   }, [touchCapabilities]);
 
-  // Enhanced mobile input handling with hidden input element
+  // Focus hidden input for mobile keyboard support
   const focusHiddenInput = useCallback(() => {
     if (touchCapabilities.isMobile && hiddenInputRef.current) {
       hiddenInputRef.current.focus();
       hiddenInputRef.current.click();
-      setShowMobileInputOverlay(true);
-      triggerHapticFeedback('light');
     }
-  }, [touchCapabilities.isMobile, triggerHapticFeedback]);
+  }, [touchCapabilities.isMobile]);
 
-  // Handle hidden input changes (for mobile typing)
-  const handleHiddenInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const lastChar = value[value.length - 1];
-    
-    if (lastChar) {
-      setCurrentInput(prev => prev + lastChar);
-      // Clear the hidden input to allow continuous typing
-      e.target.value = '';
-    }
-  }, []);
+  // Virtual keyboard detection
+  useEffect(() => {
+    if (!touchCapabilities.isMobile) return;
 
-  // Handle hidden input key events (for special keys on mobile)
-  const handleHiddenInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    e.stopPropagation();
-    
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      executeCommand();
-      triggerHapticFeedback('medium');
-      return;
-    }
-    
-    if (e.key === 'Backspace') {
-      e.preventDefault();
-      setCurrentInput(prev => prev.slice(0, -1));
-      triggerHapticFeedback('light');
-      return;
-    }
-    
-    // Handle Ctrl+C on mobile (some mobile keyboards support this)
-    if (e.ctrlKey && e.key === 'c') {
-      e.preventDefault();
-      if (socketRef.current) {
-        socketRef.current.emit('terminal-interrupt');
-      }
-      setCurrentInput('');
-      triggerHapticFeedback('heavy');
-      return;
-    }
-  }, [executeCommand, triggerHapticFeedback]);
+    const handleResize = () => {
+      const currentHeight = window.innerHeight;
+      const heightDifference = viewportHeight - currentHeight;
+      
+      // If height decreased by more than 150px, assume virtual keyboard is visible
+      const keyboardVisible = heightDifference > 150;
+      setVirtualKeyboardVisible(keyboardVisible);
+      setViewportHeight(currentHeight);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [viewportHeight, touchCapabilities.isMobile]);
+
+  
+
+  
 
   // Touch event handlers with gesture recognition
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -337,8 +254,8 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     
     // Tap gesture (short duration, minimal movement)
     if (touchDuration < 300 && distance < 10) {
-      focusHiddenInput();
       triggerHapticFeedback('light');
+      focusHiddenInput();
       return;
     }
     
@@ -346,8 +263,6 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     if (touchDuration > 500 && distance < 20) {
       // Long press detected - could trigger context actions
       triggerHapticFeedback('heavy');
-      // For now, just focus input but could expand for context menu
-      focusHiddenInput();
       return;
     }
     
@@ -369,12 +284,6 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
 
   // Handle keyboard input for the unified terminal
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    // On mobile, delegate to hidden input for better keyboard support
-    if (touchCapabilities.isMobile) {
-      focusHiddenInput();
-      return;
-    }
-
     // Handle special key combinations
     if (e.ctrlKey && e.key === 'c') {
       e.preventDefault();
@@ -414,16 +323,14 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
       setCurrentInput(prev => prev + e.key);
       return;
     }
-  }, [executeCommand, sendInput, touchCapabilities.isMobile, focusHiddenInput]);
+  }, [executeCommand, sendInput]);
 
-  // Focus the terminal when clicked (enhanced for mobile)
+  // Focus the terminal when clicked
   const handleTerminalClick = useCallback(() => {
-    if (touchCapabilities.isMobile) {
-      focusHiddenInput();
-    } else if (terminalRef.current) {
+    if (terminalRef.current) {
       terminalRef.current.focus();
     }
-  }, [touchCapabilities.isMobile, focusHiddenInput]);
+  }, []);
 
   return (
     <div 
@@ -431,7 +338,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
+        height: virtualKeyboardVisible ? `${viewportHeight}px` : '100%',
         backgroundColor: '#0f0f0f',
         color: '#e1e1e1',
         fontFamily: 'ui-monospace, "JetBrains Mono", "Fira Code", "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace',
@@ -492,12 +399,17 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
                 background: 'linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.4))',
                 border: '1px solid rgba(0, 255, 136, 0.3)',
                 borderRadius: '4px',
-                padding: '4px 8px',
+                padding: touchCapabilities.isMobile ? '8px 12px' : '4px 8px',
                 color: '#00ff88',
-                fontSize: '10px',
+                fontSize: touchCapabilities.isMobile ? '12px' : '10px',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                backdropFilter: 'blur(10px)'
+                backdropFilter: 'blur(10px)',
+                minHeight: touchCapabilities.isMobile ? '44px' : 'auto',
+                minWidth: touchCapabilities.isMobile ? '44px' : 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
               title="Scroll to bottom"
               onMouseEnter={(e) => {
@@ -521,74 +433,34 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
         <input
           ref={hiddenInputRef}
           type="text"
-          onChange={handleHiddenInputChange}
-          onKeyDown={handleHiddenInputKeyDown}
-          onBlur={() => setShowMobileInputOverlay(false)}
+          value={currentInput}
+          onChange={(e) => setCurrentInput(e.target.value)}
+          onKeyDown={handleKeyDown}
           style={{
             position: 'absolute',
             left: '-9999px',
             top: '-9999px',
             opacity: 0,
-            pointerEvents: 'none',
+            width: '1px',
+            height: '1px',
+            border: 'none',
+            outline: 'none',
+            background: 'transparent',
             fontSize: '16px', // Prevent zoom on iOS
-            zIndex: -1
+            transform: 'scale(0)',
+            pointerEvents: 'none'
           }}
+          tabIndex={-1}
+          aria-hidden="true"
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
           spellCheck={false}
-          aria-hidden="true"
         />
       )}
 
       {/* Mobile Input Overlay */}
-      {touchCapabilities.isMobile && showMobileInputOverlay && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            backdropFilter: 'blur(2px)'
-          }}
-          onClick={() => setShowMobileInputOverlay(false)}
-        >
-          <div
-            style={{
-              backgroundColor: '#1a1a1a',
-              border: '1px solid rgba(0, 255, 136, 0.3)',
-              borderRadius: '8px',
-              padding: '16px',
-              minWidth: '300px',
-              maxWidth: '90vw',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.8)'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{
-              color: '#00ff88',
-              fontSize: '14px',
-              marginBottom: '8px',
-              textAlign: 'center'
-            }}>
-              Mobile Keyboard Active
-            </div>
-            <div style={{
-              color: '#888',
-              fontSize: '12px',
-              textAlign: 'center'
-            }}>
-              Tap outside to close
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       {/* Main Terminal Area */}
       <div 
@@ -600,11 +472,15 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         tabIndex={0}
+        role="textbox"
+        aria-label="Terminal interface - tap to type commands"
+        aria-multiline="false"
+        aria-describedby="terminal-status"
         style={{
           flex: 1,
           position: 'relative',
           outline: 'none',
-          minHeight: 0, // Important for flex child
+          minHeight: touchCapabilities.isMobile ? '44px' : 0, // Important for flex child + mobile touch target
           overflow: 'hidden',
           // Enhanced touch handling
           touchAction: touchCapabilities.isMobile ? 'manipulation' : 'auto',
@@ -644,7 +520,9 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
             overscrollBehavior: 'contain',
             // Mobile font size adjustments
             fontSize: touchCapabilities.isMobile ? 'clamp(14px, 3vw, 16px)' : 'clamp(12px, 2.5vw, 14px)',
-            lineHeight: touchCapabilities.isMobile ? '1.5' : '1.4'
+            lineHeight: touchCapabilities.isMobile ? '1.5' : '1.4',
+            // Ensure minimum touch target size
+            minHeight: touchCapabilities.isMobile ? '44px' : 'auto'
           }}
         >
           {!isConnected && (
@@ -712,52 +590,16 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
             </div>
           )}
           
-          {/* Mobile floating keyboard button */}
-          {touchCapabilities.isMobile && isConnected && (
-            <button
-              onClick={focusHiddenInput}
-              style={{
-                position: 'fixed',
-                bottom: '20px',
-                right: '20px',
-                width: '56px',
-                height: '56px',
-                borderRadius: '28px',
-                backgroundColor: '#00ff88',
-                border: 'none',
-                boxShadow: '0 4px 12px rgba(0, 255, 136, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                zIndex: 100,
-                transition: 'all 0.2s ease',
-                transform: isVirtualKeyboardVisible ? 'translateY(-100px)' : 'translateY(0)'
-              }}
-              onTouchStart={(e) => {
-                e.currentTarget.style.transform = isVirtualKeyboardVisible ? 
-                  'translateY(-100px) scale(0.95)' : 'translateY(0) scale(0.95)';
-                triggerHapticFeedback('medium');
-              }}
-              onTouchEnd={(e) => {
-                e.currentTarget.style.transform = isVirtualKeyboardVisible ? 
-                  'translateY(-100px) scale(1)' : 'translateY(0) scale(1)';
-              }}
-              title="Open keyboard"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <rect x="2" y="6" width="20" height="12" rx="2" stroke="#0f0f0f" strokeWidth="2"/>
-                <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M10 14h.01M14 14h.01M18 14h.01" stroke="#0f0f0f" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M8 18h8" stroke="#0f0f0f" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            </button>
-          )}
+          
         </div>
       </div>
 
       {/* Modern Status Bar */}
       <div 
+        id="terminal-status"
         className="terminal-status"
+        role="status"
+        aria-live="polite"
         style={{
           display: 'flex',
           alignItems: 'center',
