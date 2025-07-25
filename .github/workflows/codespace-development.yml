@@ -1,0 +1,608 @@
+# Advanced Codespace Development Workflow
+# Creates persistent development sessions that continue improving the codebase
+# Uses the --dangerously-allow-browser flag equivalent for CI environments
+
+name: Codespace Continuous Development
+
+on:
+  workflow_dispatch:
+    inputs:
+      duration_hours:
+        description: 'How long to run (hours)'
+        required: false
+        default: '4'
+        type: string
+      focus_area:
+        description: 'Development focus'
+        required: false
+        default: 'architecture'
+        type: choice
+        options:
+        - architecture
+        - performance
+        - ui-ux
+        - security
+        - testing
+        - documentation
+      intensity:
+        description: 'Development intensity'
+        required: false
+        default: 'moderate'
+        type: choice
+        options:
+        - light
+        - moderate
+        - intensive
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+jobs:
+  setup-development-environment:
+    name: Setup Persistent Development Session
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+        
+    - name: Create Development Context
+      run: |
+        # Create comprehensive context file for the AI agent
+        cat > DEVELOPMENT_CONTEXT.md << 'EOF'
+        # Rust Terminal Forge - Autonomous Development Context
+        
+        ## Mission
+        Continuously improve this terminal application to be the most maintainable, 
+        human/AI-friendly codebase possible while pushing the boundaries of what's achievable
+        with modern web technology and Rust backends.
+        
+        ## Core Principles
+        - **KISS**: Keep implementations simple and understandable
+        - **YAGNI**: Only implement what's actually needed
+        - **DRY**: Eliminate code duplication through smart abstractions
+        - **MVVM/MVC**: Clear separation of concerns
+        - **Vertical Slice Architecture**: Feature-based organization
+        - **Screaming Architecture**: The codebase should tell you what it does
+        
+        ## Current Architecture
+        ```
+        rust-terminal-forge/
+        ├── src/
+        │   ├── components/          # React UI components
+        │   │   ├── RealTerminal.tsx # Main terminal interface
+        │   │   ├── AnsiText.tsx     # ANSI color parsing
+        │   │   └── ui/              # Reusable UI components
+        │   ├── home/               # Home module (MVVM pattern)
+        │   │   ├── view.tsx        # React view layer
+        │   │   ├── viewModel.ts    # Business logic
+        │   │   ├── model.ts        # Data layer
+        │   │   └── components/     # Module-specific components
+        │   ├── core/               # Core business logic
+        │   │   ├── commands/       # Command handling system
+        │   │   ├── filesystem/     # Virtual filesystem
+        │   │   └── types.ts        # Type definitions
+        │   └── utils/              # Utility functions
+        ├── src-rust/               # Rust backend services
+        │   ├── server/             # HTTP API server
+        │   ├── pty-server/         # WebSocket PTY server
+        │   └── shared/             # Shared Rust code
+        └── deployment/             # Infrastructure as code
+        ```
+        
+        ## Improvement Areas Priority
+        1. **Code Architecture** - Ensure clean patterns and maintainability
+        2. **Performance** - Optimize for speed and resource efficiency  
+        3. **Security** - Harden against vulnerabilities
+        4. **User Experience** - Mobile-first responsive design
+        5. **Developer Experience** - Tools, documentation, debugging
+        6. **Testing** - Comprehensive test coverage
+        7. **Infrastructure** - Self-healing, monitoring, scaling
+        
+        ## Success Metrics
+        - Code complexity stays manageable (cyclomatic complexity < 10 per function)
+        - Documentation coverage > 80%
+        - Mobile performance remains excellent (< 3s load time)
+        - Zero security vulnerabilities
+        - Test coverage > 90%
+        - AI agents can easily understand and modify the code
+        
+        ## Focus Area: ${{ github.event.inputs.focus_area }}
+        ## Duration: ${{ github.event.inputs.duration_hours }} hours
+        ## Intensity: ${{ github.event.inputs.intensity }}
+        EOF
+        
+    - name: Setup Claude Development Environment
+      run: |
+        # Create the main autonomous development script
+        cat > autonomous_claude.js << 'EOF'
+        #!/usr/bin/env node
+        
+        const https = require('https');
+        const fs = require('fs');
+        const path = require('path');
+        const { spawn, exec } = require('child_process');
+        
+        class AutonomousClaudeSession {
+          constructor(config) {
+            this.config = {
+              maxHours: parseInt(config.maxHours) || 4,
+              focusArea: config.focusArea || 'architecture',
+              intensity: config.intensity || 'moderate',
+              anthropicApiKey: config.anthropicApiKey
+            };
+            
+            this.startTime = Date.now();
+            this.sessionId = `session-${Date.now()}`;
+            this.improvements = [];
+            this.cycleCount = 0;
+            
+            // Intensity settings
+            this.intensityConfig = {
+              light: { cycleDuration: 300000, improvementsPerCycle: 1 },     // 5 min, 1 improvement
+              moderate: { cycleDuration: 180000, improvementsPerCycle: 2 },  // 3 min, 2 improvements  
+              intensive: { cycleDuration: 120000, improvementsPerCycle: 3 }  // 2 min, 3 improvements
+            };
+            
+            this.currentConfig = this.intensityConfig[this.config.intensity];
+          }
+          
+          log(message, level = 'info') {
+            const timestamp = new Date().toISOString();
+            const prefix = `[${timestamp}] [${level.toUpperCase()}] [${this.sessionId}]`;
+            console.log(`${prefix} ${message}`);
+            
+            // Also write to log file
+            fs.appendFileSync('autonomous_development.log', `${prefix} ${message}\n`);
+          }
+          
+          async shouldContinue() {
+            const elapsed = (Date.now() - this.startTime) / (1000 * 60 * 60);
+            return elapsed < this.config.maxHours;
+          }
+          
+          async makeClaudeRequest(messages, maxTokens = 4000) {
+            return new Promise((resolve, reject) => {
+              const data = JSON.stringify({
+                model: "claude-3-sonnet-20240229",
+                max_tokens: maxTokens,
+                messages: messages,
+                temperature: 0.1 // Low temperature for consistent code improvements
+              });
+              
+              const options = {
+                hostname: 'api.anthropic.com',
+                port: 443,
+                path: '/v1/messages',
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-api-key': this.config.anthropicApiKey,
+                  'anthropic-version': '2023-06-01'
+                }
+              };
+              
+              const req = https.request(options, (res) => {
+                let body = '';
+                res.on('data', (chunk) => body += chunk);
+                res.on('end', () => {
+                  try {
+                    const response = JSON.parse(body);
+                    if (response.error) {
+                      reject(new Error(response.error.message));
+                    } else {
+                      resolve(response);
+                    }
+                  } catch (e) {
+                    reject(e);
+                  }
+                });
+              });
+              
+              req.on('error', reject);
+              req.write(data);
+              req.end();
+            });
+          }
+          
+          async analyzeProjectState() {
+            this.log('Analyzing current project state...');
+            
+            // Get project files and their content
+            const projectFiles = await this.getProjectFiles();
+            const recentChanges = await this.getRecentChanges();
+            const context = fs.readFileSync('DEVELOPMENT_CONTEXT.md', 'utf8');
+            
+            const messages = [{
+              role: 'user',
+              content: `${context}
+              
+              ## Current Project Files:
+              ${projectFiles.substring(0, 2000)}
+              
+              ## Recent Changes:
+              ${recentChanges}
+              
+              ## Cycle: ${this.cycleCount + 1}
+              ## Focus: ${this.config.focusArea}
+              
+              As an autonomous AI developer, analyze this Rust Terminal Forge codebase and identify 
+              ${this.currentConfig.improvementsPerCycle} specific improvements that follow our core principles.
+              
+              For each improvement, consider:
+              1. Does it make the code more maintainable?
+              2. Does it follow KISS, YAGNI, DRY principles?
+              3. Does it improve the human/AI collaboration experience?
+              4. Does it maintain or improve performance?
+              5. Does it enhance security?
+              
+              Respond with a JSON array of improvements:
+              [
+                {
+                  "id": "improvement-1",
+                  "file": "path/to/file",
+                  "type": "refactor|feature|fix|optimization|documentation",
+                  "description": "Brief description",
+                  "rationale": "Why this improvement is needed",
+                  "priority": "high|medium|low",
+                  "estimatedImpact": "How this helps the project",
+                  "difficulty": "easy|medium|hard"
+                }
+              ]`
+            }];
+            
+            try {
+              const response = await this.makeClaudeRequest(messages, 2000);
+              const content = response.content[0].text;
+              
+              // Extract JSON from response
+              const jsonMatch = content.match(/\[[\s\S]*?\]/);
+              if (jsonMatch) {
+                const improvements = JSON.parse(jsonMatch[0]);
+                this.log(`Identified ${improvements.length} potential improvements`);
+                return improvements;
+              }
+              
+              this.log('No structured improvements found in response', 'warn');
+              return [];
+            } catch (error) {
+              this.log(`Error analyzing project state: ${error.message}`, 'error');
+              return [];
+            }
+          }
+          
+          async implementImprovement(improvement) {
+            this.log(`Implementing: ${improvement.description}`);
+            
+            let currentContent = '';
+            if (fs.existsSync(improvement.file)) {
+              currentContent = fs.readFileSync(improvement.file, 'utf8');
+            }
+            
+            // Get surrounding context for better improvements
+            const contextFiles = await this.getRelatedFiles(improvement.file);
+            
+            const messages = [{
+              role: 'user',
+              content: `## Improvement Task
+              File: ${improvement.file}
+              Type: ${improvement.type}
+              Description: ${improvement.description}
+              Rationale: ${improvement.rationale}
+              
+              ## Current File Content:
+              ${currentContent.substring(0, 4000)}
+              
+              ## Related Files Context:
+              ${contextFiles.substring(0, 2000)}
+              
+              ## Instructions:
+              Implement the improvement while strictly following these principles:
+              - KISS: Keep the solution simple and readable
+              - YAGNI: Only add what's necessary for this specific improvement
+              - DRY: Reuse existing patterns and avoid duplication
+              - Maintain TypeScript/Rust type safety
+              - Preserve existing functionality
+              - Add appropriate comments for AI/human readability
+              - Follow the existing code style and patterns
+              
+              Respond with ONLY the complete improved file content. Do not include explanations 
+              or markdown formatting - just the raw code that should replace the file content.`
+            }];
+            
+            try {
+              const response = await this.makeClaudeRequest(messages, 6000);
+              const improvedContent = response.content[0].text.trim();
+              
+              // Validate the improvement before applying
+              if (await this.validateImprovement(improvement.file, improvedContent)) {
+                // Create directory if it doesn't exist
+                const dir = path.dirname(improvement.file);
+                if (!fs.existsSync(dir)) {
+                  fs.mkdirSync(dir, { recursive: true });
+                }
+                
+                // Backup original file
+                if (fs.existsSync(improvement.file)) {
+                  fs.copyFileSync(improvement.file, `${improvement.file}.backup.${Date.now()}`);
+                }
+                
+                // Write improved content
+                fs.writeFileSync(improvement.file, improvedContent);
+                this.improvements.push(improvement);
+                
+                this.log(`✅ Successfully improved: ${improvement.file}`);
+                return true;
+              } else {
+                this.log(`❌ Validation failed for: ${improvement.file}`, 'warn');
+                return false;
+              }
+            } catch (error) {
+              this.log(`Error implementing improvement: ${error.message}`, 'error');
+              return false;
+            }
+          }
+          
+          async validateImprovement(filePath, content) {
+            // Basic validation checks
+            if (!content || content.length < 10) return false;
+            
+            // Language-specific validation
+            if (filePath.endsWith('.ts') || filePath.endsWith('.tsx')) {
+              // Check for basic TypeScript syntax
+              if (!content.includes('export') && !content.includes('import') && !content.includes('function') && !content.includes('const') && !content.includes('class')) {
+                return false;
+              }
+            } else if (filePath.endsWith('.rs')) {
+              // Check for basic Rust syntax
+              if (!content.includes('fn') && !content.includes('struct') && !content.includes('impl') && !content.includes('use')) {
+                return false;
+              }
+            }
+            
+            return true;
+          }
+          
+          async getProjectFiles() {
+            return new Promise((resolve) => {
+              exec(`find src -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.rs" \) | head -20 | xargs wc -l`, 
+                (error, stdout) => {
+                  resolve(stdout || 'Unable to analyze project files');
+                }
+              );
+            });
+          }
+          
+          async getRecentChanges() {
+            return new Promise((resolve) => {
+              exec('git log --oneline -n 5', (error, stdout) => {
+                resolve(stdout || 'No recent changes found');
+              });
+            });
+          }
+          
+          async getRelatedFiles(filePath) {
+            const dir = path.dirname(filePath);
+            try {
+              const files = fs.readdirSync(dir).slice(0, 3);
+              let context = '';
+              for (const file of files) {
+                if (file !== path.basename(filePath)) {
+                  const fullPath = path.join(dir, file);
+                  if (fs.statSync(fullPath).isFile()) {
+                    const content = fs.readFileSync(fullPath, 'utf8');
+                    context += `\n\n--- ${file} ---\n${content.substring(0, 500)}`;
+                  }
+                }
+              }
+              return context;
+            } catch (error) {
+              return 'No related files found';
+            }
+          }
+          
+          async runTypeCheck() {
+            return new Promise((resolve) => {
+              exec('npm run typecheck', (error, stdout, stderr) => {
+                const success = !error;
+                this.log(`TypeScript check: ${success ? 'PASSED' : 'FAILED'}`);
+                if (!success) this.log(stderr, 'warn');
+                resolve(success);
+              });
+            });
+          }
+          
+          async runBuild() {
+            return new Promise((resolve) => {
+              exec('npm run build', (error, stdout, stderr) => {
+                const success = !error;
+                this.log(`Build: ${success ? 'PASSED' : 'FAILED'}`);
+                if (!success) this.log(stderr, 'warn');
+                resolve(success);
+              });
+            });
+          }
+          
+          async commitChanges() {
+            if (this.improvements.length === 0) {
+              this.log('No improvements to commit');
+              return;
+            }
+            
+            return new Promise((resolve) => {
+              const commitMessage = `🤖 Autonomous improvements (Cycle ${this.cycleCount})
+              
+Focus: ${this.config.focusArea}
+Improvements: ${this.improvements.length}
+
+Changes:
+${this.improvements.map(imp => `- ${imp.type}: ${imp.description}`).join('\n')}
+
+Principles applied: KISS, YAGNI, DRY, MVVM
+Session: ${this.sessionId}`;
+              
+              exec(`git add . && git commit -m "${commitMessage.replace(/"/g, '\\"')}"`, (error) => {
+                if (!error) {
+                  this.log(`Committed ${this.improvements.length} improvements`);
+                  exec('git push origin main', (pushError) => {
+                    if (!pushError) {
+                      this.log('Successfully pushed changes to repository');
+                    }
+                    resolve();
+                  });
+                } else {
+                  this.log('No changes to commit');
+                  resolve();
+                }
+              });
+            });
+          }
+          
+          async runDevelopmentCycle() {
+            this.log(`🚀 Starting autonomous development session`);
+            this.log(`Focus: ${this.config.focusArea}, Duration: ${this.config.maxHours}h, Intensity: ${this.config.intensity}`);
+            
+            while (await this.shouldContinue()) {
+              this.cycleCount++;
+              this.log(`--- Development Cycle ${this.cycleCount} ---`);
+              
+              // Analyze current state and get improvements
+              const improvements = await this.analyzeProjectState();
+              
+              if (improvements.length === 0) {
+                this.log('No improvements identified, taking a short break...');
+                await new Promise(resolve => setTimeout(resolve, 30000)); // 30 second break
+                continue;
+              }
+              
+              // Sort improvements by priority and difficulty
+              improvements.sort((a, b) => {
+                const priorityWeight = { high: 3, medium: 2, low: 1 };
+                const difficultyWeight = { easy: 3, medium: 2, hard: 1 };
+                
+                const scoreA = priorityWeight[a.priority] + difficultyWeight[a.difficulty];
+                const scoreB = priorityWeight[b.priority] + difficultyWeight[b.difficulty];
+                
+                return scoreB - scoreA;
+              });
+              
+              // Implement improvements
+              let implementedCount = 0;
+              for (const improvement of improvements.slice(0, this.currentConfig.improvementsPerCycle)) {
+                if (!(await this.shouldContinue())) break;
+                
+                if (await this.implementImprovement(improvement)) {
+                  implementedCount++;
+                }
+                
+                // Small delay between implementations
+                await new Promise(resolve => setTimeout(resolve, 2000));
+              }
+              
+              // Validate changes
+              if (implementedCount > 0) {
+                this.log('Validating improvements...');
+                const typeCheckPassed = await this.runTypeCheck();
+                const buildPassed = await this.runBuild();
+                
+                if (typeCheckPassed && buildPassed) {
+                  await this.commitChanges();
+                  this.improvements = []; // Reset for next cycle
+                } else {
+                  this.log('Validation failed, rolling back changes...', 'warn');
+                  // Could implement rollback logic here
+                }
+              }
+              
+              // Wait for next cycle
+              this.log(`Cycle ${this.cycleCount} completed. Waiting for next cycle...`);
+              await new Promise(resolve => setTimeout(resolve, this.currentConfig.cycleDuration));
+            }
+            
+            this.log('🏁 Autonomous development session completed');
+            this.log(`Total cycles: ${this.cycleCount}`);
+            this.log(`Total improvements applied: ${this.improvements.length}`);
+          }
+        }
+        
+        // Main execution
+        async function main() {
+          const config = {
+            maxHours: process.env.MAX_HOURS || 4,
+            focusArea: process.env.FOCUS_AREA || 'architecture',
+            intensity: process.env.INTENSITY || 'moderate',
+            anthropicApiKey: process.env.ANTHROPIC_API_KEY
+          };
+          
+          if (!config.anthropicApiKey) {
+            console.error('❌ ANTHROPIC_API_KEY environment variable is required');
+            process.exit(1);
+          }
+          
+          const session = new AutonomousClaudeSession(config);
+          
+          // Handle graceful shutdown
+          process.on('SIGINT', () => {
+            session.log('Received shutdown signal, completing current cycle...');
+            process.exit(0);
+          });
+          
+          try {
+            await session.runDevelopmentCycle();
+          } catch (error) {
+            session.log(`Fatal error: ${error.message}`, 'error');
+            process.exit(1);
+          }
+        }
+        
+        main().catch(console.error);
+        EOF
+        
+        chmod +x autonomous_claude.js
+        
+    - name: Run Autonomous Development Session
+      env:
+        MAX_HOURS: ${{ github.event.inputs.duration_hours }}
+        FOCUS_AREA: ${{ github.event.inputs.focus_area }}
+        INTENSITY: ${{ github.event.inputs.intensity }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Configure git for commits
+        git config --global user.name "Autonomous Claude Developer"
+        git config --global user.email "claude@anthropic.com"
+        
+        # Start the autonomous development session
+        echo "🚀 Starting autonomous development session..."
+        echo "Duration: ${{ github.event.inputs.duration_hours }} hours"
+        echo "Focus: ${{ github.event.inputs.focus_area }}"
+        echo "Intensity: ${{ github.event.inputs.intensity }}"
+        
+        # Run with timeout to prevent runaway processes
+        timeout ${{ github.event.inputs.duration_hours }}h node autonomous_claude.js || echo "Session completed"
+        
+    - name: Generate Development Report
+      if: always()
+      run: |
+        echo "# Autonomous Development Session Report" > DEVELOPMENT_REPORT.md
+        echo "" >> DEVELOPMENT_REPORT.md
+        echo "**Session Duration**: ${{ github.event.inputs.duration_hours }} hours" >> DEVELOPMENT_REPORT.md
+        echo "**Focus Area**: ${{ github.event.inputs.focus_area }}" >> DEVELOPMENT_REPORT.md
+        echo "**Intensity**: ${{ github.event.inputs.intensity }}" >> DEVELOPMENT_REPORT.md
+        echo "**Completed**: $(date)" >> DEVELOPMENT_REPORT.md
+        echo "" >> DEVELOPMENT_REPORT.md
+        
+        if [ -f "autonomous_development.log" ]; then
+          echo "## Development Log" >> DEVELOPMENT_REPORT.md
+          echo "\`\`\`" >> DEVELOPMENT_REPORT.md
+          tail -n 50 autonomous_development.log >> DEVELOPMENT_REPORT.md
+          echo "\`\`\`" >> DEVELOPMENT_REPORT.md
+        fi
+        
+        # Archive logs
+        mkdir -p development_logs
+        cp autonomous_development.log "development_logs/session-$(date +%Y%m%d-%H%M%S).log" 2>/dev/null || true

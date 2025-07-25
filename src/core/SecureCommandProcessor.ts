@@ -3,6 +3,8 @@
 import { TerminalCommand } from './types';
 import { SecurityUtils } from './securityUtils';
 import { RateLimiter } from './rateLimiter';
+import { debugLogger } from './debugLogger';
+import { DebugComponent } from './debugConfig';
 import { FileSystemManager } from './filesystem/FileSystemManager';
 import { FileSystemCommands } from './commands/FileSystemCommands';
 import { SystemCommands } from './commands/SystemCommands';
@@ -13,6 +15,7 @@ import { ClaudeCommands } from './commands/ClaudeCommands';
 import { ClaudeCodeCommands } from './commands/ClaudeCodeCommands';
 import { EnvironmentCommands } from './commands/EnvironmentCommands';
 import { RustCommands } from './commands/RustCommands';
+import { UnifiedAICommandManager } from './ai/UnifiedAICommandManager';
 
 export class SecureCommandProcessor {
   private rateLimiter = new RateLimiter();
@@ -26,11 +29,31 @@ export class SecureCommandProcessor {
   private claudeCodeCommands = new ClaudeCodeCommands();
   private environmentCommands = new EnvironmentCommands();
   private rustCommands = new RustCommands();
+  private unifiedAIManager = new UnifiedAICommandManager();
 
   async processCommand(input: string, sessionId: string = 'default'): Promise<TerminalCommand> {
+    const traceId = debugLogger.startTrace(DebugComponent.COMMAND_PROCESSOR, 'processCommand', {
+      input: input.substring(0, 100), // Limit logged input to prevent spam
+      sessionId
+    });
+
+    debugLogger.debug(DebugComponent.COMMAND_PROCESSOR, `Processing command input: ${input}`, {
+      sessionId,
+      inputLength: input.length
+    });
+
     // Rate limiting check
-    if (!this.rateLimiter.isAllowed(sessionId)) {
+    const rateLimitStatus = this.rateLimiter.isAllowed(sessionId);
+    debugLogger.trace(DebugComponent.COMMAND_PROCESSOR, `Rate limit check: ${rateLimitStatus}`, { sessionId });
+    
+    if (!rateLimitStatus) {
       const remaining = this.rateLimiter.getRemainingCommands(sessionId);
+      debugLogger.warn(DebugComponent.COMMAND_PROCESSOR, `Rate limit exceeded for session: ${sessionId}`, {
+        remainingCommands: remaining
+      });
+      
+      debugLogger.endTrace(traceId, { success: false, reason: 'Rate limit exceeded' });
+      
       return {
         id: SecurityUtils.generateSecureId(),
         command: input,
@@ -41,7 +64,19 @@ export class SecureCommandProcessor {
     }
 
     // Input validation
-    if (!SecurityUtils.validateCommand(input)) {
+    const isValidCommand = SecurityUtils.validateCommand(input);
+    debugLogger.trace(DebugComponent.COMMAND_PROCESSOR, `Input validation: ${isValidCommand}`, {
+      inputLength: input.length,
+      hasSpecialChars: /[<>|&;]/.test(input)
+    });
+    
+    if (!isValidCommand) {
+      debugLogger.warn(DebugComponent.COMMAND_PROCESSOR, `Invalid command input: ${input}`, {
+        reason: 'Contains forbidden characters or exceeds length limit'
+      });
+      
+      debugLogger.endTrace(traceId, { success: false, reason: 'Invalid command input' });
+      
       return {
         id: SecurityUtils.generateSecureId(),
         command: input,
@@ -57,19 +92,53 @@ export class SecureCommandProcessor {
     const baseCommand = parts[0];
     const args = parts.slice(1);
 
+    debugLogger.debug(DebugComponent.COMMAND_PROCESSOR, `Command parsed successfully`, {
+      original: input,
+      sanitized: sanitizedInput,
+      expanded: command,
+      baseCommand,
+      argsCount: args.length
+    });
+
     const id = SecurityUtils.generateSecureId();
     const timestamp = new Date().toISOString();
 
     // Add to command history
     this.utilityCommands.addToHistory(command);
+    debugLogger.trace(DebugComponent.COMMAND_PROCESSOR, 'Command added to history');
 
     try {
-      return await this.executeCommand(baseCommand, args, id, command, timestamp);
+      const result = await this.executeCommand(baseCommand, args, id, command, timestamp);
+      
+      debugLogger.info(DebugComponent.COMMAND_PROCESSOR, `Command processing completed: ${baseCommand}`, {
+        exitCode: result.exitCode,
+        outputLength: result.output?.length || 0,
+        success: result.exitCode === 0
+      });
+      
+      debugLogger.endTrace(traceId, { 
+        success: true, 
+        exitCode: result.exitCode,
+        baseCommand,
+        outputLength: result.output?.length || 0
+      });
+      
+      return result;
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      debugLogger.error(DebugComponent.COMMAND_PROCESSOR, `Command processing error: ${errorMessage}`, {
+        command,
+        error,
+        stackTrace: error instanceof Error ? error.stack : undefined
+      });
+      
+      debugLogger.endTrace(traceId, { success: false, error: errorMessage });
+      
       return {
         id,
         command,
-        output: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
+        output: `Error: ${errorMessage}`,
         timestamp,
         exitCode: 1
       };
@@ -77,6 +146,12 @@ export class SecureCommandProcessor {
   }
 
   private async executeCommand(baseCommand: string, args: string[], id: string, command: string, timestamp: string): Promise<TerminalCommand> {
+    debugLogger.debug(DebugComponent.COMMAND_PROCESSOR, `Executing command: ${baseCommand}`, {
+      baseCommand,
+      argsCount: args.length,
+      fullCommand: command
+    });
+
     switch (baseCommand) {
       // File system commands
       case 'pwd':
@@ -145,6 +220,10 @@ export class SecureCommandProcessor {
       // Claude CLI commands (mapped from claude-code)
       case 'claude-code':
         return await this.claudeCodeCommands.handleClaude(args, id, command, timestamp);
+      
+      // Unified AI Interface - supports all providers
+      case 'ai':
+        return await this.unifiedAIManager.handleAICommand(args, id, command, timestamp);
       
       // Legacy cargo support (for backward compatibility)
       case 'cargo-legacy':
@@ -223,12 +302,15 @@ export class SecureCommandProcessor {
     const result: string[] = [];
     
     for (const part of parts) {
-      if (part.startsWith('-') && part.length > 2 && !part.includes('=')) {
+      // Handle long flags (--flag) or flags with equals (--flag=value) or single char flags (-f)
+      if (part.startsWith('-') && part.length > 2 && !part.startsWith('--') && !part.includes('=')) {
+        // This is a combined short flag like -abc, split into -a -b -c
         const flags = part.slice(1);
         for (const flag of flags) {
           result.push(`-${flag}`);
         }
       } else {
+        // This is a single argument: command, long flag (--help), single flag (-h), or value
         result.push(part);
       }
     }
@@ -241,7 +323,7 @@ export class SecureCommandProcessor {
       'pwd', 'ls', 'cd', 'mkdir', 'touch', 'cat', 'find', 'grep', 'vim', 
       'echo', 'whoami', 'date', 'env', 'uptime', 'hostname', 'which', 
       'history', 'alias', 'cargo', 'rustc', 'rustup', 'rust-dev',
-      'gemini', 'claude', 'claude-code', 'clear', 'help'
+      'gemini', 'claude', 'claude-code', 'ai', 'clear', 'help'
     ];
     const suggestions = commands.filter(cmd => 
       cmd.includes(command) || 

@@ -3,21 +3,29 @@ import React, { useState, useEffect } from 'react';
 import { HomeViewModel } from './viewModel';
 import { TerminalTabs } from './components/TerminalTabs';
 import { Terminal } from './components/Terminal';
-import { RealTerminal } from '@/components/RealTerminal';
+// import { RealTerminal } from '@/components/RealTerminal'; // File removed
+import { MultiTabTerminal } from '@/components/MultiTabTerminal';
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useVisualViewport } from '../hooks/useVisualViewport';
+import { themeManager } from '@/theme';
 
 export const HomeView: React.FC = () => {
   const [viewModel] = useState(() => new HomeViewModel());
   const [, forceUpdate] = useState({});
   const [isInitializing, setIsInitializing] = useState(true);
+  const [showThemeSwitcher, setShowThemeSwitcher] = useState(false);
   const { viewportHeight, isKeyboardOpen, isStable } = useVisualViewport();
 
   useEffect(() => {
     viewModel.onStateChange(() => {
       forceUpdate({});
     });
+
+    // Initialize theme manager
+    themeManager.init();
 
     // Auto-login with default user if not authenticated
     const initializeAuth = async () => {
@@ -194,44 +202,107 @@ export const HomeView: React.FC = () => {
         animation: 'gradientShift 20s ease infinite'
       }}
     >
-      {/* Terminal Tabs - Fixed at top */}
-      <TerminalTabs
-        sessions={sessions}
-        activeSessionId={activeSession?.id || ''}
-        onSwitchSession={handleSwitchSession}
-        onCloseSession={handleCloseSession}
-        onNewSession={handleNewSession}
-      />
-
-      {/* Terminal Content */}
-      <div className="flex flex-col h-full" style={{
-        background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 25%, #0a0a0a 100%)',
-        padding: 'clamp(8px, 2vw, 16px)'
+      {/* Multi-Tab Terminal Interface */}
+      <div className="flex-1 relative" style={{
+        padding: 'clamp(8px, 2vw, 16px)',
+        background: 'var(--terminal-gradient-main)'
       }}>
-        {/* Modern PTY Terminal Interface */}
-        <div className="flex-1" style={{
+        {/* Theme Switcher Toggle - Repositioned to not obstruct add terminal button */}
+        <button
+          onClick={() => setShowThemeSwitcher(!showThemeSwitcher)}
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '80px', // Moved left to avoid obstruction
+            zIndex: 1000,
+            background: 'var(--terminal-gradient-button)',
+            border: '1px solid rgba(0, 255, 136, 0.3)',
+            borderRadius: '50%',
+            width: '48px',
+            height: '48px',
+            color: 'var(--terminal-neon-green)',
+            fontSize: '18px',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            backdropFilter: 'blur(15px) saturate(1.2)',
+            WebkitBackdropFilter: 'blur(15px) saturate(1.2)',
+            boxShadow: '0 4px 12px var(--terminal-glow-green), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--terminal-gradient-button-hover)';
+            e.currentTarget.style.transform = 'scale(1.1)';
+            e.currentTarget.style.boxShadow = '0 6px 20px var(--terminal-glow-green), 0 0 30px var(--terminal-glow-green)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'var(--terminal-gradient-button)';
+            e.currentTarget.style.transform = 'scale(1)';
+            e.currentTarget.style.boxShadow = '0 4px 12px var(--terminal-glow-green), inset 0 1px 0 rgba(255, 255, 255, 0.1)';
+          }}
+          title="Switch Terminal Theme"
+        >
+          🎨
+        </button>
+
+        {/* Theme Switcher Panel - Adjusted position */}
+        {showThemeSwitcher && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '80px',
+              right: '80px', // Aligned with theme button
+              zIndex: 999,
+              animation: 'fadeIn 0.3s ease-out'
+            }}
+          >
+            <ThemeSwitcher compact />
+          </div>
+        )}
+
+        <div style={{
           borderRadius: '12px',
           overflow: 'hidden',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05)'
+          height: '100%',
+          boxShadow: `
+            0 0 50px var(--terminal-glow-green),
+            inset 0 0 100px rgba(0, 255, 136, 0.02),
+            0 25px 50px -12px var(--terminal-shadow-dark),
+            0 0 0 1px rgba(0, 255, 136, 0.1)
+          `
         }}>
-          <RealTerminal className="h-full" />
+          <ErrorBoundary 
+            onError={(error, errorInfo) => {
+              console.error('MultiTabTerminal Error:', error, errorInfo);
+            }}
+          >
+            <MultiTabTerminal className="h-full" />
+          </ErrorBoundary>
         </div>
-        
-        {/* Original Terminal - HIDDEN FOR NOW TO AVOID CONFUSION */}
-        {false && activeSession && (
-          <div className="flex-1 border-b border-gray-600" style={{display: 'none'}}>
-            <div className="px-4 py-2 bg-gray-800 text-white text-xs">
-              Original Simulated Terminal (Hidden - Use Real Terminal Above)
-            </div>
+      </div>
+      
+      {/* Legacy components - kept for reference but hidden */}
+      {false && (
+        <div style={{ display: 'none' }}>
+          <TerminalTabs
+            sessions={sessions}
+            activeSessionId={activeSession?.id || ''}
+            onSwitchSession={handleSwitchSession}
+            onCloseSession={handleCloseSession}
+            onNewSession={handleNewSession}
+          />
+          {/* <RealTerminal /> */}
+          {activeSession && (
             <Terminal
               session={activeSession}
               currentPath={viewModel.getCurrentPath()}
               onExecuteCommand={handleExecuteCommand}
               username={currentUser?.username || 'user'}
             />
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

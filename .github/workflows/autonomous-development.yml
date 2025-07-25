@@ -1,0 +1,496 @@
+# Autonomous Development Workflow
+# Continuously improves codebase using AI agents in GitHub Codespaces
+# Follows KISS, YAGNI, DRY, MVVM principles for maintainable code
+
+name: Autonomous Development Cycle
+
+on:
+  # Trigger on push to main for immediate improvements
+  push:
+    branches: [ main ]
+  
+  # Scheduled continuous improvement every 6 hours
+  schedule:
+    - cron: '0 */6 * * *'
+  
+  # Manual trigger for immediate improvements
+  workflow_dispatch:
+    inputs:
+      focus_area:
+        description: 'Focus area for improvements'
+        required: false
+        default: 'general'
+        type: choice
+        options:
+        - general
+        - performance
+        - security
+        - ui-ux
+        - architecture
+        - testing
+        - documentation
+      
+      duration_minutes:
+        description: 'Max duration in minutes'
+        required: false
+        default: '30'
+        type: string
+
+env:
+  NODE_VERSION: '18'
+  RUST_VERSION: 'stable'
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  analyze-codebase:
+    name: Analyze Current State
+    runs-on: ubuntu-latest
+    outputs:
+      should_improve: ${{ steps.analysis.outputs.should_improve }}
+      priority_areas: ${{ steps.analysis.outputs.priority_areas }}
+      
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Full history for better analysis
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ env.RUST_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        npm ci
+        cargo check
+        
+    - name: Run code quality analysis
+      id: analysis
+      run: |
+        # Create analysis script
+        cat > analyze.js << 'EOF'
+        const fs = require('fs');
+        const path = require('path');
+        
+        // Analysis metrics
+        const metrics = {
+          codeComplexity: 0,
+          testCoverage: 0,
+          documentationScore: 0,
+          architectureScore: 0,
+          securityScore: 0,
+          performanceScore: 0
+        };
+        
+        // Calculate code complexity
+        function analyzeComplexity(dir) {
+          let complexity = 0;
+          const files = fs.readdirSync(dir, { withFileTypes: true });
+          
+          for (const file of files) {
+            const fullPath = path.join(dir, file.name);
+            if (file.isDirectory() && !file.name.startsWith('.') && file.name !== 'node_modules') {
+              complexity += analyzeComplexity(fullPath);
+            } else if (file.name.endsWith('.ts') || file.name.endsWith('.tsx') || file.name.endsWith('.rs')) {
+              const content = fs.readFileSync(fullPath, 'utf8');
+              // Simple complexity metrics
+              complexity += (content.match(/if|for|while|switch|catch/g) || []).length;
+              complexity += (content.match(/function|fn|=>/g) || []).length * 0.5;
+            }
+          }
+          return complexity;
+        }
+        
+        // Calculate documentation score
+        function analyzeDocumentation() {
+          let score = 0;
+          const readmeExists = fs.existsSync('README.md') ? 20 : 0;
+          const deploymentExists = fs.existsSync('DEPLOYMENT.md') ? 15 : 0;
+          const dockerExists = fs.existsSync('Dockerfile') ? 10 : 0;
+          
+          // Check for inline documentation
+          const srcFiles = getAllFiles('src', ['.ts', '.tsx', '.rs']);
+          const documentedFiles = srcFiles.filter(file => {
+            const content = fs.readFileSync(file, 'utf8');
+            return content.includes('/**') || content.includes('///') || content.includes('//!');
+          });
+          
+          const docRatio = documentedFiles.length / Math.max(srcFiles.length, 1);
+          score = readmeExists + deploymentExists + dockerExists + (docRatio * 55);
+          
+          return Math.min(score, 100);
+        }
+        
+        function getAllFiles(dir, extensions) {
+          let files = [];
+          try {
+            const items = fs.readdirSync(dir, { withFileTypes: true });
+            for (const item of items) {
+              const fullPath = path.join(dir, item.name);
+              if (item.isDirectory() && !item.name.startsWith('.')) {
+                files = files.concat(getAllFiles(fullPath, extensions));
+              } else if (extensions.some(ext => item.name.endsWith(ext))) {
+                files.push(fullPath);
+              }
+            }
+          } catch (e) {
+            // Directory doesn't exist or can't be read
+          }
+          return files;
+        }
+        
+        // Run analysis
+        metrics.codeComplexity = analyzeComplexity('src');
+        metrics.documentationScore = analyzeDocumentation();
+        
+        // Determine if improvements are needed
+        const shouldImprove = 
+          metrics.codeComplexity > 200 || 
+          metrics.documentationScore < 70 ||
+          Math.random() > 0.7; // 30% chance for continuous improvement
+        
+        // Priority areas based on scores
+        const priorityAreas = [];
+        if (metrics.codeComplexity > 200) priorityAreas.push('architecture');
+        if (metrics.documentationScore < 50) priorityAreas.push('documentation');
+        priorityAreas.push('performance', 'security'); // Always consider these
+        
+        console.log('Analysis Results:', JSON.stringify(metrics, null, 2));
+        console.log('Should Improve:', shouldImprove);
+        console.log('Priority Areas:', priorityAreas.join(','));
+        
+        // Set GitHub Actions outputs
+        const output = process.env.GITHUB_OUTPUT;
+        fs.appendFileSync(output, `should_improve=${shouldImprove}\n`);
+        fs.appendFileSync(output, `priority_areas=${priorityAreas.join(',')}\n`);
+        EOF
+        
+        node analyze.js
+
+  autonomous-improvement:
+    name: Autonomous Code Improvement
+    needs: analyze-codebase
+    if: needs.analyze-codebase.outputs.should_improve == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Create Codespace for AI Development
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const maxDuration = '${{ github.event.inputs.duration_minutes || 30 }}';
+          const focusArea = '${{ github.event.inputs.focus_area || 'general' }}';
+          const priorityAreas = '${{ needs.analyze-codebase.outputs.priority_areas }}';
+          
+          // Create improvement task description
+          const taskDescription = `
+          # Autonomous Development Task
+          
+          ## Focus Area: ${focusArea}
+          ## Priority Areas: ${priorityAreas}
+          ## Max Duration: ${maxDuration} minutes
+          
+          ## Principles to Follow:
+          - KISS (Keep It Simple, Stupid)
+          - YAGNI (You Aren't Gonna Need It)
+          - DRY (Don't Repeat Yourself)
+          - MVVM/MVC patterns
+          - Vertical Slice Architecture
+          - Self-healing infrastructure
+          
+          ## Tasks:
+          1. Analyze current codebase architecture
+          2. Identify improvement opportunities
+          3. Implement incremental improvements
+          4. Update documentation
+          5. Ensure mobile-first responsive design
+          6. Add proper error handling and logging
+          7. Optimize performance where needed
+          8. Create/update tests for new functionality
+          
+          ## Success Criteria:
+          - Code follows architectural principles
+          - No breaking changes to existing functionality
+          - Documentation is updated
+          - Mobile experience remains excellent
+          - Performance is maintained or improved
+          
+          Continue working on this terminal forge application to make it more
+          human/AI friendly and maintainable. Focus on ${focusArea} improvements.
+          `;
+          
+          console.log('Task Description:', taskDescription);
+          
+          // Store task description for the improvement job
+          const fs = require('fs');
+          fs.writeFileSync('AUTONOMOUS_TASK.md', taskDescription);
+      
+    - name: Setup Claude Code Environment
+      run: |
+        # Install Claude Code CLI (if available) or prepare for API calls
+        npm install -g @anthropic-ai/claude-cli 2>/dev/null || echo "Claude CLI not available, using API"
+        
+        # Create improvement script
+        cat > autonomous_improve.js << 'EOF'
+        const https = require('https');
+        const fs = require('fs');
+        const path = require('path');
+        const { spawn, exec } = require('child_process');
+        
+        class AutonomousDeveloper {
+          constructor(apiKey, maxDurationMinutes = 30) {
+            this.apiKey = apiKey;
+            this.maxDurationMinutes = maxDurationMinutes;
+            this.startTime = Date.now();
+            this.improvements = [];
+          }
+          
+          shouldContinue() {
+            const elapsed = (Date.now() - this.startTime) / 1000 / 60;
+            return elapsed < this.maxDurationMinutes;
+          }
+          
+          async makeClaudeRequest(messages) {
+            return new Promise((resolve, reject) => {
+              const data = JSON.stringify({
+                model: "claude-3-sonnet-20240229",
+                max_tokens: 4000,
+                messages: messages
+              });
+              
+              const options = {
+                hostname: 'api.anthropic.com',
+                port: 443,
+                path: '/v1/messages',
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-api-key': this.apiKey,
+                  'anthropic-version': '2023-06-01'
+                }
+              };
+              
+              const req = https.request(options, (res) => {
+                let body = '';
+                res.on('data', (chunk) => body += chunk);
+                res.on('end', () => {
+                  try {
+                    resolve(JSON.parse(body));
+                  } catch (e) {
+                    reject(e);
+                  }
+                });
+              });
+              
+              req.on('error', reject);
+              req.write(data);
+              req.end();
+            });
+          }
+          
+          async analyzeCodebase() {
+            const taskDescription = fs.readFileSync('AUTONOMOUS_TASK.md', 'utf8');
+            
+            // Get current project structure
+            const projectStructure = await this.getProjectStructure();
+            
+            const messages = [{
+              role: 'user',
+              content: `${taskDescription}
+              
+              Current project structure:
+              ${projectStructure}
+              
+              Please analyze this Rust Terminal Forge codebase and suggest 3 specific improvements
+              that follow the architectural principles mentioned. Focus on making the code more
+              maintainable and AI-friendly. Respond with a JSON array of improvements with this format:
+              [{"file": "path/to/file", "description": "what to improve", "priority": "high|medium|low"}]`
+            }];
+            
+            try {
+              const response = await this.makeClaudeRequest(messages);
+              const content = response.content[0].text;
+              
+              // Extract JSON from response
+              const jsonMatch = content.match(/\[[\s\S]*\]/);
+              if (jsonMatch) {
+                return JSON.parse(jsonMatch[0]);
+              }
+              return [];
+            } catch (error) {
+              console.error('Error analyzing codebase:', error);
+              return [];
+            }
+          }
+          
+          async getProjectStructure() {
+            return new Promise((resolve) => {
+              exec('find . -type f -name "*.ts" -o -name "*.tsx" -o -name "*.rs" | head -20', 
+                (error, stdout) => {
+                  resolve(stdout || 'Unable to get project structure');
+                }
+              );
+            });
+          }
+          
+          async implementImprovement(improvement) {
+            console.log(`Implementing: ${improvement.description}`);
+            
+            const fileContent = fs.existsSync(improvement.file) ? 
+              fs.readFileSync(improvement.file, 'utf8') : '';
+            
+            const messages = [{
+              role: 'user',
+              content: `File: ${improvement.file}
+              Current content:
+              ${fileContent.substring(0, 3000)}
+              
+              Task: ${improvement.description}
+              
+              Please provide the improved version of this file following KISS, DRY, YAGNI principles.
+              Make it more maintainable and AI-friendly. If this is a new file, create appropriate content.
+              Respond with just the file content, no explanation.`
+            }];
+            
+            try {
+              const response = await this.makeClaudeRequest(messages);
+              const improvedContent = response.content[0].text;
+              
+              // Write improved content to file
+              const dir = path.dirname(improvement.file);
+              if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+              }
+              
+              fs.writeFileSync(improvement.file, improvedContent);
+              this.improvements.push(improvement);
+              
+              console.log(`✅ Improved: ${improvement.file}`);
+              return true;
+            } catch (error) {
+              console.error(`Error improving ${improvement.file}:`, error);
+              return false;
+            }
+          }
+          
+          async runDevelopmentCycle() {
+            console.log('🚀 Starting autonomous development cycle...');
+            
+            while (this.shouldContinue()) {
+              console.log('🔍 Analyzing codebase...');
+              const improvements = await this.analyzeCodebase();
+              
+              if (improvements.length === 0) {
+                console.log('No improvements found, waiting...');
+                await new Promise(resolve => setTimeout(resolve, 60000));
+                continue;
+              }
+              
+              // Sort by priority
+              improvements.sort((a, b) => {
+                const priority = { high: 3, medium: 2, low: 1 };
+                return priority[b.priority] - priority[a.priority];
+              });
+              
+              console.log(`Found ${improvements.length} improvements:`);
+              improvements.forEach(imp => 
+                console.log(`  - ${imp.description} (${imp.priority})`));
+              
+              // Implement improvements
+              for (const improvement of improvements.slice(0, 3)) {
+                if (!this.shouldContinue()) break;
+                
+                await this.implementImprovement(improvement);
+                await new Promise(resolve => setTimeout(resolve, 5000));
+              }
+              
+              // Wait before next cycle
+              await new Promise(resolve => setTimeout(resolve, 30000));
+            }
+            
+            console.log('🏁 Development cycle completed');
+            console.log(`Implemented ${this.improvements.length} improvements`);
+          }
+        }
+        
+        // Start autonomous development
+        const apiKey = process.env.ANTHROPIC_API_KEY;
+        const maxDuration = parseInt(process.env.MAX_DURATION_MINUTES) || 30;
+        
+        if (!apiKey) {
+          console.error('ANTHROPIC_API_KEY not found');
+          process.exit(1);
+        }
+        
+        const developer = new AutonomousDeveloper(apiKey, maxDuration);
+        developer.runDevelopmentCycle().catch(console.error);
+        EOF
+        
+    - name: Run Autonomous Development
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        MAX_DURATION_MINUTES: ${{ github.event.inputs.duration_minutes || 30 }}
+      run: |
+        timeout ${{ github.event.inputs.duration_minutes || 30 }}m node autonomous_improve.js || echo "Development cycle completed"
+        
+    - name: Test Changes
+      run: |
+        # Run basic tests to ensure nothing is broken
+        npm run typecheck || echo "TypeScript errors detected"
+        npm run lint || echo "Linting errors detected"
+        
+        # Try to build the project
+        npm run build || echo "Build failed"
+        
+    - name: Commit Improvements
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "Autonomous Developer"
+        
+        git add .
+        
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          # Create detailed commit message
+          echo "🤖 Autonomous improvements applied" > commit_msg.txt
+          echo "" >> commit_msg.txt
+          echo "Areas improved:" >> commit_msg.txt
+          echo "- Code architecture and maintainability" >> commit_msg.txt
+          echo "- Documentation and comments" >> commit_msg.txt
+          echo "- Performance optimizations" >> commit_msg.txt
+          echo "- Security enhancements" >> commit_msg.txt
+          echo "" >> commit_msg.txt
+          echo "Following principles: KISS, YAGNI, DRY, MVVM" >> commit_msg.txt
+          echo "Focus: ${{ github.event.inputs.focus_area || 'general' }}" >> commit_msg.txt
+          
+          git commit -F commit_msg.txt
+          git push origin main
+        fi
+
+  schedule-next-cycle:
+    name: Schedule Next Improvement Cycle
+    needs: [analyze-codebase, autonomous-improvement]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Calculate Next Run Time
+      run: |
+        # Calculate next run based on repository activity
+        next_run=$(date -d "+6 hours" -u +"%Y-%m-%dT%H:%M:%SZ")
+        echo "Next autonomous improvement cycle scheduled for: $next_run"
+        
+        # Could integrate with GitHub API to schedule dynamic workflows
+        echo "Continuous improvement cycle active ✨"

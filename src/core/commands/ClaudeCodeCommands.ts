@@ -4,7 +4,7 @@ import { SecureExecutor } from '../SecureExecutor';
 
 export class ClaudeCodeCommands extends BaseCommandHandler {
   private secureExecutor = new SecureExecutor({
-    allowRealExecution: true,
+    allowRealExecution: localStorage.getItem('allowRealExecution') === 'true',
     allowedCommands: ['claude', 'which']
   });
 

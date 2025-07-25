@@ -8,6 +8,10 @@ pnpm-debug.log*
 lerna-debug.log*
 
 .env
+.claude
+.roo
+
+__pycache__
 
 node_modules
 dist
@@ -32,3 +36,36 @@ Cargo.lock
 *.njsproj
 *.sln
 *.sw?
+
+# Claude Flow generated files
+.claude/settings.local.json
+.mcp.json
+claude-flow.config.json
+.swarm/
+.hive-mind/
+memory/claude-flow-data.json
+memory/sessions/*
+!memory/sessions/README.md
+memory/agents/*
+!memory/agents/README.md
+coordination/memory_bank/*
+coordination/subtasks/*
+coordination/orchestration/*
+*.db
+*.db-journal
+*.db-wal
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+claude-flow
+claude-flow.bat
+claude-flow.ps1
+hive-mind-prompt-*.txt
+
+# Dead code prevention (added by cleanup agent)
+agent_workspace/prompts/prompt-id-*.json
+!agent_workspace/prompts/prompt-id-1cd1f484a6f744faa408e508728dc5b0.json
+coordination/
+*.swarm_backup
+duplicate_*.py
+multi_agent_swarm.py

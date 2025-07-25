@@ -132,7 +132,7 @@ describe('GeminiCommands', () => {
 describe('RustCommands', () => {
   it('handles cargo version', async () => {
     const result = await rustCommands.handleCargo(['--version'], '1', 'cargo --version', ts);
-    expect(result.output).toContain('cargo 1.75.0');
+    expect(result.output).toContain('cargo 1.88.0');
     expect(result.exitCode).toBe(0);
   });
 

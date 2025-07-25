@@ -2,6 +2,8 @@
 import { TerminalCommand } from './types';
 import { SecurityUtils } from './securityUtils';
 import { ProcessExecutor } from './ProcessExecutor';
+import { debugLogger } from './debugLogger';
+import { DebugComponent } from './debugConfig';
 
 export interface ExecutionConfig {
   allowRealExecution: boolean;
@@ -26,9 +28,15 @@ export class SecureExecutor {
     maxOutputLength: 10000, // 10KB max output
     allowedCommands: [],
     environment: {
-      'HOME': '/home/user',
-      'USER': 'user',
-      'PATH': '/usr/local/bin:/usr/bin:/bin'
+      'HOME': typeof process !== 'undefined' ? process.env.HOME || '/home/user' : '/home/user',
+      'USER': typeof process !== 'undefined' ? process.env.USER || 'user' : 'user',
+      'PATH': typeof process !== 'undefined' ? process.env.PATH || '/usr/local/bin:/usr/bin:/bin:/home/codespace/.cargo/bin' : '/usr/local/bin:/usr/bin:/bin',
+      'CARGO_HOME': typeof process !== 'undefined' ? process.env.CARGO_HOME || '/home/codespace/.cargo' : '/home/codespace/.cargo',
+      'RUSTUP_HOME': typeof process !== 'undefined' ? process.env.RUSTUP_HOME || '/home/codespace/.rustup' : '/home/codespace/.rustup',
+      'RUST_BACKTRACE': '1', // Enable Rust backtraces for better debugging
+      'CARGO_TERM_COLOR': 'always', // Force colored output from Cargo
+      'TERM': 'xterm-256color', // Ensure good terminal support
+      'COLORTERM': 'truecolor'
     }
   };
 
@@ -42,24 +50,47 @@ export class SecureExecutor {
     },
     {
       command: 'rustc',
-      allowedArgs: ['--version', '--help', '--explain', '--print', 'target-list', 'cfg'],
+      allowedArgs: [
+        '--version', '--help', '--explain', '--print', 'target-list', 'cfg',
+        '--target', '--crate-type', '--crate-name', '--edition', '--emit',
+        '--out-dir', '--opt-level', '--debug-info', '--codegen-units',
+        '--rpath', '--test', '--bench', '--cap-lints', '--color',
+        '--error-format', '--json', '--pretty', '--unpretty', '--verbose'
+      ],
       requiresArgs: false,
-      maxArgs: 10,
-      description: 'Rust compiler'
+      maxArgs: 20,
+      description: 'Rust compiler with comprehensive options'
     },
     {
       command: 'rustup',
-      allowedArgs: ['--version', '--help', 'show', 'update', 'toolchain'],
+      allowedArgs: [
+        '--version', '--help', 'show', 'update', 'self', 'install', 'uninstall',
+        'toolchain', 'list', 'install', 'uninstall', 'link', 'update',
+        'target', 'add', 'remove', 'list', 'component', 'add', 'remove', 'list',
+        'override', 'set', 'unset', 'list', 'run', 'which', 'doc',
+        '--toolchain', 'stable', 'beta', 'nightly', '--force', '--profile',
+        'minimal', 'default', 'complete'
+      ],
       requiresArgs: false,
-      maxArgs: 10,
-      description: 'Rust toolchain installer'
+      maxArgs: 15,
+      description: 'Rust toolchain installer with comprehensive support'
     },
     {
       command: 'cargo',
-      allowedArgs: ['--version', '--help', 'build', 'test', 'check', 'clean', 'doc', 'fmt', 'clippy', '--release'],
+      allowedArgs: [
+        '--version', '--help', '--list', '--explain',
+        'build', 'test', 'check', 'clean', 'doc', 'fmt', 'clippy', 'run',
+        'new', 'init', 'add', 'remove', 'update', 'search', 'install', 'uninstall',
+        'publish', 'package', 'tree', 'audit', 'fix', 'generate-lockfile',
+        'locate-project', 'metadata', 'pkgid', 'report', 'verify-project',
+        '--release', '--debug', '--target', '--features', '--all-features', 
+        '--no-default-features', '--workspace', '--all', '--exclude',
+        '--manifest-path', '--offline', '--frozen', '--locked', '--target-dir',
+        '--color', '--quiet', '-q', '--verbose', '-v', '--jobs', '-j'
+      ],
       requiresArgs: false,
-      maxArgs: 15,
-      description: 'Rust package manager'
+      maxArgs: 25,
+      description: 'Rust package manager with comprehensive command support'
     },
     {
       command: 'claude',
@@ -100,14 +131,34 @@ export class SecureExecutor {
     originalCommand: string,
     timestamp: string
   ): Promise<TerminalCommand> {
+    const traceId = debugLogger.startTrace(DebugComponent.SECURE_EXECUTOR, 'executeCommand', {
+      command,
+      args,
+      id,
+      originalCommand
+    });
+
+    debugLogger.debug(DebugComponent.SECURE_EXECUTOR, `Starting command execution: ${originalCommand}`, {
+      command,
+      args: args.length,
+      allowRealExecution: this.config.allowRealExecution
+    });
+
     try {
       // Security validation
       const validation = this.validateExecution(command, args);
       if (!validation.isValid) {
+        debugLogger.warn(DebugComponent.SECURE_EXECUTOR, `Command validation failed: ${validation.reason}`, {
+          command: originalCommand,
+          reason: validation.reason
+        });
+
         SecurityUtils.logSecurityEvent('COMMAND_REJECTED', {
           command: originalCommand,
           reason: validation.reason
         });
+        
+        debugLogger.endTrace(traceId, { success: false, reason: validation.reason });
         
         return {
           id,
@@ -118,23 +169,45 @@ export class SecureExecutor {
         };
       }
 
+      debugLogger.debug(DebugComponent.SECURE_EXECUTOR, 'Command validation passed', {
+        command,
+        isAllowed: this.isCommandAllowed(command)
+      });
+
       // Check if real execution is enabled and command is allowed
       if (this.config.allowRealExecution && this.isCommandAllowed(command)) {
-        return await this.executeReal(command, args, id, originalCommand, timestamp);
+        debugLogger.info(DebugComponent.SECURE_EXECUTOR, 'Executing command in real environment', { command });
+        const result = await this.executeReal(command, args, id, originalCommand, timestamp);
+        debugLogger.endTrace(traceId, { success: true, exitCode: result.exitCode, executionMode: 'real' });
+        return result;
       } else {
-        // Fall back to simulated execution for safety
-        return this.executeSimulated(command, args, id, originalCommand, timestamp);
+        debugLogger.info(DebugComponent.SECURE_EXECUTOR, 'Executing command in simulated environment', {
+          command,
+          reason: !this.config.allowRealExecution ? 'Real execution disabled' : 'Command not allowed'
+        });
+        const result = await this.executeSimulated(command, args, id, originalCommand, timestamp);
+        debugLogger.endTrace(traceId, { success: true, exitCode: result.exitCode, executionMode: 'simulated' });
+        return result;
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      debugLogger.error(DebugComponent.SECURE_EXECUTOR, `Command execution error: ${errorMessage}`, {
+        command: originalCommand,
+        error,
+        stackTrace: error instanceof Error ? error.stack : undefined
+      });
+
       SecurityUtils.logSecurityEvent('EXECUTION_ERROR', {
         command: originalCommand,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: errorMessage
       });
+
+      debugLogger.endTrace(traceId, { success: false, error: errorMessage });
 
       return {
         id,
         command: originalCommand,
-        output: `Execution Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
+        output: `Execution Error: ${errorMessage}`,
         timestamp,
         exitCode: 1
       };
@@ -145,33 +218,61 @@ export class SecureExecutor {
    * Validate command execution against security rules
    */
   private validateExecution(command: string, args: string[]): { isValid: boolean; reason?: string } {
+    debugLogger.trace(DebugComponent.SECURE_EXECUTOR, `Validating command execution`, {
+      command,
+      argsCount: args.length,
+      args: args.slice(0, 5) // Only log first 5 args to avoid spam
+    });
+
     // Check command name
     if (!SecurityUtils.validateCommand(command)) {
+      debugLogger.debug(DebugComponent.SECURE_EXECUTOR, `Command failed format validation: ${command}`);
       return { isValid: false, reason: 'Invalid command format' };
     }
 
     // Check if command is in allowlist
     const allowlistEntry = SecureExecutor.COMMAND_ALLOWLIST.find(entry => entry.command === command);
     if (!allowlistEntry) {
+      debugLogger.debug(DebugComponent.SECURE_EXECUTOR, `Command not in allowlist: ${command}`, {
+        availableCommands: SecureExecutor.COMMAND_ALLOWLIST.map(entry => entry.command)
+      });
       return { isValid: false, reason: 'Command not in allowlist' };
     }
 
+    debugLogger.trace(DebugComponent.SECURE_EXECUTOR, `Found allowlist entry for command: ${command}`, {
+      maxArgs: allowlistEntry.maxArgs,
+      requiresArgs: allowlistEntry.requiresArgs,
+      allowedArgsCount: allowlistEntry.allowedArgs.length
+    });
+
     // Validate arguments
     if (args.length > allowlistEntry.maxArgs) {
+      debugLogger.debug(DebugComponent.SECURE_EXECUTOR, `Too many arguments for command: ${command}`, {
+        provided: args.length,
+        maximum: allowlistEntry.maxArgs
+      });
       return { isValid: false, reason: 'Too many arguments' };
     }
 
     if (allowlistEntry.requiresArgs && args.length === 0) {
+      debugLogger.debug(DebugComponent.SECURE_EXECUTOR, `Command requires arguments but none provided: ${command}`);
       return { isValid: false, reason: 'Command requires arguments' };
     }
 
     // Validate each argument
-    for (const arg of args) {
+    for (let i = 0; i < args.length; i++) {
+      const arg = args[i];
       if (!this.validateArgument(arg, allowlistEntry.allowedArgs)) {
+        debugLogger.debug(DebugComponent.SECURE_EXECUTOR, `Invalid argument at position ${i}: ${arg}`, {
+          command,
+          argumentIndex: i,
+          allowedArgs: allowlistEntry.allowedArgs.slice(0, 10) // Limit to prevent spam
+        });
         return { isValid: false, reason: `Invalid argument: ${arg}` };
       }
     }
 
+    debugLogger.trace(DebugComponent.SECURE_EXECUTOR, `Command validation successful: ${command}`);
     return { isValid: true };
   }
 
@@ -215,6 +316,15 @@ export class SecureExecutor {
     originalCommand: string,
     timestamp: string
   ): Promise<TerminalCommand> {
+    const startTime = performance.now();
+    
+    debugLogger.info(DebugComponent.SECURE_EXECUTOR, `Starting real execution: ${originalCommand}`, {
+      command,
+      argsCount: args.length,
+      timeout: this.config.timeoutMs,
+      environment: Object.keys(this.config.environment)
+    });
+
     // Log the execution attempt
     SecurityUtils.logSecurityEvent('REAL_EXECUTION', {
       command: originalCommand,
@@ -223,8 +333,12 @@ export class SecureExecutor {
 
     try {
       // Additional security validation for real execution
+      debugLogger.trace(DebugComponent.SECURE_EXECUTOR, 'Performing additional security validation for real execution');
       const validation = ProcessExecutor.validateCommand(command, args);
       if (!validation.isValid) {
+        debugLogger.warn(DebugComponent.SECURE_EXECUTOR, `Process executor validation failed: ${validation.reason}`, {
+          command: originalCommand
+        });
         return {
           id,
           command: originalCommand,
@@ -234,10 +348,26 @@ export class SecureExecutor {
         };
       }
 
+      debugLogger.debug(DebugComponent.SECURE_EXECUTOR, 'Calling ProcessExecutor.executeCommand', {
+        command,
+        timeout: this.config.timeoutMs,
+        envVarCount: Object.keys(this.config.environment).length
+      });
+
       // Execute the real command
       const result = await ProcessExecutor.executeCommand(command, args, {
         timeout: this.config.timeoutMs,
         env: this.config.environment
+      });
+
+      const executionTime = performance.now() - startTime;
+      
+      debugLogger.info(DebugComponent.SECURE_EXECUTOR, `Real execution completed: ${originalCommand}`, {
+        exitCode: result.exitCode,
+        executionTime: Math.round(executionTime),
+        stdoutLength: result.stdout?.length || 0,
+        stderrLength: result.stderr?.length || 0,
+        success: result.exitCode === 0
       });
 
       // Combine stdout and stderr
@@ -246,18 +376,32 @@ export class SecureExecutor {
         output += result.stderr ? `\n${result.stderr}` : '';
       }
 
-      return {
+      const terminalCommand = {
         id,
         command: originalCommand,
         output: output || '(No output)',
         timestamp,
         exitCode: result.exitCode
       };
+
+      // Log execution result using the debugLogger's convenience method
+      debugLogger.logCommandExecution(DebugComponent.SECURE_EXECUTOR, command, args, terminalCommand, executionTime);
+
+      return terminalCommand;
     } catch (error) {
+      const executionTime = performance.now() - startTime;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      debugLogger.error(DebugComponent.SECURE_EXECUTOR, `Real execution failed: ${originalCommand}`, {
+        error: errorMessage,
+        executionTime: Math.round(executionTime),
+        stackTrace: error instanceof Error ? error.stack : undefined
+      });
+
       return {
         id,
         command: originalCommand,
-        output: `Execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        output: `Execution failed: ${errorMessage}`,
         timestamp,
         exitCode: 1
       };
@@ -274,23 +418,48 @@ export class SecureExecutor {
     originalCommand: string,
     timestamp: string
   ): Promise<TerminalCommand> {
+    const startTime = performance.now();
+    
+    debugLogger.info(DebugComponent.SECURE_EXECUTOR, `Starting simulated execution: ${originalCommand}`, {
+      command,
+      argsCount: args.length
+    });
+
     const simulatedOutputs: Record<string, (args: string[]) => string> = {
       'gemini': (args) => this.simulateGemini(args),
       'rustc': (args) => this.simulateRustc(args),
       'rustup': (args) => this.simulateRustup(args),
-      'cargo': (args) => this.simulateCargo(args)
+      'cargo': (args) => this.simulateCargo(args),
+      'claude': (args) => this.simulateClaude(args)
     };
 
     const outputGenerator = simulatedOutputs[command];
-    const output = outputGenerator ? outputGenerator(args) : `${command}: command simulation not available`;
+    const hasSimulation = !!outputGenerator;
+    
+    debugLogger.debug(DebugComponent.SECURE_EXECUTOR, `Using ${hasSimulation ? 'custom' : 'default'} simulation for command: ${command}`, {
+      availableSimulations: Object.keys(simulatedOutputs)
+    });
 
-    return Promise.resolve({
+    const output = outputGenerator ? outputGenerator(args) : `${command}: command simulation not available`;
+    const executionTime = performance.now() - startTime;
+
+    const result = {
       id,
       command: originalCommand,
       output,
       timestamp,
       exitCode: 0
+    };
+
+    debugLogger.info(DebugComponent.SECURE_EXECUTOR, `Simulated execution completed: ${originalCommand}`, {
+      executionTime: Math.round(executionTime),
+      outputLength: output.length,
+      hasCustomSimulation: hasSimulation
     });
+
+    debugLogger.logCommandExecution(DebugComponent.SECURE_EXECUTOR, command, args, result, executionTime);
+
+    return Promise.resolve(result);
   }
 
   /**
@@ -410,52 +579,267 @@ SUBCOMMANDS:
   }
 
   /**
-   * Enhanced Cargo simulation
+   * Enhanced Cargo simulation with comprehensive command support
    */
   private simulateCargo(args: string[]): string {
     if (args.includes('--version')) {
-      return 'cargo 1.75.0 (1d8b05cdd 2023-11-20)';
+      return 'cargo 1.88.0 (873a06493 2025-05-10)';
     }
 
     if (args.includes('--help')) {
-      return `Cargo 1.75.0
+      return `Cargo 1.88.0
 Rust's package manager
 
 USAGE:
     cargo [+toolchain] [OPTIONS] [COMMAND]
 
-COMMANDS:
-    build    Compile the current package
-    check    Analyze the current package and report errors
-    clean    Remove the target directory
-    test     Run the tests
-    doc      Build this package's and its dependencies' documentation
-    fmt      Format all Rust files in this project
-    clippy   Run Clippy linter`;
+OPTIONS:
+    -v, --verbose                Use verbose output (-vv very verbose/build.rs output)
+    -q, --quiet                  Do not print cargo log messages
+        --color <WHEN>           Coloring: auto, always, never
+        --frozen                 Require Cargo.lock and cache are up to date
+        --locked                 Require Cargo.lock is up to date
+        --offline                Run without accessing the network
+
+Some common cargo commands are (see all commands with --list):
+    build, b    Compile the current package
+    check, c    Analyze the current package and report errors, but don't build object files
+    clean       Remove the target directory
+    doc         Build this package's and its dependencies' documentation
+    new         Create a new cargo package
+    init        Create a new cargo package in an existing directory
+    add         Add dependencies to a manifest file
+    remove      Remove dependencies from a manifest file
+    run, r      Run a binary or example of the local package
+    test, t     Run the tests
+    bench       Run the benchmarks
+    update      Update dependencies listed in Cargo.lock
+    search      Search registry for crates
+    publish     Package and upload this package to the registry
+    install     Install a Rust binary. Default location is $HOME/.cargo/bin
+    uninstall   Uninstall a Rust binary`;
     }
 
-    // Enhanced cargo simulation
+    if (args.includes('--list')) {
+      return `Installed Commands:
+    build            Compile the current package
+    check            Analyze the current package and report errors
+    clean            Remove the target directory
+    doc              Build this package's and its dependencies' documentation
+    new              Create a new cargo package
+    init             Create a new cargo package in an existing directory
+    add              Add dependencies to a manifest file
+    remove           Remove dependencies from a manifest file  
+    run              Run a binary or example of the local package
+    test             Run the tests
+    bench            Run the benchmarks
+    update           Update dependencies listed in Cargo.lock
+    search           Search registry for crates
+    publish          Package and upload this package to the registry
+    install          Install a Rust binary
+    uninstall        Uninstall a Rust binary
+    fmt              Rustfmt (format code)
+    clippy           Clippy (linter)
+    tree             Display dependency tree
+    audit            Audit dependencies for security vulnerabilities
+    fix              Automatically fix lint warnings
+    locate-project   Print the absolute path of the current Cargo.toml
+    metadata         Output the resolved dependencies
+    pkgid            Print a fully qualified package specification
+    verify-project   Check correctness of crate manifest`;
+    }
+
+    // Build command with different options
     if (args.includes('build')) {
-      return `   Compiling rust-terminal-forge v0.1.0 (/home/user/project)
-    Finished dev [unoptimized + debuginfo] target(s) in 2.34s`;
+      const isRelease = args.includes('--release');
+      const buildType = isRelease ? 'release [optimized]' : 'dev [unoptimized + debuginfo]';
+      const time = isRelease ? '45.67s' : '2.34s';
+      
+      return `   Compiling rust-terminal-forge v0.1.0 (/workspaces/rust-terminal-forge)
+    Finished ${buildType} target(s) in ${time}`;
     }
 
+    // Check command
+    if (args.includes('check')) {
+      return `    Checking rust-terminal-forge v0.1.0 (/workspaces/rust-terminal-forge)
+    Finished dev [unoptimized + debuginfo] target(s) in 0.45s`;
+    }
+
+    // Clean command
+    if (args.includes('clean')) {
+      return `   Removed 3 files, 45.2MB from target directory`;
+    }
+
+    // Run command
+    if (args.includes('run')) {
+      return `    Finished dev [unoptimized + debuginfo] target(s) in 0.12s
+     Running \`target/debug/rust-terminal-forge\`
+Hello, Rust Terminal Forge!
+Application started successfully.`;
+    }
+
+    // Test command with comprehensive output
     if (args.includes('test')) {
-      return `   Compiling rust-terminal-forge v0.1.0 (/home/user/project)
+      return `   Compiling rust-terminal-forge v0.1.0 (/workspaces/rust-terminal-forge)
     Finished test [unoptimized + debuginfo] target(s) in 1.23s
      Running unittests src/lib.rs (target/debug/deps/rust_terminal_forge-abc123)
 
-running 5 tests
-test tests::test_secure_execution ... ok
-test tests::test_command_validation ... ok
-test tests::test_input_sanitization ... ok
-test tests::test_gemini_integration ... ok
-test tests::test_rust_toolchain ... ok
+running 8 tests
+test core::commands::test_cargo_commands ... ok
+test core::commands::test_rust_commands ... ok
+test core::security::test_secure_execution ... ok
+test core::security::test_command_validation ... ok
+test core::security::test_input_sanitization ... ok
+test terminal::test_command_processing ... ok
+test terminal::test_environment_setup ... ok
+test integration::test_rust_toolchain ... ok
 
-test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s`;
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s`;
+    }
+
+    // New project command
+    if (args.includes('new')) {
+      const projectName = args[args.indexOf('new') + 1] || 'my-project';
+      const projectType = args.includes('--lib') ? 'library' : 'binary (application)';
+      
+      return `     Created ${projectType} package \`${projectName}\` package`;
+    }
+
+    // Init command
+    if (args.includes('init')) {
+      const projectType = args.includes('--lib') ? 'library' : 'binary (application)';
+      
+      return `     Created ${projectType} package`;
+    }
+
+    // Add dependency command
+    if (args.includes('add')) {
+      const dependency = args[args.indexOf('add') + 1] || 'serde';
+      
+      return `    Updating crates.io index
+      Adding ${dependency} v1.0 to dependencies.
+                Features:
+                + derive
+                + std
+                (and 3 more)`;
+    }
+
+    // Tree command
+    if (args.includes('tree')) {
+      return `rust-terminal-forge v0.1.0 (/workspaces/rust-terminal-forge)
+├── tokio v1.0.0
+├── warp v0.3.0
+├── serde v1.0.0
+│   └── serde_derive v1.0.0
+├── serde_json v1.0.0
+├── uuid v1.0.0
+└── portable-pty v0.8.0`;
+    }
+
+    // Update command
+    if (args.includes('update')) {
+      return `    Updating crates.io index
+    Updating tokio v1.0.0 -> v1.0.1
+    Updating serde v1.0.0 -> v1.0.1`;
+    }
+
+    // Doc command
+    if (args.includes('doc')) {
+      const openFlag = args.includes('--open') ? '\n    Opening docs in browser...' : '';
+      
+      return `   Documenting rust-terminal-forge v0.1.0 (/workspaces/rust-terminal-forge)
+    Finished dev [unoptimized + debuginfo] target(s) in 3.45s${openFlag}`;
+    }
+
+    // Fmt command
+    if (args.includes('fmt')) {
+      return `Diff in /workspaces/rust-terminal-forge/src/lib.rs at line 42:
+-    let result=foo();
++    let result = foo();
+`;
+    }
+
+    // Clippy command
+    if (args.includes('clippy')) {
+      return `    Checking rust-terminal-forge v0.1.0 (/workspaces/rust-terminal-forge)
+    Finished dev [unoptimized + debuginfo] target(s) in 1.23s
+warning: unused variable: \`result\`
+ --> src/main.rs:42:9
+   |
+42 |     let result = process_command();
+   |         ^^^^^^ help: if this is intentional, prefix it with an underscore: \`_result\`
+   |
+   = note: \`#[warn(unused_variables)]\` on by default
+
+warning: \`rust-terminal-forge\` (bin "rust-terminal-forge") generated 1 warning`;
+    }
+
+    // Locate project command
+    if (args.includes('locate-project')) {
+      return `{"root":"/workspaces/rust-terminal-forge/Cargo.toml"}`;
+    }
+
+    // Metadata command
+    if (args.includes('metadata')) {
+      return `{"packages":[{"name":"rust-terminal-forge","version":"0.1.0","id":"rust-terminal-forge 0.1.0 (path+file:///workspaces/rust-terminal-forge)"}],"workspace_members":["rust-terminal-forge 0.1.0 (path+file:///workspaces/rust-terminal-forge)"],"resolve":{"nodes":[{"id":"rust-terminal-forge 0.1.0 (path+file:///workspaces/rust-terminal-forge)","dependencies":[]}],"root":"rust-terminal-forge 0.1.0 (path+file:///workspaces/rust-terminal-forge)"},"target_directory":"/workspaces/rust-terminal-forge/target","version":1,"workspace_root":"/workspaces/rust-terminal-forge","metadata":null}`;
+    }
+
+    // Search command
+    if (args.includes('search')) {
+      const query = args[args.indexOf('search') + 1] || 'serde';
+      
+      return `serde = "1.0.210"    # A generic serialization/deserialization framework
+serde_json = "1.0.128"  # A JSON serialization file format
+serde_derive = "1.0.210" # Macros 1.1 implementation of #[derive(Serialize, Deserialize)]
+serde_yaml = "0.9.34"   # YAML data format for Serde`;
     }
 
     return 'Use "cargo --help" for usage information';
+  }
+
+  /**
+   * Simulate Claude CLI responses
+   */
+  private simulateClaude(args: string[]): string {
+    if (args.includes('--help')) {
+      return `Claude Code - AI Assistant for Development
+
+Usage: claude [OPTIONS] [PROMPT]
+
+REPL Usage:
+  claude                           Start interactive REPL
+  claude "query"                   Start REPL with initial prompt
+  
+One-shot Usage:
+  claude -p "query"                Query via SDK and exit
+  claude -c                        Continue most recent conversation
+  claude -r "<session-id>"         Resume session by ID
+
+Commands:
+  claude update                    Update to latest version
+  claude mcp                       Configure Model Context Protocol servers
+
+Options:
+  --add-dir <PATH>           Add working directory
+  --allowedTools <TOOLS>     Specify allowed tools (comma-separated)
+  --disallowedTools <TOOLS>  Specify disallowed tools (comma-separated)
+  -p, --print                Print response without interactive mode
+  --output-format <FORMAT>   Set response output format (text, json)
+  --verbose                  Enable detailed logging
+  --model <MODEL>            Set specific model for session
+  --permission-mode <MODE>   Set permission mode (strict, normal, loose)
+  -c, --continue             Load most recent conversation
+  -r, --resume <SESSION>     Resume specific session
+  --dangerously-skip-permissions  Skip permission prompts (use with caution)
+  --help                     Show this help message
+  --version                  Show version information`;
+    }
+
+    if (args.includes('--version')) {
+      return 'claude 0.8.1';
+    }
+
+    return 'Use "claude --help" for usage information';
   }
 
   /**

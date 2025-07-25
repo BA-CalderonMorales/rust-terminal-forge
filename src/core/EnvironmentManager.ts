@@ -78,6 +78,11 @@ export class EnvironmentManager {
    */
   private loadFromStorage(): void {
     try {
+      // Skip localStorage in test environment
+      if (typeof localStorage === 'undefined' || process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
+        return;
+      }
+      
       const stored = localStorage.getItem('terminal-env-vars');
       if (stored) {
         const parsed = JSON.parse(stored);
@@ -93,6 +98,11 @@ export class EnvironmentManager {
    */
   private saveToStorage(): void {
     try {
+      // Skip localStorage in test environment
+      if (typeof localStorage === 'undefined' || process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
+        return;
+      }
+      
       const obj = Object.fromEntries(this.variables);
       localStorage.setItem('terminal-env-vars', JSON.stringify(obj));
     } catch (error) {

@@ -25,12 +25,41 @@
     --ring: 158 64% 52%;
     --radius: 0.5rem;
     
-    /* Terminal specific colors */
+    /* NvChad-inspired cyberpunk terminal colors */
     --terminal-bg: #0a0a0a;
+    --terminal-bg-secondary: #0f0f0f;
+    --terminal-bg-tertiary: #1a1a1a;
     --terminal-fg: #e1e1e1;
+    --terminal-fg-secondary: #b3b3b3;
+    --terminal-fg-muted: #666666;
+    
+    /* Neon accent colors */
+    --terminal-neon-green: #00ff88;
+    --terminal-neon-blue: #00d4ff;
+    --terminal-neon-pink: #ff007f;
+    --terminal-neon-purple: #b000ff;
+    --terminal-electric-blue: #0080ff;
+    
+    /* Status colors */
     --terminal-accent: #00ff88;
     --terminal-secondary: #ff4757;
-    --terminal-warning: #ffa502;
+    --terminal-warning: #ffaa00;
+    --terminal-success: #00ff88;
+    --terminal-error: #ff4757;
+    --terminal-info: #00d4ff;
+    
+    /* Glow effects */
+    --terminal-glow-green: rgba(0, 255, 136, 0.6);
+    --terminal-glow-blue: rgba(0, 212, 255, 0.6);
+    --terminal-glow-pink: rgba(255, 0, 127, 0.6);
+    --terminal-shadow-dark: rgba(0, 0, 0, 0.8);
+    
+    /* Gradients */
+    --terminal-gradient-main: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 25%, #0a0a0a 75%, #1a1a1a 100%);
+    --terminal-gradient-header: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    --terminal-gradient-terminal: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%);
+    --terminal-gradient-button: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.4));
+    --terminal-gradient-button-hover: linear-gradient(135deg, rgba(0, 255, 136, 0.4), rgba(0, 255, 136, 0.6));
   }
 
   .dark {
@@ -59,23 +88,39 @@
 @layer base {
   * {
     @apply border-border;
+    /* Optimize box-sizing for mobile */
+    box-sizing: border-box;
   }
 
-  html,
-  body {
-    min-height: 100%;
+  html {
+    /* Enhanced viewport handling for mobile */
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height */
+    /* Prevent tap highlight on mobile */
+    -webkit-tap-highlight-color: transparent;
+    /* Optimize text rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   body {
     @apply bg-background text-foreground;
-    /* Prevent bounce scrolling on iOS */
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* Prevent bounce scrolling and rubber banding on iOS */
     overscroll-behavior: none;
-    /* Prevent zooming on input focus */
+    /* Prevent zooming on input focus and optimize touch */
     touch-action: manipulation;
     /* Enhanced font rendering */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* Better mobile performance */
+    will-change: scroll-position;
+    transform: translateZ(0);
   }
 
   /* Prevent text selection in terminal for better mobile experience */
@@ -92,7 +137,7 @@
   }
 }
 
-/* Modern terminal app layout with cyberpunk aesthetics */
+/* Modern NvChad-inspired terminal app with GPU acceleration */
 .terminal-app {
   position: fixed;
   top: 0;
@@ -101,16 +146,43 @@
   bottom: 0;
   display: flex;
   flex-direction: column;
-  height: var(--visual-viewport-height);
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
   max-height: 100vh;
+  max-height: 100dvh;
   overflow: hidden;
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+  background: var(--terminal-gradient-main);
   z-index: 1;
   contain: layout style size;
-  /* Cyberpunk glow effect */
+  
+  /* Enhanced cyberpunk aesthetics */
   background-attachment: fixed;
   background-size: 400% 400%;
-  animation: gradientShift 20s ease infinite;
+  animation: cyberpunkGradientShift 20s ease infinite;
+  
+  /* GPU acceleration for smooth performance */
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  
+  /* Advanced mobile optimization */
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  
+  /* Modern shadows and depth */
+  box-shadow: 
+    0 0 50px var(--terminal-glow-green),
+    inset 0 0 100px rgba(0, 255, 136, 0.02),
+    0 25px 50px -12px var(--terminal-shadow-dark);
+    
+  /* Subtle border with glow */
+  border: 1px solid rgba(0, 255, 136, 0.1);
+  
+  /* Dynamic content visibility optimization */
+  content-visibility: auto;
 }
 
 .terminal-no-sessions {
@@ -210,6 +282,9 @@
 @media (max-width: 768px) {
   .terminal-content {
     padding: 0.75rem;
+    /* Enhanced mobile performance */
+    will-change: scroll-position;
+    transform: translateZ(0);
   }
   
   .terminal-input {
@@ -218,27 +293,95 @@
   }
   
   /* Prevent zoom on input focus for iOS Safari */
-  .terminal-input input {
+  .terminal-input input,
+  input[type="text"],
+  input[type="password"],
+  textarea {
     font-size: 16px;
+    /* Prevent iOS zoom on focus */
+    -webkit-text-size-adjust: 100%;
+    /* Better touch response */
+    border-radius: 8px;
+    min-height: 44px;
   }
   
-  /* Better touch targets */
-  .touch-manipulation {
+  /* Enhanced touch targets (WCAG AA compliance) */
+  .touch-manipulation,
+  button,
+  [role="button"],
+  [tabindex="0"],
+  .mobile-tab,
+  .tab-button {
     touch-action: manipulation;
     min-height: 44px;
     min-width: 44px;
+    /* Improve tap response */
+    -webkit-tap-highlight-color: transparent;
+    /* Better accessibility for touch */
+    cursor: pointer;
   }
   
   /* Keyboard-specific optimizations */
   .terminal-app[data-keyboard-open="1"] .terminal-input {
     transform: translateY(calc(var(--keyboard-height) * -1));
   }
+  
+  /* Better scroll behavior on mobile */
+  .terminal-output,
+  .terminal-content {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    scroll-behavior: smooth;
+  }
+  
+  /* Mobile-specific font optimizations */
+  body,
+  .terminal-app {
+    font-size: clamp(14px, 4vw, 16px);
+    line-height: 1.5;
+  }
+  
+  /* Optimize animations for mobile performance */
+  .terminal-app {
+    animation: none; /* Disable gradient animation on mobile for performance */
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 640px) and (max-width: 1024px) {
+  .terminal-content {
+    padding: 1rem;
+    font-size: clamp(14px, 2.5vw, 16px);
+  }
+  
+  .terminal-input {
+    padding: 1rem;
+    padding-bottom: calc(1rem + var(--safe-area-bottom));
+  }
+  
+  .terminal-input input {
+    font-size: 1rem;
+  }
+  
+  /* Tablet-specific touch targets */
+  .touch-manipulation,
+  button,
+  [role="button"] {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  /* Better terminal layout for tablets */
+  .multi-tab-terminal {
+    max-width: none;
+  }
 }
 
 /* Responsive design for larger screens */
-@media (min-width: 640px) {
+@media (min-width: 1025px) {
   .terminal-content {
-    padding: 1rem;
+    padding: 1.25rem;
+    font-size: 0.875rem;
   }
   
   .terminal-input {
@@ -251,18 +394,51 @@
   }
 }
 
+/* Orientation-specific optimizations */
+@media screen and (max-width: 768px) and (orientation: portrait) {
+  .terminal-content {
+    font-size: clamp(14px, 4.5vw, 16px);
+  }
+  
+  .mobile-tab {
+    min-width: 100px;
+    max-width: 180px;
+  }
+}
+
+@media screen and (max-width: 1024px) and (orientation: landscape) {
+  .terminal-content {
+    font-size: clamp(12px, 3vw, 14px);
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .mobile-tab {
+    min-width: 120px;
+    max-width: 200px;
+  }
+  
+  /* Better use of landscape space */
+  .terminal-app {
+    height: 100vh;
+    height: 100dvh;
+  }
+}
+
 /* Advanced mobile viewport handling */
 @media screen and (max-width: 768px) {
   /* iOS Safari specific fixes */
   @supports (-webkit-touch-callout: none) {
     .terminal-app {
+      height: 100vh;
+      height: 100dvh;
+      /* iOS Safari viewport fix */
       height: -webkit-fill-available;
-      height: var(--visual-viewport-height);
     }
     
     .terminal-no-sessions {
+      height: 100vh;
+      height: 100dvh;
       height: -webkit-fill-available;
-      height: var(--visual-viewport-height);
     }
     
     /* Fix for iOS address bar behavior */
@@ -276,13 +452,27 @@
       overscroll-behavior-y: none;
       -webkit-overflow-scrolling: touch;
     }
+    
+    /* iOS keyboard handling */
+    .terminal-app[data-keyboard-open="1"] {
+      height: 100vh;
+      height: 100dvh;
+    }
   }
   
   /* Android Chrome specific fixes */
   @supports not (-webkit-touch-callout: none) {
     .terminal-app {
       height: 100vh;
-      height: var(--visual-viewport-height);
+      height: 100dvh;
+    }
+    
+    /* Android keyboard handling */
+    .terminal-app[data-keyboard-open="1"] {
+      height: 100vh;
+      height: 100dvh;
+      /* Adjust for virtual keyboard */
+      padding-bottom: env(keyboard-inset-height, 0);
     }
   }
 }
@@ -343,10 +533,82 @@
   }
 }
 
-@keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+/* Enhanced cyberpunk animations */
+@keyframes cyberpunkGradientShift {
+  0% { 
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg) saturate(1.1);
+  }
+  25% { 
+    background-position: 50% 25%;
+    filter: hue-rotate(5deg) saturate(1.2);
+  }
+  50% { 
+    background-position: 100% 50%;
+    filter: hue-rotate(10deg) saturate(1.1);
+  }
+  75% { 
+    background-position: 50% 75%;
+    filter: hue-rotate(5deg) saturate(1.2);
+  }
+  100% { 
+    background-position: 0% 50%;
+    filter: hue-rotate(0deg) saturate(1.1);
+  }
+}
+
+@keyframes neonPulse {
+  0%, 100% { 
+    opacity: 0.8;
+    box-shadow: 0 0 5px var(--terminal-glow-green);
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 1;
+    box-shadow: 0 0 20px var(--terminal-glow-green), 0 0 30px var(--terminal-glow-green);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes glitchEffect {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-1px, 1px); }
+  40% { transform: translate(-1px, -1px); }
+  60% { transform: translate(1px, 1px); }
+  80% { transform: translate(1px, -1px); }
+}
+
+@keyframes dataStream {
+  0% { transform: translateY(-100px); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+@keyframes holographicShimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+
+@keyframes scanLine {
+  0% { top: -2px; }
+  100% { top: 100%; }
+}
+
+@keyframes fadeIn {
+  0% { 
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  100% { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes neonFlicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+  75% { opacity: 0.9; }
 }
 
 /* Modern terminal enhancements */

@@ -1,0 +1,969 @@
+# Learning Feedback Loop System
+# Captures insights from autonomous development cycles to improve future performance
+# Creates a knowledge base that evolves with the project
+
+name: Learning Feedback Loop
+
+on:
+  # Trigger after autonomous development cycles
+  workflow_run:
+    workflows: ["Autonomous Development Cycle", "Codespace Continuous Development", "Self-Healing Infrastructure"]
+    types:
+      - completed
+  
+  # Manual trigger for analysis
+  workflow_dispatch:
+    inputs:
+      analysis_depth:
+        description: 'Analysis depth'
+        required: false
+        default: 'standard'
+        type: choice
+        options:
+        - light
+        - standard
+        - deep
+      
+      focus_area:
+        description: 'Learning focus area'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - performance
+        - architecture
+        - user-experience
+        - security
+        - code-quality
+
+env:
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+jobs:
+  collect-insights:
+    name: Collect Development Insights
+    runs-on: ubuntu-latest
+    outputs:
+      insights_available: ${{ steps.collection.outputs.insights_available }}
+      insights_count: ${{ steps.collection.outputs.insights_count }}
+      
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 50 # Get more history for pattern analysis
+        
+    - name: Collect Development Data
+      id: collection
+      run: |
+        # Create insight collection script
+        cat > collect_insights.js << 'EOF'
+        const fs = require('fs');
+        const { spawn, exec } = require('child_process');
+        
+        class InsightCollector {
+          constructor() {
+            this.insights = {
+              codeChanges: [],
+              performanceMetrics: [],
+              errorPatterns: [],
+              successPatterns: [],
+              userFeedback: [],
+              architecturalEvolution: []
+            };
+          }
+          
+          async collectAllInsights() {
+            console.log('📊 Collecting development insights...');
+            
+            // Collect recent code changes and their impact
+            await this.collectCodeChangeInsights();
+            
+            // Analyze build and test patterns
+            await this.collectBuildPatterns();
+            
+            // Gather performance data
+            await this.collectPerformanceInsights();
+            
+            // Analyze error and resolution patterns
+            await this.collectErrorPatterns();
+            
+            // Track architectural evolution
+            await this.collectArchitecturalInsights();
+            
+            return this.generateInsightReport();
+          }
+          
+          async collectCodeChangeInsights() {
+            console.log('Analyzing recent code changes...');
+            
+            try {
+              // Get recent commits with their impact
+              const commitResult = await this.runCommand(
+                'git log --oneline --stat --since="7 days ago" | head -50'
+              );
+              
+              const commits = this.parseCommitData(commitResult.stdout);
+              
+              // Analyze patterns in successful changes
+              const autonomousCommits = commits.filter(c => 
+                c.message.includes('🤖') || 
+                c.message.includes('Autonomous') ||
+                c.message.includes('Auto-healing')
+              );
+              
+              const manualCommits = commits.filter(c => !autonomousCommits.includes(c));
+              
+              this.insights.codeChanges = {
+                totalCommits: commits.length,
+                autonomousCommits: autonomousCommits.length,
+                manualCommits: manualCommits.length,
+                averageFilesChanged: this.calculateAverageFilesChanged(commits),
+                mostActiveAreas: this.identifyActiveCodeAreas(commits),
+                commitPatterns: this.analyzeCommitPatterns(commits)
+              };
+              
+            } catch (error) {
+              console.log('Could not analyze code changes:', error.message);
+            }
+          }
+          
+          async collectBuildPatterns() {
+            console.log('Analyzing build success patterns...');
+            
+            try {
+              // Check recent build results (if available in logs)
+              const buildResult = await this.runCommand('npm run build 2>&1');
+              const typeCheckResult = await this.runCommand('npm run typecheck 2>&1');
+              
+              this.insights.successPatterns.push({
+                type: 'build_success',
+                success: buildResult.code === 0,
+                duration: this.estimateBuildDuration(buildResult.stdout),
+                errors: this.extractErrors(buildResult.stderr),
+                timestamp: new Date().toISOString()
+              });
+              
+              this.insights.successPatterns.push({
+                type: 'typecheck_success',
+                success: typeCheckResult.code === 0,
+                errors: this.extractTypeScriptErrors(typeCheckResult.stdout),
+                timestamp: new Date().toISOString()
+              });
+              
+            } catch (error) {
+              console.log('Could not analyze build patterns:', error.message);
+            }
+          }
+          
+          async collectPerformanceInsights() {
+            console.log('Gathering performance metrics...');
+            
+            try {
+              // Analyze bundle size if dist exists
+              if (fs.existsSync('dist')) {
+                const bundleSize = this.calculateDirectorySize('dist');
+                
+                this.insights.performanceMetrics.push({
+                  metric: 'bundle_size',
+                  value: bundleSize,
+                  unit: 'bytes',
+                  timestamp: new Date().toISOString(),
+                  threshold: 5 * 1024 * 1024 // 5MB threshold
+                });
+              }
+              
+              // Count lines of code
+              const locResult = await this.runCommand(
+                'find src -name "*.ts" -o -name "*.tsx" | xargs wc -l | tail -1'
+              );
+              
+              if (locResult.stdout) {
+                const totalLines = parseInt(locResult.stdout.trim().split(/\s+/)[0]) || 0;
+                
+                this.insights.performanceMetrics.push({
+                  metric: 'lines_of_code',
+                  value: totalLines,
+                  unit: 'lines',
+                  timestamp: new Date().toISOString()
+                });
+              }
+              
+              // Analyze file complexity
+              const complexFiles = await this.runCommand(
+                'find src -name "*.ts" -o -name "*.tsx" | xargs wc -l | sort -nr | head -10'
+              );
+              
+              this.insights.performanceMetrics.push({
+                metric: 'code_complexity',
+                value: this.analyzeComplexity(complexFiles.stdout),
+                unit: 'complexity_score',
+                timestamp: new Date().toISOString()
+              });
+              
+            } catch (error) {
+              console.log('Could not gather performance metrics:', error.message);
+            }
+          }
+          
+          async collectErrorPatterns() {
+            console.log('Analyzing error patterns...');
+            
+            try {
+              // Look for TODO/FIXME patterns
+              const todoResult = await this.runCommand('grep -r "TODO\\|FIXME\\|HACK" src/ || true');
+              const todoCount = (todoResult.stdout.match(/\n/g) || []).length;
+              
+              if (todoCount > 0) {
+                this.insights.errorPatterns.push({
+                  type: 'technical_debt',
+                  count: todoCount,
+                  impact: todoCount > 20 ? 'high' : todoCount > 10 ? 'medium' : 'low',
+                  examples: todoResult.stdout.split('\n').slice(0, 5),
+                  timestamp: new Date().toISOString()
+                });
+              }
+              
+              // Look for console.log patterns (potential debugging leftovers)
+              const consoleResult = await this.runCommand('grep -r "console\\." src/ || true');
+              const consoleCount = (consoleResult.stdout.match(/\n/g) || []).length;
+              
+              if (consoleCount > 10) {
+                this.insights.errorPatterns.push({
+                  type: 'debug_statements',
+                  count: consoleCount,
+                  impact: consoleCount > 50 ? 'high' : 'medium',
+                  timestamp: new Date().toISOString()
+                });
+              }
+              
+            } catch (error) {
+              console.log('Could not analyze error patterns:', error.message);
+            }
+          }
+          
+          async collectArchitecturalInsights() {
+            console.log('Tracking architectural evolution...');
+            
+            try {
+              // Analyze directory structure
+              const structureResult = await this.runCommand('find src -type d | head -20');
+              const directories = structureResult.stdout.split('\n').filter(Boolean);
+              
+              // Analyze file distribution
+              const fileDistribution = {};
+              for (const dir of directories) {
+                const fileCount = await this.runCommand(`find "${dir}" -maxdepth 1 -name "*.ts" -o -name "*.tsx" | wc -l`);
+                const count = parseInt(fileCount.stdout.trim()) || 0;
+                if (count > 0) {
+                  fileDistribution[dir] = count;
+                }
+              }
+              
+              this.insights.architecturalEvolution.push({
+                timestamp: new Date().toISOString(),
+                directoryCount: directories.length,
+                fileDistribution: fileDistribution,
+                architectureScore: this.calculateArchitectureScore(fileDistribution)
+              });
+              
+            } catch (error) {
+              console.log('Could not analyze architectural evolution:', error.message);
+            }
+          }
+          
+          parseCommitData(gitOutput) {
+            const commits = [];
+            const lines = gitOutput.split('\n').filter(Boolean);
+            
+            for (const line of lines) {
+              if (line.match(/^[a-f0-9]+\s/)) {
+                const [hash, ...messageParts] = line.split(' ');
+                commits.push({
+                  hash: hash,
+                  message: messageParts.join(' '),
+                  filesChanged: 0 // Would need more parsing for accurate count
+                });
+              }
+            }
+            
+            return commits;
+          }
+          
+          calculateDirectorySize(dirPath) {
+            let totalSize = 0;
+            
+            const calculateSize = (currentPath) => {
+              const items = fs.readdirSync(currentPath);
+              
+              for (const item of items) {
+                const itemPath = require('path').join(currentPath, item);
+                const stats = fs.statSync(itemPath);
+                
+                if (stats.isDirectory()) {
+                  calculateSize(itemPath);
+                } else {
+                  totalSize += stats.size;
+                }
+              }
+            };
+            
+            try {
+              calculateSize(dirPath);
+            } catch (error) {
+              console.log(`Error calculating size for ${dirPath}:`, error.message);
+            }
+            
+            return totalSize;
+          }
+          
+          analyzeComplexity(complexFilesOutput) {
+            const lines = complexFilesOutput.split('\n').filter(Boolean);
+            const fileSizes = lines.map(line => {
+              const size = parseInt(line.trim().split(/\s+/)[0]) || 0;
+              return size;
+            });
+            
+            const averageSize = fileSizes.reduce((sum, size) => sum + size, 0) / fileSizes.length;
+            const maxSize = Math.max(...fileSizes);
+            
+            // Simple complexity score: higher is more complex
+            return Math.round((averageSize * 0.7) + (maxSize * 0.3));
+          }
+          
+          calculateArchitectureScore(fileDistribution) {
+            const totalFiles = Object.values(fileDistribution).reduce((sum, count) => sum + count, 0);
+            const directories = Object.keys(fileDistribution).length;
+            
+            if (directories === 0) return 0;
+            
+            const avgFilesPerDir = totalFiles / directories;
+            
+            // Good architecture: balanced file distribution, not too many files per directory
+            const balanceScore = Math.max(0, 100 - Math.abs(avgFilesPerDir - 8) * 5);
+            const distributionScore = Math.min(100, directories * 10); // More directories generally better
+            
+            return Math.round((balanceScore + distributionScore) / 2);
+          }
+          
+          async runCommand(command, timeout = 10000) {
+            return new Promise((resolve) => {
+              const child = spawn('sh', ['-c', command], {
+                stdio: ['pipe', 'pipe', 'pipe'],
+                timeout: timeout
+              });
+              
+              let stdout = '';
+              let stderr = '';
+              
+              child.stdout.on('data', (data) => stdout += data.toString());
+              child.stderr.on('data', (data) => stderr += data.toString());
+              
+              child.on('close', (code) => {
+                resolve({ code, stdout, stderr });
+              });
+              
+              child.on('error', (error) => {
+                resolve({ code: 1, stdout, stderr: error.message });
+              });
+            });
+          }
+          
+          extractErrors(stderr) {
+            if (!stderr) return [];
+            
+            return stderr.split('\n')
+              .filter(line => 
+                line.toLowerCase().includes('error') ||
+                line.toLowerCase().includes('failed') ||
+                line.includes('✗')
+              )
+              .slice(0, 10); // Limit to first 10 errors
+          }
+          
+          extractTypeScriptErrors(output) {
+            if (!output) return [];
+            
+            return output.split('\n')
+              .filter(line => line.includes('error TS'))
+              .slice(0, 10);
+          }
+          
+          estimateBuildDuration(buildOutput) {
+            // Look for time indicators in build output
+            const timeMatch = buildOutput.match(/(\d+\.?\d*)\s*(s|ms|seconds|milliseconds)/i);
+            if (timeMatch) {
+              const value = parseFloat(timeMatch[1]);
+              const unit = timeMatch[2].toLowerCase();
+              
+              if (unit.startsWith('s')) return value * 1000; // Convert to ms
+              return value;
+            }
+            
+            return null; // Unknown duration
+          }
+          
+          calculateAverageFilesChanged(commits) {
+            if (commits.length === 0) return 0;
+            
+            const totalFiles = commits.reduce((sum, commit) => sum + (commit.filesChanged || 1), 0);
+            return Math.round(totalFiles / commits.length);
+          }
+          
+          identifyActiveCodeAreas(commits) {
+            const areas = {};
+            
+            commits.forEach(commit => {
+              // Simple heuristic based on commit message
+              if (commit.message.toLowerCase().includes('component')) {
+                areas['components'] = (areas['components'] || 0) + 1;
+              }
+              if (commit.message.toLowerCase().includes('terminal')) {
+                areas['terminal'] = (areas['terminal'] || 0) + 1;
+              }
+              if (commit.message.toLowerCase().includes('ui') || commit.message.toLowerCase().includes('style')) {
+                areas['ui'] = (areas['ui'] || 0) + 1;
+              }
+              if (commit.message.toLowerCase().includes('command')) {
+                areas['commands'] = (areas['commands'] || 0) + 1;
+              }
+            });
+            
+            return Object.entries(areas)
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 5)
+              .map(([area, count]) => ({ area, count }));
+          }
+          
+          analyzeCommitPatterns(commits) {
+            const patterns = {
+              autonomous: 0,
+              refactoring: 0,
+              features: 0,
+              fixes: 0,
+              documentation: 0
+            };
+            
+            commits.forEach(commit => {
+              const message = commit.message.toLowerCase();
+              
+              if (message.includes('🤖') || message.includes('autonomous')) {
+                patterns.autonomous++;
+              } else if (message.includes('refactor') || message.includes('improve')) {
+                patterns.refactoring++;
+              } else if (message.includes('add') || message.includes('implement')) {
+                patterns.features++;
+              } else if (message.includes('fix') || message.includes('bug')) {
+                patterns.fixes++;
+              } else if (message.includes('doc') || message.includes('readme')) {
+                patterns.documentation++;
+              }
+            });
+            
+            return patterns;
+          }
+          
+          generateInsightReport() {
+            const totalInsights = 
+              this.insights.codeChanges.length +
+              this.insights.performanceMetrics.length +
+              this.insights.errorPatterns.length +
+              this.insights.successPatterns.length +
+              this.insights.architecturalEvolution.length;
+            
+            console.log('Insight Collection Summary:');
+            console.log('==========================');
+            console.log(`Total insights collected: ${totalInsights}`);
+            console.log(`Code change insights: ${this.insights.codeChanges.totalCommits || 0}`);
+            console.log(`Performance metrics: ${this.insights.performanceMetrics.length}`);
+            console.log(`Error patterns: ${this.insights.errorPatterns.length}`);
+            console.log(`Success patterns: ${this.insights.successPatterns.length}`);
+            console.log(`Architecture insights: ${this.insights.architecturalEvolution.length}`);
+            
+            return {
+              totalInsights,
+              insights: this.insights,
+              collectionTimestamp: new Date().toISOString()
+            };
+          }
+        }
+        
+        // Run insight collection
+        const collector = new InsightCollector();
+        collector.collectAllInsights().then(report => {
+          // Set GitHub Actions outputs
+          const output = process.env.GITHUB_OUTPUT;
+          fs.appendFileSync(output, `insights_available=true\n`);
+          fs.appendFileSync(output, `insights_count=${report.totalInsights}\n`);
+          
+          // Save detailed insights
+          fs.writeFileSync('development_insights.json', JSON.stringify(report, null, 2));
+          
+          console.log('✅ Insight collection completed');
+        }).catch(error => {
+          console.error('Insight collection failed:', error);
+          const output = process.env.GITHUB_OUTPUT;
+          fs.appendFileSync(output, `insights_available=false\n`);
+          fs.appendFileSync(output, `insights_count=0\n`);
+        });
+        EOF
+        
+        node collect_insights.js
+        
+    - name: Upload Development Insights
+      if: steps.collection.outputs.insights_available == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: development-insights
+        path: development_insights.json
+
+  analyze-patterns:
+    name: AI Pattern Analysis
+    needs: collect-insights
+    if: needs.collect-insights.outputs.insights_available == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      
+    - name: Download Insights
+      uses: actions/download-artifact@v4
+      with:
+        name: development-insights
+        
+    - name: AI-Powered Pattern Analysis
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        ANALYSIS_DEPTH: ${{ github.event.inputs.analysis_depth || 'standard' }}
+        FOCUS_AREA: ${{ github.event.inputs.focus_area || 'all' }}
+      run: |
+        # Create AI pattern analysis script
+        cat > pattern_analyzer.js << 'EOF'
+        const https = require('https');
+        const fs = require('fs');
+        
+        class PatternAnalyzer {
+          constructor(apiKey) {
+            this.apiKey = apiKey;
+            this.insights = null;
+            this.patterns = [];
+            this.recommendations = [];
+          }
+          
+          async analyzePatterns(insightData) {
+            console.log('🧠 Starting AI pattern analysis...');
+            
+            this.insights = insightData;
+            
+            // Generate AI-powered insights
+            const analysis = await this.performAIAnalysis();
+            
+            // Extract actionable patterns
+            this.patterns = await this.extractPatterns(analysis);
+            
+            // Generate recommendations
+            this.recommendations = await this.generateRecommendations();
+            
+            return this.createLearningReport();
+          }
+          
+          async performAIAnalysis() {
+            if (!this.apiKey) {
+              console.log('No API key available for AI analysis');
+              return this.fallbackAnalysis();
+            }
+            
+            const messages = [{
+              role: 'user',
+              content: `Analyze this development data from the Rust Terminal Forge project:
+              
+              ${JSON.stringify(this.insights, null, 2)}
+              
+              Focus Area: ${process.env.FOCUS_AREA}
+              Analysis Depth: ${process.env.ANALYSIS_DEPTH}
+              
+              Please provide insights on:
+              1. **Development Patterns**: What patterns emerge from the code changes and commits?
+              2. **Quality Trends**: How is code quality evolving over time?
+              3. **Performance Insights**: What performance trends do you see?
+              4. **Architecture Evolution**: How is the architecture improving?
+              5. **Error Patterns**: What common issues are occurring?
+              6. **Success Factors**: What practices are working well?
+              7. **Recommendations**: What specific improvements would you suggest?
+              
+              Respond with actionable insights that will help improve future autonomous development cycles.
+              Focus on patterns that can be automated and improvements that follow KISS, YAGNI, DRY principles.`
+            }];
+            
+            try {
+              const response = await this.makeClaudeRequest(messages, 3000);
+              return response.content[0].text;
+            } catch (error) {
+              console.error('AI analysis failed:', error.message);
+              return this.fallbackAnalysis();
+            }
+          }
+          
+          fallbackAnalysis() {
+            console.log('Performing fallback analysis...');
+            
+            let analysis = '# Automated Pattern Analysis\n\n';
+            
+            // Basic pattern recognition without AI
+            if (this.insights.codeChanges.autonomousCommits > this.insights.codeChanges.manualCommits) {
+              analysis += '- **Autonomous Development Trend**: Autonomous commits are exceeding manual commits\n';
+            }
+            
+            if (this.insights.errorPatterns.length > 0) {
+              analysis += '- **Error Patterns Detected**: Technical debt and debugging statements found\n';
+            }
+            
+            if (this.insights.performanceMetrics.length > 0) {
+              analysis += '- **Performance Tracking**: Bundle size and code complexity being monitored\n';
+            }
+            
+            return analysis;
+          }
+          
+          async extractPatterns(analysisText) {
+            const patterns = [];
+            
+            // Extract bullet points and structured insights
+            const lines = analysisText.split('\n');
+            let currentSection = '';
+            
+            for (const line of lines) {
+              if (line.startsWith('#')) {
+                currentSection = line.replace(/^#+\s*/, '');
+              } else if (line.startsWith('-') || line.startsWith('*')) {
+                patterns.push({
+                  section: currentSection,
+                  pattern: line.replace(/^[-*]\s*/, ''),
+                  confidence: 'medium',
+                  actionable: line.toLowerCase().includes('should') || line.toLowerCase().includes('recommend')
+                });
+              }
+            }
+            
+            return patterns;
+          }
+          
+          async generateRecommendations() {
+            const recommendations = [];
+            
+            // Performance recommendations
+            if (this.insights.performanceMetrics.some(m => m.metric === 'bundle_size' && m.value > m.threshold)) {
+              recommendations.push({
+                type: 'performance',
+                priority: 'high',
+                title: 'Bundle Size Optimization',
+                description: 'Bundle size exceeds threshold, consider code splitting',
+                implementation: 'automated',
+                estimatedImpact: 'high'
+              });
+            }
+            
+            // Code quality recommendations
+            if (this.insights.errorPatterns.some(e => e.type === 'technical_debt' && e.impact === 'high')) {
+              recommendations.push({
+                type: 'quality',
+                priority: 'medium',
+                title: 'Technical Debt Reduction',
+                description: 'High number of TODO/FIXME comments detected',
+                implementation: 'automated',
+                estimatedImpact: 'medium'
+              });
+            }
+            
+            // Architecture recommendations
+            if (this.insights.architecturalEvolution.length > 0) {
+              const latestArchScore = this.insights.architecturalEvolution[this.insights.architecturalEvolution.length - 1].architectureScore;
+              
+              if (latestArchScore < 70) {
+                recommendations.push({
+                  type: 'architecture',
+                  priority: 'high',
+                  title: 'Architecture Improvement',
+                  description: 'File distribution could be better balanced',
+                  implementation: 'manual_review',
+                  estimatedImpact: 'high'
+                });
+              }
+            }
+            
+            return recommendations;
+          }
+          
+          createLearningReport() {
+            return {
+              timestamp: new Date().toISOString(),
+              analysisDepth: process.env.ANALYSIS_DEPTH,
+              focusArea: process.env.FOCUS_AREA,
+              totalPatterns: this.patterns.length,
+              actionablePatterns: this.patterns.filter(p => p.actionable).length,
+              recommendations: this.recommendations,
+              patterns: this.patterns,
+              nextActions: this.generateNextActions(),
+              learningScore: this.calculateLearningScore()
+            };
+          }
+          
+          generateNextActions() {
+            const actions = [];
+            
+            // High priority recommendations become next actions
+            const highPriorityRecs = this.recommendations.filter(r => r.priority === 'high');
+            
+            for (const rec of highPriorityRecs) {
+              actions.push({
+                action: rec.implementation === 'automated' ? 'schedule_automation' : 'flag_for_review',
+                target: rec.type,
+                description: rec.title,
+                estimatedEffort: rec.implementation === 'automated' ? 'low' : 'medium'
+              });
+            }
+            
+            // Always suggest knowledge base update
+            actions.push({
+              action: 'update_knowledge_base',
+              target: 'documentation',
+              description: 'Update AI collaboration guide with new patterns',
+              estimatedEffort: 'low'
+            });
+            
+            return actions;
+          }
+          
+          calculateLearningScore() {
+            let score = 50; // Base score
+            
+            // Increase score for more insights
+            score += Math.min(this.insights.totalInsights * 2, 30);
+            
+            // Increase score for actionable patterns
+            score += this.patterns.filter(p => p.actionable).length * 3;
+            
+            // Increase score for high-value recommendations
+            score += this.recommendations.filter(r => r.priority === 'high').length * 5;
+            
+            return Math.min(score, 100);
+          }
+          
+          async makeClaudeRequest(messages, maxTokens = 2000) {
+            return new Promise((resolve, reject) => {
+              const data = JSON.stringify({
+                model: "claude-3-sonnet-20240229",
+                max_tokens: maxTokens,
+                messages: messages,
+                temperature: 0.2
+              });
+              
+              const options = {
+                hostname: 'api.anthropic.com',
+                port: 443,
+                path: '/v1/messages',
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-api-key': this.apiKey,
+                  'anthropic-version': '2023-06-01'
+                }
+              };
+              
+              const req = https.request(options, (res) => {
+                let body = '';
+                res.on('data', (chunk) => body += chunk);
+                res.on('end', () => {
+                  try {
+                    const response = JSON.parse(body);
+                    if (response.error) {
+                      reject(new Error(response.error.message));
+                    } else {
+                      resolve(response);
+                    }
+                  } catch (e) {
+                    reject(e);
+                  }
+                });
+              });
+              
+              req.on('error', reject);
+              req.write(data);
+              req.end();
+            });
+          }
+        }
+        
+        // Load insights and run analysis
+        const insightData = JSON.parse(fs.readFileSync('development_insights.json', 'utf8'));
+        const analyzer = new PatternAnalyzer(process.env.ANTHROPIC_API_KEY);
+        
+        analyzer.analyzePatterns(insightData).then(report => {
+          console.log('Learning Report Generated:');
+          console.log('=========================');
+          console.log(`Total Patterns: ${report.totalPatterns}`);
+          console.log(`Actionable Patterns: ${report.actionablePatterns}`);
+          console.log(`Recommendations: ${report.recommendations.length}`);
+          console.log(`Learning Score: ${report.learningScore}/100`);
+          
+          // Save learning report
+          fs.writeFileSync('learning_report.json', JSON.stringify(report, null, 2));
+          
+          // Create markdown summary
+          const markdown = `# Learning Report - ${new Date().toDateString()}
+          
+## Analysis Summary
+- **Focus Area**: ${report.focusArea}
+- **Patterns Identified**: ${report.totalPatterns}
+- **Actionable Insights**: ${report.actionablePatterns}
+- **Learning Score**: ${report.learningScore}/100
+
+## Key Recommendations
+${report.recommendations.map(rec => 
+  `- **${rec.title}** (${rec.priority}): ${rec.description}`
+).join('\n')}
+
+## Next Actions
+${report.nextActions.map(action => 
+  `- ${action.action}: ${action.description} (${action.estimatedEffort} effort)`
+).join('\n')}
+
+Generated by AI Learning Feedback Loop`;
+          
+          fs.writeFileSync('LEARNING_REPORT.md', markdown);
+          
+          console.log('✅ Pattern analysis completed');
+        }).catch(error => {
+          console.error('Pattern analysis failed:', error);
+          process.exit(1);
+        });
+        EOF
+        
+        node pattern_analyzer.js
+        
+    - name: Upload Learning Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: learning-report
+        path: |
+          learning_report.json
+          LEARNING_REPORT.md
+
+  update-knowledge-base:
+    name: Update Knowledge Base
+    needs: [collect-insights, analyze-patterns]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Download Learning Report
+      uses: actions/download-artifact@v4
+      with:
+        name: learning-report
+        
+    - name: Update AI Collaboration Guide
+      run: |
+        # Update the AI collaboration guide with new learnings
+        if [ -f "learning_report.json" ]; then
+          # Extract key insights and update documentation
+          cat > update_knowledge.js << 'EOF'
+          const fs = require('fs');
+          
+          const learningReport = JSON.parse(fs.readFileSync('learning_report.json', 'utf8'));
+          
+          // Append learnings to the AI collaboration guide
+          const learningSection = `
+          
+## 📚 Recent Learning Insights (Auto-Generated)
+
+*Last Updated: ${new Date().toDateString()}*
+
+### Identified Patterns
+${learningReport.patterns.slice(0, 10).map(p => `- ${p.pattern}`).join('\n')}
+
+### Active Recommendations
+${learningReport.recommendations.map(r => `- **${r.title}**: ${r.description}`).join('\n')}
+
+### Learning Score: ${learningReport.learningScore}/100
+
+*This section is automatically updated by the Learning Feedback Loop system.*
+`;
+          
+          // Read current AI guide
+          let aiGuide = fs.readFileSync('AI_COLLABORATION_GUIDE.md', 'utf8');
+          
+          // Remove old learning insights section if it exists
+          aiGuide = aiGuide.replace(/## 📚 Recent Learning Insights.*?(?=##|$)/gs, '');
+          
+          // Append new learning insights
+          aiGuide += learningSection;
+          
+          // Write updated guide
+          fs.writeFileSync('AI_COLLABORATION_GUIDE.md', aiGuide);
+          
+          console.log('✅ AI Collaboration Guide updated with latest insights');
+          EOF
+          
+          node update_knowledge.js
+        fi
+        
+    - name: Commit Learning Updates
+      run: |
+        git config --local user.email "learning@github.com"
+        git config --local user.name "Learning Feedback Loop"
+        
+        git add .
+        
+        if ! git diff --staged --quiet; then
+          # Create learning commit message
+          echo "📚 Learning feedback loop update" > commit_msg.txt
+          echo "" >> commit_msg.txt
+          echo "Updated knowledge base with insights from recent development cycles:" >> commit_msg.txt
+          echo "" >> commit_msg.txt
+          
+          if [ -f "learning_report.json" ]; then
+            echo "- Analyzed ${{ needs.collect-insights.outputs.insights_count }} development insights" >> commit_msg.txt
+            echo "- Generated AI-powered pattern analysis" >> commit_msg.txt
+            echo "- Updated AI collaboration documentation" >> commit_msg.txt
+          fi
+          
+          echo "" >> commit_msg.txt
+          echo "Continuous learning system active 🧠✨" >> commit_msg.txt
+          
+          git commit -F commit_msg.txt
+          git push origin main
+        else
+          echo "No learning updates to commit"
+        fi
+
+  schedule-next-analysis:
+    name: Schedule Next Learning Cycle
+    needs: [collect-insights, analyze-patterns, update-knowledge-base]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Calculate Learning Velocity
+      run: |
+        echo "📈 Learning Feedback Loop Metrics:"
+        echo "================================="
+        echo "Insights Collected: ${{ needs.collect-insights.outputs.insights_count }}"
+        echo "Analysis Completed: ${{ needs.analyze-patterns.result == 'success' }}"
+        echo "Knowledge Base Updated: ${{ needs.update-knowledge-base.result == 'success' }}"
+        
+        if [ "${{ needs.collect-insights.outputs.insights_count }}" -gt "10" ]; then
+          echo "📊 High learning velocity detected - rich development activity"
+        else
+          echo "📊 Standard learning velocity - steady development progress"
+        fi
+        
+        echo ""
+        echo "🔄 Next learning analysis will be triggered by:"
+        echo "- Completion of autonomous development cycles"
+        echo "- Self-healing infrastructure activities"
+        echo "- Manual workflow dispatch"
+        echo ""
+        echo "🧠 Continuous learning system is active and evolving! ✨"

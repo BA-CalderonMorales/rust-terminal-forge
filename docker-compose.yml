@@ -1,0 +1,121 @@
+# Docker Compose configuration for Rust Terminal Forge
+# Production-ready with security hardening and monitoring
+
+version: '3.8'
+
+services:
+  rust-terminal-forge:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: rust-terminal-forge
+    ports:
+      - "8080:8080"   # Frontend
+      - "3000:3000"   # API Server  
+      - "8081:8081"   # PTY WebSocket Server
+    environment:
+      - NODE_ENV=production
+      - RUST_LOG=info
+      - PORT=8080
+      - API_PORT=3000
+      - PTY_PORT=8081
+    restart: unless-stopped
+    
+    # Security hardening
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    read_only: true
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Temporary filesystems for writable areas
+    tmpfs:
+      - /tmp:size=100M
+      - /var/cache:size=50M
+
+  # Optional: Reverse proxy with Traefik for HTTPS
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - --api.insecure=false
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.email=your-email@domain.com
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt-data:/letsencrypt
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.api.rule=Host(`traefik.yourdomain.com`)
+      - traefik.http.routers.api.tls.certresolver=letsencrypt
+    profiles:
+      - production
+    restart: unless-stopped
+
+  # Optional: Redis for session storage (if needed)
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-defaultpassword}
+    volumes:
+      - redis-data:/data
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    profiles:
+      - with-redis
+
+volumes:
+  letsencrypt-data:
+    driver: local
+  redis-data:
+    driver: local
+
+# Networks (optional, for advanced setups)
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

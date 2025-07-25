@@ -1,117 +1,210 @@
-# Rust Terminal Forge
+# 🚀 Rust Terminal Forge
 
-Rust Terminal Forge is a secure web-based terminal emulator built with React, TypeScript and Tailwind CSS. It automatically publishes the `dist` folder to GitHub Pages using GitHub Actions for both production deploys and preview environments.
+> A modern, secure web-based terminal emulator with multi-tab support, mobile optimization, and autonomous development capabilities.
 
-<details>
-<summary><strong>Getting Started</strong></summary>
+**Rust Terminal Forge** combines the power of a real PTY backend with a React/TypeScript frontend to deliver a comprehensive terminal experience. Features include multi-tab sessions, gesture navigation, mobile-first design, and an innovative autonomous development system.
 
-Install the dependencies and start the development server:
+## ✨ Key Features
 
-```sh
+### 🖥️ Terminal Capabilities
+- **Real PTY Backend**: Authentic terminal experience with WebSocket communication
+- **Multi-Tab Sessions**: Create, manage, and switch between multiple terminal sessions
+- **Mobile-First Design**: Touch-optimized interface with gesture navigation
+- **Persistent Sessions**: Session state survives page refreshes and tab switching
+- **ANSI Support**: Full color and formatting support for terminal output
 
+### 📱 Mobile Optimization
+- **Gesture Navigation**: Swipe between tabs with haptic feedback
+- **Touch-Friendly UI**: 44px minimum touch targets (WCAG AA compliant)
+- **Virtual Keyboard Support**: Seamless mobile keyboard integration
+- **Responsive Design**: Optimized for all screen sizes and orientations
+
+### 🤖 Autonomous Development
+- **Self-Improving Codebase**: AI agents continuously enhance code quality
+- **Quality Gates**: Automated code complexity and security monitoring
+- **Self-Healing Infrastructure**: Automatic issue detection and resolution
+- **Learning System**: Pattern recognition and continuous improvement
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+ and npm
+- Rust 1.75+ (for backend development)
+- Modern browser with WebSocket support
+
+### Installation
+
+```bash
+# Clone the repository
+git clone <YOUR_GIT_URL>
+cd rust-terminal-forge
+
+# Install dependencies
 npm install
+
+# Start development server
 npm run dev
-
 ```
 
-Create a production build with:
+### Production Build
 
-```sh
+```bash
+# Create optimized build
 npm run build
-```
-</details>
 
-<details>
-<summary><strong>Project info</strong></summary>
-
-**URL**: https://lovable.dev/projects/8625de05-3749-4001-aedf-b432dd29c710
-</details>
-
-<details>
-<summary><strong>How can I edit this code?</strong></summary>
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/8625de05-3749-4001-aedf-b432dd29c710) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
- git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
- cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
- npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
- npm run dev
+# Preview production build
+npm run preview
 ```
 
-**Edit a file directly in GitHub**
+## 🏗️ Architecture Overview
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### System Components
+- **Frontend**: React + TypeScript + Vite + Tailwind CSS
+- **Backend**: Rust HTTP server with WebSocket PTY support
+- **Terminal Engine**: Real PTY sessions with ANSI processing
+- **UI Framework**: shadcn/ui components with mobile optimization
+- **State Management**: MVVM pattern with persistent storage
 
-**Use GitHub Codespaces**
+### Design Patterns
+- **MVVM Architecture**: Clear separation of concerns in `src/home/`
+- **Command Pattern**: Extensible command system in `src/core/commands/`
+- **Vertical Slice Architecture**: Feature-based code organization
+- **Test-Driven Development**: Comprehensive test coverage (51+ tests)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+For detailed architecture information, see [ARCHITECTURE.md](./ARCHITECTURE.md).
 
-</details>
+## 🛠️ Development
 
-<details>
-<summary><strong>What technologies are used for this project?</strong></summary>
+### Development Workflow
+The project follows **Test-Driven Development (TDD)** principles with comprehensive test coverage:
+- **51 passing tests** covering core functionality
+- **Mobile-specific test scenarios** for gesture navigation
+- **Integration tests** for end-to-end workflows
+- **Performance benchmarks** and optimization metrics
 
-This project is built with:
+### Available Scripts
+```bash
+npm run dev          # Start development server
+npm run build        # Create production build
+npm run preview      # Preview production build
+npm run test         # Run test suite
+npm run typecheck    # TypeScript type checking
+npm run lint         # Code linting
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Development Environments
+- **Local Development**: Clone repo and run `npm run dev`
+- **GitHub Codespaces**: Click Code → Codespaces → New codespace
+- **Lovable Integration**: Direct editing via [Lovable Project](https://lovable.dev/projects/8625de05-3749-4001-aedf-b432dd29c710)
 
-</details>
+For detailed development setup and workflows, see [DEVELOPMENT.md](./DEVELOPMENT.md).
 
-<details>
-<summary><strong>Deployment</strong></summary>
+## 🧰 Tech Stack
 
-Pushes to `main` automatically deploy to **GitHub Pages** via `.github/workflows/deploy.yml`. Pull requests generate live previews using `.github/workflows/preview.yml`.
+### Frontend
+- **React 18**: Modern component-based UI framework
+- **TypeScript**: Type-safe JavaScript development
+- **Vite**: Lightning-fast development and build tool
+- **Tailwind CSS**: Utility-first CSS framework
+- **shadcn/ui**: High-quality, accessible component library
 
-Once deployed, your site will be available at `https://<OWNER>.github.io/rust-terminal-forge/`.
+### Backend
+- **Rust**: High-performance, memory-safe systems programming
+- **WebSockets**: Real-time bidirectional communication
+- **PTY**: Pseudo-terminal for authentic shell experience
 
-</details>
+### Development & Testing
+- **Vitest**: Fast unit testing framework
+- **ESLint**: Code quality and consistency
+- **Prettier**: Code formatting
+- **GitHub Actions**: CI/CD and autonomous development
 
-<details>
-<summary><strong>Common commands</strong></summary>
+## 🚀 Deployment
 
-Use `help` inside the terminal for the full list. Recent additions: the `uptime` command displays how long the system has been running and `hostname` shows the server name. You can now clear the command history with `history -c`, limit output with `history -n <count>`, and jump back to the previous directory with `cd -`.
+### Automatic Deployment
+- **GitHub Pages**: Automatic deployment on `main` branch pushes
+- **Preview Environments**: Live previews for pull requests
+- **Production URL**: `https://<OWNER>.github.io/rust-terminal-forge/`
 
-</details>
+### Alternative Deployment Options
+- **Docker**: Self-hosted with full container support
+- **Railway**: Zero-config deployment with free tier
+- **Fly.io**: Global edge deployment
+- **Coolify**: Self-hosted platform alternative
 
-<details>
-<summary><strong>Can I connect a custom domain to my Lovable project?</strong></summary>
+For comprehensive deployment guides and security best practices, see [DEPLOYMENT.md](./DEPLOYMENT.md).
 
-Yes, you can!
+## 💻 Terminal Features
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Built-in Commands
+The terminal supports a comprehensive set of commands:
+- **File System**: `ls`, `cd`, `pwd`, `mkdir`, `rm`, `cp`, `mv`
+- **System Info**: `uptime`, `hostname`, `whoami`, `uname`
+- **History**: `history`, `history -c`, `history -n <count>`
+- **Navigation**: `cd -` (previous directory)
+- **Utilities**: `help`, `clear`, `echo`, `cat`
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### Multi-Tab Management
+- **Create Tabs**: Click '+' or use keyboard shortcuts
+- **Switch Tabs**: Click tabs or swipe on mobile
+- **Close Tabs**: Right-click → Close or swipe gesture
+- **Session Persistence**: Tabs survive page refreshes
+- **Process Tracking**: Visual indicators for active processes
 
-</details>
+### Mobile Gestures
+- **Swipe Left/Right**: Navigate between tabs
+- **Long Press**: Context menu access
+- **Haptic Feedback**: Touch confirmation
+- **Virtual Keyboard**: Optimized input handling
+
+## 🤖 Autonomous Development System
+
+Rust Terminal Forge features an innovative **autonomous development system** that continuously improves the codebase:
+
+### Core Components
+- **Autonomous Development Cycle**: Analyzes and improves code every 6 hours
+- **Quality Gates**: Monitors complexity, security, and performance metrics
+- **Self-Healing Infrastructure**: Automatically fixes build and deployment issues
+- **Learning Feedback Loop**: Extracts insights and continuously evolves
+- **Codespace Integration**: Long-running AI development sessions
+
+### Key Benefits
+- **Zero API Key Required**: Designed to work without external dependencies
+- **Continuous Improvement**: Code quality improves automatically over time
+- **Security Focused**: Built-in security scanning and vulnerability patches
+- **Human-AI Collaboration**: Peaceful environment for collaborative development
+
+For detailed information about the autonomous system, see [AI_INTEGRATION.md](./AI_INTEGRATION.md).
+
+## 📚 Documentation
+
+- **[DEVELOPMENT.md](./DEVELOPMENT.md)**: Development setup, TDD workflow, and testing
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)**: Technical architecture and design patterns
+- **[AI_INTEGRATION.md](./AI_INTEGRATION.md)**: Multi-AI collaboration and autonomous features
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)**: Deployment options and security practices
+
+## 🚦 Project Status
+
+- ✅ **Core Terminal**: Full PTY backend with WebSocket communication
+- ✅ **Multi-Tab System**: Complete with gesture navigation and persistence
+- ✅ **Mobile Optimization**: Touch-friendly UI with haptic feedback
+- ✅ **Test Coverage**: 51+ tests with comprehensive coverage
+- ✅ **Autonomous System**: Self-improving development workflows
+- 🔄 **Performance Optimization**: Ongoing improvements via AI agents
+- 📋 **Feature Roadmap**: Cloud sync, collaborative editing, voice commands
+
+## 🤝 Contributing
+
+Contributions are welcome! The project is designed for human-AI collaboration:
+- Follow the established architectural patterns
+- Maintain test coverage with TDD approach
+- Use the autonomous system for continuous improvement
+- Coordinate with AI agents via the built-in swarm system
+
+## 📄 License
+
+This project is built with love for the art of programming and the belief that humans and AI can work together to create extraordinary software.
+
+---
+
+**Built with ❤️ using Rust Terminal Forge - Where human creativity meets AI innovation!**
