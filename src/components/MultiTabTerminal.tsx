@@ -59,6 +59,7 @@ export const MultiTabTerminal: React.FC<MultiTabTerminalProps> = ({ className = 
   const [showCursor, setShowCursor] = useState(true);
   const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [currentPath, setCurrentPath] = useState('/workspaces/rust-terminal-forge');
   
   // Mobile-specific state
   const [touchCapabilities] = useState(getTouchCapabilities());

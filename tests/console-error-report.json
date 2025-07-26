@@ -1,0 +1,355 @@
+{
+  "timestamp": "2025-07-26T04:40:57.475Z",
+  "url": "http://localhost:8081",
+  "summary": {
+    "totalMessages": 34,
+    "errors": 0,
+    "warnings": 0,
+    "hasErrors": false,
+    "hasWarnings": false
+  },
+  "errors": [],
+  "warnings": [],
+  "allMessages": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "location": {
+        "url": "http://localhost:8081/@vite/client",
+        "lineNumber": 494,
+        "columnNumber": 8
+      },
+      "timestamp": "2025-07-26T04:40:47.089Z"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected.",
+      "location": {
+        "url": "http://localhost:8081/@vite/client",
+        "lineNumber": 617,
+        "columnNumber": 14
+      },
+      "timestamp": "2025-07-26T04:40:47.093Z"
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold",
+      "location": {
+        "url": "http://localhost:8081/node_modules/.vite/deps/chunk-R6S4VRB5.js?v=c7049f19",
+        "lineNumber": 21550,
+        "columnNumber": 24
+      },
+      "timestamp": "2025-07-26T04:40:47.177Z"
+    },
+    {
+      "type": "warn",
+      "text": "Failed to load environment variables from storage: JSHandle@error",
+      "location": {
+        "url": "http://localhost:8081/src/core/EnvironmentManager.ts",
+        "lineNumber": 82,
+        "columnNumber": 14
+      },
+      "timestamp": "2025-07-26T04:40:47.220Z"
+    },
+    {
+      "type": "warn",
+      "text": "Failed to initialize provider gemini: JSHandle@error",
+      "location": {
+        "url": "http://localhost:8081/src/core/ai/AIProviderRegistry.ts",
+        "lineNumber": 277,
+        "columnNumber": 24
+      },
+      "timestamp": "2025-07-26T04:40:47.222Z"
+    },
+    {
+      "type": "warn",
+      "text": "Failed to initialize provider qwen: JSHandle@error",
+      "location": {
+        "url": "http://localhost:8081/src/core/ai/AIProviderRegistry.ts",
+        "lineNumber": 277,
+        "columnNumber": 24
+      },
+      "timestamp": "2025-07-26T04:40:47.223Z"
+    },
+    {
+      "type": "warn",
+      "text": "Security Event: user_authenticated JSHandle@object",
+      "location": {
+        "url": "http://localhost:8081/src/core/securityUtils.ts",
+        "lineNumber": 93,
+        "columnNumber": 16
+      },
+      "timestamp": "2025-07-26T04:40:47.259Z"
+    },
+    {
+      "type": "log",
+      "text": "🚀 Connecting PTY for session: Terminal 1",
+      "location": {
+        "url": "http://localhost:8081/src/components/MultiTabTerminal.tsx?t=1753504758527",
+        "lineNumber": 122,
+        "columnNumber": 16
+      },
+      "timestamp": "2025-07-26T04:40:47.299Z"
+    },
+    {
+      "type": "log",
+      "text": "✅ Connected PTY for session: Terminal 1",
+      "location": {
+        "url": "http://localhost:8081/src/components/MultiTabTerminal.tsx?t=1753504758527",
+        "lineNumber": 133,
+        "columnNumber": 20
+      },
+      "timestamp": "2025-07-26T04:40:47.381Z"
+    },
+    {
+      "type": "log",
+      "text": "🎯 Terminal ready for session: Terminal 1 JSHandle@object",
+      "location": {
+        "url": "http://localhost:8081/src/components/MultiTabTerminal.tsx?t=1753504758527",
+        "lineNumber": 153,
+        "columnNumber": 20
+      },
+      "timestamp": "2025-07-26T04:40:47.388Z"
+    },
+    {
+      "type": "log",
+      "text": "📤 Terminal output for Terminal 1: \u001b[?2004h\u001b[0;32m@BA-CalderonMorales \u001b[0m➜ \u001b[1;34m/workspaces/rust-terminal-forge \u001b[0;36m(\u001b[1;31mmain\u001b[0;36m) \u001b[0m$ ",
+      "location": {
+        "url": "http://localhost:8081/src/components/MultiTabTerminal.tsx?t=1753504758527",
+        "lineNumber": 156,
+        "columnNumber": 20
+      },
+      "timestamp": "2025-07-26T04:40:47.774Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 AnsiText parsed segments: 1 from text length: 114",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 18,
+        "columnNumber": 20
+      },
+      "timestamp": "2025-07-26T04:40:47.775Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:47.775Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:47.799Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:48.299Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:48.799Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:49.299Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:49.799Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:50.299Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:50.799Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:51.299Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:51.798Z"
+    },
+    {
+      "type": "log",
+      "text": "Mobile detection test: JSHandle@object",
+      "location": {
+        "url": "pptr:evaluate;ConsoleErrorDetector.performInteractionTests%20(file%3A%2F%2F%2Fworkspaces%2Frust-terminal-forge%2Ftests%2Fconsole-error-detection.test.js%3A214%3A23)",
+        "lineNumber": 2,
+        "columnNumber": 18
+      },
+      "timestamp": "2025-07-26T04:40:51.962Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:52.298Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:52.798Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:53.299Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:53.798Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:54.298Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:54.798Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:55.299Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:55.798Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:56.298Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:56.798Z"
+    },
+    {
+      "type": "log",
+      "text": "🎨 Rendering 1 ANSI segments",
+      "location": {
+        "url": "http://localhost:8081/src/components/AnsiText.tsx",
+        "lineNumber": 49,
+        "columnNumber": 12
+      },
+      "timestamp": "2025-07-26T04:40:57.298Z"
+    }
+  ]
+}
