@@ -427,17 +427,17 @@ jobs:
             const totalFiles = this.refactorings.length;
             const totalViolations = this.refactorings.reduce((sum, r) => sum + r.violationsFixed, 0);
             
-            return `# Automated Refactoring Summary
-            
-Files Refactored: ${totalFiles}
-Violations Fixed: ${totalViolations}
-            
-## Refactored Files:
-${this.refactorings.map(r => 
-  `- ${r.file}: ${r.violationsFixed} issues fixed (${r.originalLength} → ${r.refactoredLength} chars)`
-).join('\n')}
-            
-Refactoring completed following KISS, DRY, and YAGNI principles.`;
+            return '# Automated Refactoring Summary\n' +
+            '\n' +
+            'Files Refactored: ' + totalFiles + '\n' +
+            'Violations Fixed: ' + totalViolations + '\n' +
+            '\n' +
+            '## Refactored Files:\n' +
+            this.refactorings.map(r => 
+              '- ' + r.file + ': ' + r.violationsFixed + ' issues fixed (' + r.originalLength + ' → ' + r.refactoredLength + ' chars)'
+            ).join('\n') + '\n' +
+            '\n' +
+            'Refactoring completed following KISS, DRY, and YAGNI principles.';
           }
         }
         

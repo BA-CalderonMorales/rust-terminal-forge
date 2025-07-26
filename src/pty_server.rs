@@ -26,14 +26,18 @@ impl TerminalSession {
     fn process_input(&mut self, input: &str) -> String {
         info!("⚙️ Processing input in session {}: '{}'", self.id, input.trim());
         
+        // Mark session as active when processing input
+        self.active = true;
+        
         // For now, just echo back with Rick's style
         let response = format!(
             "🧪 Rick's Rust Terminal processed: {}\n\
             Wubba Lubba Dub Dub!\n\
-            📊 Session: {}\n\
+            📊 Session: {} (Active: {})\n\
             ⏰ Processed at: {}\n",
             input.trim(),
             self.id,
+            self.active,
             chrono::Utc::now().format("%H:%M:%S UTC")
         );
         

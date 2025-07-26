@@ -137,7 +137,7 @@ jobs:
             };
             
             this.startTime = Date.now();
-            this.sessionId = `session-${Date.now()}`;
+            this.sessionId = 'session-' + Date.now();
             this.improvements = [];
             this.cycleCount = 0;
             
@@ -153,11 +153,11 @@ jobs:
           
           log(message, level = 'info') {
             const timestamp = new Date().toISOString();
-            const prefix = `[${timestamp}] [${level.toUpperCase()}] [${this.sessionId}]`;
-            console.log(`${prefix} ${message}`);
+            const prefix = '[' + timestamp + '] [' + level.toUpperCase() + '] [' + this.sessionId + ']';
+            console.log(prefix + ' ' + message);
             
             // Also write to log file
-            fs.appendFileSync('autonomous_development.log', `${prefix} ${message}\n`);
+            fs.appendFileSync('autonomous_development.log', prefix + ' ' + message + '\n');
           }
           
           async shouldContinue() {
@@ -219,40 +219,41 @@ jobs:
             
             const messages = [{
               role: 'user',
-              content: `${context}
-              
-              ## Current Project Files:
-              ${projectFiles.substring(0, 2000)}
-              
-              ## Recent Changes:
-              ${recentChanges}
-              
-              ## Cycle: ${this.cycleCount + 1}
-              ## Focus: ${this.config.focusArea}
-              
-              As an autonomous AI developer, analyze this Rust Terminal Forge codebase and identify 
-              ${this.currentConfig.improvementsPerCycle} specific improvements that follow our core principles.
-              
-              For each improvement, consider:
-              1. Does it make the code more maintainable?
-              2. Does it follow KISS, YAGNI, DRY principles?
-              3. Does it improve the human/AI collaboration experience?
-              4. Does it maintain or improve performance?
-              5. Does it enhance security?
-              
-              Respond with a JSON array of improvements:
-              [
-                {
-                  "id": "improvement-1",
-                  "file": "path/to/file",
-                  "type": "refactor|feature|fix|optimization|documentation",
-                  "description": "Brief description",
-                  "rationale": "Why this improvement is needed",
-                  "priority": "high|medium|low",
-                  "estimatedImpact": "How this helps the project",
-                  "difficulty": "easy|medium|hard"
-                }
-              ]`
+              content: context +
+              '\n' +
+              '\n' +
+              '## Current Project Files:\n' +
+              projectFiles.substring(0, 2000) + '\n' +
+              '\n' +
+              '## Recent Changes:\n' +
+              recentChanges + '\n' +
+              '\n' +
+              '## Cycle: ' + (this.cycleCount + 1) + '\n' +
+              '## Focus: ' + this.config.focusArea + '\n' +
+              '\n' +
+              'As an autonomous AI developer, analyze this Rust Terminal Forge codebase and identify \n' +
+              this.currentConfig.improvementsPerCycle + ' specific improvements that follow our core principles.\n' +
+              '\n' +
+              'For each improvement, consider:\n' +
+              '1. Does it make the code more maintainable?\n' +
+              '2. Does it follow KISS, YAGNI, DRY principles?\n' +
+              '3. Does it improve the human/AI collaboration experience?\n' +
+              '4. Does it maintain or improve performance?\n' +
+              '5. Does it enhance security?\n' +
+              '\n' +
+              'Respond with a JSON array of improvements:\n' +
+              '[\n' +
+              '  {\n' +
+              '    "id": "improvement-1",\n' +
+              '    "file": "path/to/file",\n' +
+              '    "type": "refactor|feature|fix|optimization|documentation",\n' +
+              '    "description": "Brief description",\n' +
+              '    "rationale": "Why this improvement is needed",\n' +
+              '    "priority": "high|medium|low",\n' +
+              '    "estimatedImpact": "How this helps the project",\n' +
+              '    "difficulty": "easy|medium|hard"\n' +
+              '  }\n' +
+              ']'
             }];
             
             try {
@@ -263,20 +264,20 @@ jobs:
               const jsonMatch = content.match(/\[[\s\S]*?\]/);
               if (jsonMatch) {
                 const improvements = JSON.parse(jsonMatch[0]);
-                this.log(`Identified ${improvements.length} potential improvements`);
+                this.log('Identified ' + improvements.length + ' potential improvements');
                 return improvements;
               }
               
               this.log('No structured improvements found in response', 'warn');
               return [];
             } catch (error) {
-              this.log(`Error analyzing project state: ${error.message}`, 'error');
+              this.log('Error analyzing project state: ' + error.message, 'error');
               return [];
             }
           }
           
           async implementImprovement(improvement) {
-            this.log(`Implementing: ${improvement.description}`);
+            this.log('Implementing: ' + improvement.description);
             
             let currentContent = '';
             if (fs.existsSync(improvement.file)) {
@@ -288,30 +289,30 @@ jobs:
             
             const messages = [{
               role: 'user',
-              content: `## Improvement Task
-              File: ${improvement.file}
-              Type: ${improvement.type}
-              Description: ${improvement.description}
-              Rationale: ${improvement.rationale}
-              
-              ## Current File Content:
-              ${currentContent.substring(0, 4000)}
-              
-              ## Related Files Context:
-              ${contextFiles.substring(0, 2000)}
-              
-              ## Instructions:
-              Implement the improvement while strictly following these principles:
-              - KISS: Keep the solution simple and readable
-              - YAGNI: Only add what's necessary for this specific improvement
-              - DRY: Reuse existing patterns and avoid duplication
-              - Maintain TypeScript/Rust type safety
-              - Preserve existing functionality
-              - Add appropriate comments for AI/human readability
-              - Follow the existing code style and patterns
-              
-              Respond with ONLY the complete improved file content. Do not include explanations 
-              or markdown formatting - just the raw code that should replace the file content.`
+              content: '## Improvement Task\n' +
+              'File: ' + improvement.file + '\n' +
+              'Type: ' + improvement.type + '\n' +
+              'Description: ' + improvement.description + '\n' +
+              'Rationale: ' + improvement.rationale + '\n' +
+              '\n' +
+              '## Current File Content:\n' +
+              currentContent.substring(0, 4000) + '\n' +
+              '\n' +
+              '## Related Files Context:\n' +
+              contextFiles.substring(0, 2000) + '\n' +
+              '\n' +
+              '## Instructions:\n' +
+              'Implement the improvement while strictly following these principles:\n' +
+              '- KISS: Keep the solution simple and readable\n' +
+              '- YAGNI: Only add what\'s necessary for this specific improvement\n' +
+              '- DRY: Reuse existing patterns and avoid duplication\n' +
+              '- Maintain TypeScript/Rust type safety\n' +
+              '- Preserve existing functionality\n' +
+              '- Add appropriate comments for AI/human readability\n' +
+              '- Follow the existing code style and patterns\n' +
+              '\n' +
+              'Respond with ONLY the complete improved file content. Do not include explanations \n' +
+              'or markdown formatting - just the raw code that should replace the file content.'
             }];
             
             try {
@@ -335,14 +336,14 @@ jobs:
                 fs.writeFileSync(improvement.file, improvedContent);
                 this.improvements.push(improvement);
                 
-                this.log(`✅ Successfully improved: ${improvement.file}`);
+                this.log('✅ Successfully improved: ' + improvement.file);
                 return true;
               } else {
-                this.log(`❌ Validation failed for: ${improvement.file}`, 'warn');
+                this.log('❌ Validation failed for: ' + improvement.file, 'warn');
                 return false;
               }
             } catch (error) {
-              this.log(`Error implementing improvement: ${error.message}`, 'error');
+              this.log('Error implementing improvement: ' + error.message, 'error');
               return false;
             }
           }
@@ -409,7 +410,7 @@ jobs:
             return new Promise((resolve) => {
               exec('npm run typecheck', (error, stdout, stderr) => {
                 const success = !error;
-                this.log(`TypeScript check: ${success ? 'PASSED' : 'FAILED'}`);
+                this.log('TypeScript check: ' + (success ? 'PASSED' : 'FAILED'));
                 if (!success) this.log(stderr, 'warn');
                 resolve(success);
               });
@@ -420,7 +421,7 @@ jobs:
             return new Promise((resolve) => {
               exec('npm run build', (error, stdout, stderr) => {
                 const success = !error;
-                this.log(`Build: ${success ? 'PASSED' : 'FAILED'}`);
+                this.log('Build: ' + (success ? 'PASSED' : 'FAILED'));
                 if (!success) this.log(stderr, 'warn');
                 resolve(success);
               });
@@ -434,20 +435,20 @@ jobs:
             }
             
             return new Promise((resolve) => {
-              const commitMessage = `🤖 Autonomous improvements (Cycle ${this.cycleCount})
-              
-Focus: ${this.config.focusArea}
-Improvements: ${this.improvements.length}
-
-Changes:
-${this.improvements.map(imp => `- ${imp.type}: ${imp.description}`).join('\n')}
-
-Principles applied: KISS, YAGNI, DRY, MVVM
-Session: ${this.sessionId}`;
+              const commitMessage = '🤖 Autonomous improvements (Cycle ' + this.cycleCount + ')\n' +
+              '\n' +
+              'Focus: ' + this.config.focusArea + '\n' +
+              'Improvements: ' + this.improvements.length + '\n' +
+              '\n' +
+              'Changes:\n' +
+              this.improvements.map(imp => '- ' + imp.type + ': ' + imp.description).join('\n') + '\n' +
+              '\n' +
+              'Principles applied: KISS, YAGNI, DRY, MVVM\n' +
+              'Session: ' + this.sessionId;
               
               exec(`git add . && git commit -m "${commitMessage.replace(/"/g, '\\"')}"`, (error) => {
                 if (!error) {
-                  this.log(`Committed ${this.improvements.length} improvements`);
+                  this.log('Committed ' + this.improvements.length + ' improvements');
                   exec('git push origin main', (pushError) => {
                     if (!pushError) {
                       this.log('Successfully pushed changes to repository');
@@ -463,12 +464,12 @@ Session: ${this.sessionId}`;
           }
           
           async runDevelopmentCycle() {
-            this.log(`🚀 Starting autonomous development session`);
-            this.log(`Focus: ${this.config.focusArea}, Duration: ${this.config.maxHours}h, Intensity: ${this.config.intensity}`);
+            this.log('🚀 Starting autonomous development session');
+            this.log('Focus: ' + this.config.focusArea + ', Duration: ' + this.config.maxHours + 'h, Intensity: ' + this.config.intensity);
             
             while (await this.shouldContinue()) {
               this.cycleCount++;
-              this.log(`--- Development Cycle ${this.cycleCount} ---`);
+              this.log('--- Development Cycle ' + this.cycleCount + ' ---');
               
               // Analyze current state and get improvements
               const improvements = await this.analyzeProjectState();
@@ -519,13 +520,13 @@ Session: ${this.sessionId}`;
               }
               
               // Wait for next cycle
-              this.log(`Cycle ${this.cycleCount} completed. Waiting for next cycle...`);
+              this.log('Cycle ' + this.cycleCount + ' completed. Waiting for next cycle...');
               await new Promise(resolve => setTimeout(resolve, this.currentConfig.cycleDuration));
             }
             
             this.log('🏁 Autonomous development session completed');
-            this.log(`Total cycles: ${this.cycleCount}`);
-            this.log(`Total improvements applied: ${this.improvements.length}`);
+            this.log('Total cycles: ' + this.cycleCount);
+            this.log('Total improvements applied: ' + this.improvements.length);
           }
         }
         
@@ -554,7 +555,7 @@ Session: ${this.sessionId}`;
           try {
             await session.runDevelopmentCycle();
           } catch (error) {
-            session.log(`Fatal error: ${error.message}`, 'error');
+            session.log('Fatal error: ' + error.message, 'error');
             process.exit(1);
           }
         }

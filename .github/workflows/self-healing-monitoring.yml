@@ -110,7 +110,7 @@ jobs:
                   this.issues.push({
                     type: 'missing_file',
                     severity: 'high',
-                    message: `Critical file missing: ${file}`,
+                    message: 'Critical file missing: ' + file,
                     autoHealing: true
                   });
                 }
@@ -177,7 +177,7 @@ jobs:
                     this.issues.push({
                       type: 'outdated_dependencies',
                       severity: 'medium',
-                      message: `${criticalOutdated} outdated npm dependencies`,
+                      message: criticalOutdated + ' outdated npm dependencies',
                       autoHealing: false // Manual review needed
                     });
                   }
@@ -199,7 +199,7 @@ jobs:
                       this.issues.push({
                         type: 'security_vulnerabilities',
                         severity: criticalVulns > 0 ? 'critical' : 'high',
-                        message: `${criticalVulns} critical, ${highVulns} high security vulnerabilities`,
+                        message: criticalVulns + ' critical, ' + highVulns + ' high security vulnerabilities',
                         autoHealing: true
                       });
                     }
@@ -230,7 +230,7 @@ jobs:
                   this.issues.push({
                     type: 'missing_directory',
                     severity: 'high',
-                    message: `Key directory missing: ${dir}`,
+                    message: 'Key directory missing: ' + dir,
                     autoHealing: true
                   });
                 }
@@ -278,7 +278,7 @@ jobs:
                 this.issues.push({
                   type: 'large_files',
                   severity: 'medium',
-                  message: `${largeFiles.length} files exceed 500 lines (potential refactoring needed)`,
+                  message: largeFiles.length + ' files exceed 500 lines (potential refactoring needed)',
                   autoHealing: false
                 });
               }
@@ -291,7 +291,7 @@ jobs:
                 this.issues.push({
                   type: 'technical_debt',
                   severity: 'low',
-                  message: `${todoCount} TODO/FIXME comments found (consider addressing technical debt)`,
+                  message: todoCount + ' TODO/FIXME comments found (consider addressing technical debt)',
                   autoHealing: false
                 });
               }
@@ -314,7 +314,7 @@ jobs:
               ];
               
               for (const pattern of secretPatterns) {
-                const result = await this.runCommand(`grep -r -i "${pattern}" src/ || true`, 5000);
+                const result = await this.runCommand('grep -r -i "' + pattern + '" src/ || true', 5000);
                 if (result.stdout.trim()) {
                   this.issues.push({
                     type: 'potential_secret_leak',
@@ -390,20 +390,20 @@ jobs:
             
             console.log('Health Report:');
             console.log('==============');
-            console.log(`Overall Health: ${healthy ? '✅ Healthy' : '⚠️ Issues Found'}`);
-            console.log(`Total Issues: ${this.issues.length}`);
-            console.log(`Critical: ${criticalIssues.length}`);
-            console.log(`High: ${highIssues.length}`);
-            console.log(`Medium: ${mediumIssues.length}`);
-            console.log(`Low: ${lowIssues.length}`);
-            console.log(`Auto-healing Available: ${needsHealing ? '✅' : '❌'}`);
+            console.log('Overall Health: ' + (healthy ? '✅ Healthy' : '⚠️ Issues Found'));
+            console.log('Total Issues: ' + this.issues.length);
+            console.log('Critical: ' + criticalIssues.length);
+            console.log('High: ' + highIssues.length);
+            console.log('Medium: ' + mediumIssues.length);
+            console.log('Low: ' + lowIssues.length);
+            console.log('Auto-healing Available: ' + (needsHealing ? '✅' : '❌'));
             
             if (this.issues.length > 0) {
               console.log('\nIssues Details:');
               this.issues.forEach((issue, i) => {
-                console.log(`${i + 1}. [${issue.severity.toUpperCase()}] ${issue.message}`);
+                console.log((i + 1) + '. [' + issue.severity.toUpperCase() + '] ' + issue.message);
                 if (issue.details) {
-                  console.log(`   Details: ${issue.details.substring(0, 100)}...`);
+                  console.log('   Details: ' + issue.details.substring(0, 100) + '...');
                 }
               });
             }
@@ -417,9 +417,9 @@ jobs:
         monitor.runHealthChecks().then(report => {
           // Set GitHub Actions outputs
           const output = process.env.GITHUB_OUTPUT;
-          fs.appendFileSync(output, `healthy=${report.healthy}\n`);
-          fs.appendFileSync(output, `issues=${report.totalIssues}\n`);
-          fs.appendFileSync(output, `needs_healing=${report.needsHealing}\n`);
+          fs.appendFileSync(output, 'healthy=' + report.healthy + '\n');
+          fs.appendFileSync(output, 'issues=' + report.totalIssues + '\n');
+          fs.appendFileSync(output, 'needs_healing=' + report.needsHealing + '\n');
           
           // Save detailed report
           fs.writeFileSync('health_report.json', JSON.stringify(report, null, 2));
@@ -488,7 +488,7 @@ jobs:
             console.log('🔧 Starting auto-healing process...');
             
             const healableIssues = healthReport.issues.filter(issue => issue.autoHealing);
-            console.log(`Found ${healableIssues.length} auto-healable issues`);
+            console.log('Found ' + healableIssues.length + ' auto-healable issues');
             
             for (const issue of healableIssues) {
               await this.healIssue(issue);
@@ -498,7 +498,7 @@ jobs:
           }
           
           async healIssue(issue) {
-            console.log(`Healing: ${issue.type} - ${issue.message}`);
+            console.log('Healing: ' + issue.type + ' - ' + issue.message);
             
             try {
               switch (issue.type) {
@@ -527,10 +527,10 @@ jobs:
                   break;
                   
                 default:
-                  console.log(`No auto-healing available for: ${issue.type}`);
+                  console.log('No auto-healing available for: ' + issue.type);
               }
             } catch (error) {
-              console.error(`Failed to heal ${issue.type}:`, error.message);
+              console.error('Failed to heal ' + issue.type + ':', error.message);
             }
           }
           
@@ -543,7 +543,7 @@ jobs:
             ];
             
             for (const fix of fixes) {
-              console.log(`Attempting: ${fix}`);
+              console.log('Attempting: ' + fix);
               const result = await this.runCommand(fix, 60000);
               
               if (result.code === 0) {
@@ -555,7 +555,7 @@ jobs:
                     action: fix,
                     success: true
                   });
-                  console.log(`✅ Build fixed with: ${fix}`);
+                  console.log('✅ Build fixed with: ' + fix);
                   return;
                 }
               }
@@ -620,7 +620,7 @@ jobs:
             ];
             
             for (const fix of fixes) {
-              console.log(`Attempting: ${fix}`);
+              console.log('Attempting: ' + fix);
               const result = await this.runCommand(fix, 120000);
               
               if (result.code === 0) {
@@ -632,7 +632,7 @@ jobs:
                     action: fix,
                     success: true
                   });
-                  console.log(`✅ Security vulnerabilities fixed with: ${fix}`);
+                  console.log('✅ Security vulnerabilities fixed with: ' + fix);
                   return;
                 }
               }
@@ -643,33 +643,19 @@ jobs:
           
           async healMissingFile(issue) {
             const filePath = issue.message.split(': ')[1];
-            console.log(`Creating missing file: ${filePath}`);
+            console.log('Creating missing file: ' + filePath);
             
             // Create basic file templates based on file type
             let template = '';
             
             if (filePath.endsWith('.tsx')) {
-              template = `import React from 'react';
-
-export const Component: React.FC = () => {
-  return <div>Component</div>;
-};`;
+              template = 'import React from \'react\';\n\nexport const Component: React.FC = () => {\n  return <div>Component</div>;\n};';
             } else if (filePath.endsWith('.ts')) {
-              template = `// Auto-generated file
-export const placeholder = true;`;
+              template = '// Auto-generated file\nexport const placeholder = true;';
             } else if (filePath === 'package.json') {
-              template = `{
-  "name": "rust-terminal-forge",
-  "version": "1.0.0",
-  "private": true
-}`;
+              template = '{\n  "name": "rust-terminal-forge",\n  "version": "1.0.0",\n  "private": true\n}';
             } else if (filePath === 'Cargo.toml') {
-              template = `[package]
-name = "rust-terminal-forge"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]`;
+              template = '[package]\nname = "rust-terminal-forge"\nversion = "0.1.0"\nedition = "2021"\n\n[dependencies]';
             }
             
             if (template) {
@@ -680,34 +666,34 @@ edition = "2021"
                 }
                 
                 fs.writeFileSync(filePath, template);
-                console.log(`✅ Created missing file: ${filePath}`);
+                console.log('✅ Created missing file: ' + filePath);
                 
                 this.healingActions.push({
                   issue: 'missing_file',
-                  action: `created_${filePath}`,
+                  action: 'created_' + filePath,
                   success: true
                 });
               } catch (error) {
-                console.error(`Failed to create ${filePath}:`, error.message);
+                console.error('Failed to create ' + filePath + ':', error.message);
               }
             }
           }
           
           async healMissingDirectory(issue) {
             const dirPath = issue.message.split(': ')[1];
-            console.log(`Creating missing directory: ${dirPath}`);
+            console.log('Creating missing directory: ' + dirPath);
             
             try {
               fs.mkdirSync(dirPath, { recursive: true });
-              console.log(`✅ Created missing directory: ${dirPath}`);
+              console.log('✅ Created missing directory: ' + dirPath);
               
               this.healingActions.push({
                 issue: 'missing_directory',
-                action: `created_${dirPath}`,
+                action: 'created_' + dirPath,
                 success: true
               });
             } catch (error) {
-              console.error(`Failed to create directory ${dirPath}:`, error.message);
+              console.error('Failed to create directory ' + dirPath + ':', error.message);
             }
           }
           
@@ -779,10 +765,10 @@ edition = "2021"
         
         healer.healIssues(healthReport).then(actions => {
           console.log('🏁 Auto-healing completed');
-          console.log(`Applied ${actions.length} healing actions`);
+          console.log('Applied ' + actions.length + ' healing actions');
           
           actions.forEach(action => {
-            console.log(`- ${action.issue}: ${action.action} (${action.success ? 'Success' : 'Failed'})`);
+            console.log('- ' + action.issue + ': ' + action.action + ' (' + (action.success ? 'Success' : 'Failed') + ')');
           });
           
           // Save healing report

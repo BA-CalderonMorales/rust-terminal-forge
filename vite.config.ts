@@ -1,9 +1,9 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import path from "path";
-import { componentTagger } from "lovable-tagger";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react-swc';
+import path from 'path';
 
 // https://vitejs.dev/config/
+// Removed the 'lovable‑tagger' componentTagger plugin due to ESM issues.
 
 export default defineConfig(({ mode }) => ({
   base: mode === 'development' ? '/' : '/rust-terminal-forge/',
@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => ({
     css: true,
   },
   server: {
-    host: "::",
+    host: '::',
     port: 8080,
     proxy: {
       '/api': {
@@ -60,14 +60,10 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-  plugins: [
-    react(),
-    mode === 'development' &&
-    componentTagger(),
-  ].filter(Boolean),
+  plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
 }));
