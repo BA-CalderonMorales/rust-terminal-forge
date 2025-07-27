@@ -1,19 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { themeManager, themes } from '../theme';
 import { hapticFeedback } from '../core/gestureNavigation';
+import { designTokens } from '../styles/design-tokens';
 
 interface ThemeSwitcherProps {
   className?: string;
   compact?: boolean;
+  subtle?: boolean;
 }
 
 export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ 
   className = '', 
-  compact = false 
+  compact = false,
+  subtle = false 
 }) => {
   const [currentTheme, setCurrentTheme] = useState(themeManager.getCurrentTheme());
   const [isOpen, setIsOpen] = useState(false);
   const availableThemes = themeManager.getAvailableThemes();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const unsubscribe = themeManager.subscribe((theme) => {
@@ -21,6 +25,23 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     });
     return unsubscribe;
   }, []);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
 
   const handleThemeChange = (themeKey: string) => {
     themeManager.setTheme(themeKey);
@@ -32,6 +53,147 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
     setIsOpen(!isOpen);
     hapticFeedback.light();
   };
+
+  const handleTouchStart = () => {
+    hapticFeedback.light();
+  };
+
+  // Professional theme switcher without emojis
+  if (subtle) {
+    return (
+      <div 
+        ref={dropdownRef}
+        className={`professional-button ${className}`} 
+        data-testid="theme-switcher-subtle"
+        style={{ 
+          position: 'relative',
+          display: 'inline-block'
+        }}
+      >
+        <button
+          data-testid="theme-switcher-button"
+          onClick={toggleDropdown}
+          onTouchStart={handleTouchStart}
+          tabIndex={0}
+          role="button"
+          aria-haspopup="listbox"
+          aria-label="Switch theme"
+          style={{
+            background: designTokens.colors.background.elevated,
+            border: `1px solid ${designTokens.colors.border.default}`,
+            padding: designTokens.spacing[2],
+            cursor: 'pointer',
+            borderRadius: designTokens.borderRadius.md,
+            transition: designTokens.transitions.fast,
+            minHeight: '44px',
+            minWidth: '44px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: designTokens.colors.foreground.primary,
+            fontSize: designTokens.typography.fontSizes.sm,
+            fontFamily: designTokens.typography.fontFamilies.mono
+          }}
+        >
+          <span className="text-icon text-icon--theme" style={{
+            fontSize: designTokens.typography.fontSizes.lg,
+            color: designTokens.colors.accent.primary
+          }} />
+        </button>
+
+        {isOpen && (
+          <div
+            data-testid="theme-dropdown"
+            style={{
+              position: 'absolute',
+              top: '100%',
+              right: 0,
+              marginTop: designTokens.spacing[2],
+              background: designTokens.colors.background.elevated,
+              border: `1px solid ${designTokens.colors.border.default}`,
+              borderRadius: designTokens.borderRadius.lg,
+              padding: designTokens.spacing[3],
+              minWidth: '200px',
+              zIndex: designTokens.zIndex.dropdown,
+              boxShadow: designTokens.shadows.lg
+            }}
+          >
+            <div style={{
+              fontSize: designTokens.typography.fontSizes.xs,
+              color: designTokens.colors.foreground.muted,
+              marginBottom: designTokens.spacing[2],
+              fontFamily: designTokens.typography.fontFamilies.mono,
+              letterSpacing: '0.5px',
+              textTransform: 'uppercase'
+            }}>
+              Theme Selection
+            </div>
+            {availableThemes.map((theme) => {
+              const themeData = themes[theme.key as keyof typeof themes];
+              const currentThemeName = themeManager.getCurrentTheme().name;
+              const isActive = theme.name === currentThemeName;
+              
+              return (
+                <button
+                  key={theme.key}
+                  data-theme-key={theme.key}
+                  onClick={() => handleThemeChange(theme.key)}
+                  className="professional-button"
+                  style={{
+                    width: '100%',
+                    padding: `${designTokens.spacing[2]} ${designTokens.spacing[3]}`,
+                    background: isActive ? designTokens.colors.accent.primary : 'transparent',
+                    border: isActive ? `1px solid ${designTokens.colors.accent.primary}` : '1px solid transparent',
+                    borderRadius: designTokens.borderRadius.md,
+                    color: isActive ? designTokens.colors.foreground.inverse : designTokens.colors.foreground.primary,
+                    fontSize: designTokens.typography.fontSizes.sm,
+                    fontFamily: designTokens.typography.fontFamilies.mono,
+                    cursor: 'pointer',
+                    transition: designTokens.transitions.fast,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: designTokens.spacing[2],
+                    marginBottom: designTokens.spacing[1],
+                    textAlign: 'left'
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '12px',
+                      height: '12px',
+                      borderRadius: '50%',
+                      background: designTokens.colors.accent.primary,
+                      flexShrink: 0
+                    }}
+                  />
+                  <span style={{ flex: 1 }}>{theme.name}</span>
+                  {isActive && (
+                    <span className="text-icon text-icon--success" style={{
+                      fontSize: designTokens.typography.fontSizes.xs,
+                      color: isActive ? designTokens.colors.foreground.inverse : designTokens.colors.accent.success
+                    }} />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        
+        <style>{`
+          @keyframes slideIn {
+            from {
+              opacity: 0;
+              transform: translateY(-8px) scale(0.95);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   if (compact) {
     return (

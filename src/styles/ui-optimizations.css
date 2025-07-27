@@ -1,0 +1,280 @@
+/**
+ * UI Space Optimization and Design System
+ * TDD GREEN Phase: Minimal CSS to pass failing tests
+ */
+
+/* Design System Variables - Consistent Spacing */
+:root {
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  /* Performance optimizations */
+  --gpu-acceleration: translateZ(0);
+  --contain-layout: layout style paint;
+}
+
+/* Sleek Terminal Container */
+.sleek-terminal-container {
+  container-type: inline-size;
+  contain: var(--contain-layout);
+}
+
+.sleek-terminal-header {
+  /* Single integrated header - eliminates redundant bars */
+  border: 1px solid rgba(0, 255, 136, 0.1);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+}
+
+/* Responsive Layout Optimizations */
+@container (max-width: 768px) {
+  .sleek-terminal-container {
+    padding: var(--spacing-xs) !important;
+  }
+  
+  .terminal-tool-interface {
+    font-size: clamp(12px, 3vw, 14px);
+  }
+  
+  /* Mobile-optimized touch targets */
+  button, [role="button"], input, textarea {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+}
+
+@container (min-width: 1024px) {
+  .sleek-terminal-container {
+    padding: var(--spacing-sm) !important;
+  }
+  
+  /* Desktop-specific optimizations */
+  .desktop-optimized {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+}
+
+/* Eliminate Horizontal Scrolling */
+* {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.terminal-tool-interface {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  contain: var(--contain-layout);
+}
+
+.terminal-tool-interface textarea,
+.terminal-tool-interface input {
+  width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Visual Hierarchy */
+[data-priority="primary"] {
+  z-index: 10;
+  opacity: 1;
+  font-weight: 600;
+}
+
+[data-priority="secondary"] {
+  opacity: 0.8;
+  font-weight: 400;
+}
+
+[data-priority="tertiary"] {
+  opacity: 0.6;
+  font-size: 0.9em;
+}
+
+/* Performance Optimizations */
+.consistent-loading,
+.consistent-error,
+.consistent-success {
+  will-change: opacity, transform;
+  transform: var(--gpu-acceleration);
+  backface-visibility: hidden;
+}
+
+/* Animation Performance */
+@keyframes optimized-fade {
+  from { opacity: 0; transform: translateY(-4px) var(--gpu-acceleration); }
+  to { opacity: 1; transform: translateY(0) var(--gpu-acceleration); }
+}
+
+.sleek-terminal-header {
+  animation: optimized-fade 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Information Density Optimization */
+.terminal-content {
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.terminal-content h1,
+.terminal-content h2,
+.terminal-content h3,
+.terminal-content [role="heading"] {
+  margin: var(--spacing-sm) 0 var(--spacing-xs) 0;
+  line-height: 1.2;
+}
+
+/* Consistent Spacing System */
+.gap-xs { gap: var(--spacing-xs); }
+.gap-sm { gap: var(--spacing-sm); }
+.gap-md { gap: var(--spacing-md); }
+.gap-lg { gap: var(--spacing-lg); }
+
+.p-xs { padding: var(--spacing-xs); }
+.p-sm { padding: var(--spacing-sm); }
+.p-md { padding: var(--spacing-md); }
+
+.m-xs { margin: var(--spacing-xs); }
+.m-sm { margin: var(--spacing-sm); }
+.m-md { margin: var(--spacing-md); }
+
+/* Focus States for Accessibility */
+button:focus,
+input:focus,
+textarea:focus,
+[tabindex]:focus {
+  outline: 2px solid var(--terminal-neon-green);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(0, 255, 136, 0.2);
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transform: none !important;
+  }
+}
+
+/* High Contrast Support */
+@media (prefers-contrast: high) {
+  .sleek-terminal-header {
+    border-width: 2px;
+  }
+  
+  [data-priority="secondary"] {
+    opacity: 0.9;
+  }
+}
+
+/* Theme-Aware Layout Adjustments */
+.theme-matrix .sleek-terminal-container {
+  padding: var(--spacing-xs) !important; /* More compact for matrix theme */
+}
+
+.theme-synthwave .sleek-terminal-container {
+  padding: var(--spacing-md) !important; /* More breathing room for synthwave */
+}
+
+.theme-cyberpunk .sleek-terminal-container {
+  padding: var(--spacing-sm) !important; /* Balanced spacing for cyberpunk */
+}
+
+/* Error States */
+.consistent-error {
+  background: linear-gradient(135deg, rgba(255, 71, 87, 0.1), rgba(255, 71, 87, 0.2));
+  border: 1px solid rgba(255, 71, 87, 0.3);
+  color: var(--terminal-error);
+}
+
+.consistent-success {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 255, 136, 0.2));
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: var(--terminal-success);
+}
+
+/* Responsive Typography */
+.responsive-text {
+  font-size: clamp(12px, 2.5vw, 16px);
+  line-height: clamp(1.2, 1.4, 1.6);
+}
+
+/* Container Queries for Advanced Responsiveness */
+@container (max-width: 400px) {
+  .terminal-tool-interface {
+    flex-direction: column;
+  }
+  
+  .split-view {
+    flex-direction: column !important;
+  }
+  
+  .side-panel {
+    width: 100% !important;
+    height: 50% !important;
+  }
+}
+
+@container (min-width: 1200px) {
+  .terminal-content {
+    max-width: 80ch;
+    margin: 0 auto;
+  }
+}
+
+/* Accessibility Improvements */
+.screen-reader-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Terminal-Specific Optimizations */
+.terminal-no-sessions {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  contain: var(--contain-layout);
+}
+
+/* Browser-Specific Optimizations */
+@supports (backdrop-filter: blur(10px)) {
+  .sleek-terminal-header {
+    backdrop-filter: blur(10px) saturate(1.1);
+  }
+}
+
+@supports not (backdrop-filter: blur(10px)) {
+  .sleek-terminal-header {
+    background: rgba(26, 26, 26, 0.95);
+  }
+}
+
+/* Print Styles */
+@media print {
+  .sleek-terminal-container {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+  
+  .terminal-cursor,
+  [data-testid*="cursor"] {
+    display: none !important;
+  }
+}

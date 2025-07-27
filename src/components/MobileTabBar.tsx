@@ -73,9 +73,10 @@ const MobileTab: React.FC<MobileTabProps> = ({
           {session.name}
         </span>
         
-        {/* Dirty indicator */}
+        {/* Professional status indicator without emoji */}
         {session.isDirty && (
           <span 
+            className="text-icon"
             style={{
               marginLeft: '6px',
               color: '#ffaa00',
@@ -85,7 +86,7 @@ const MobileTab: React.FC<MobileTabProps> = ({
             }}
             title={`${session.processCount} active processes`}
           >
-            ●
+            •
           </span>
         )}
         
@@ -143,7 +144,7 @@ const MobileTab: React.FC<MobileTabProps> = ({
           }}
           aria-label={`Close ${session.name}`}
         >
-          ×
+          <span className="text-icon text-icon--close" />
         </button>
       )}
 
@@ -382,7 +383,7 @@ export const MobileTabBar: React.FC<MobileTabBarProps> = ({
             aria-label="Restore closed tab"
             title="Restore recently closed tab"
           >
-            ↶
+            <span className="text-icon">⟲</span>
           </button>
         )}
 
@@ -422,7 +423,7 @@ export const MobileTabBar: React.FC<MobileTabBarProps> = ({
             aria-label="Create new terminal"
             title="Create new terminal tab"
           >
-            +
+            <span className="text-icon text-icon--add" />
           </button>
         )}
       </div>
@@ -470,6 +471,7 @@ export const MobileTabBar: React.FC<MobileTabBarProps> = ({
           }
         }
       `}</style>
+      
     </div>
   );
 };

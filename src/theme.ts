@@ -197,6 +197,19 @@ export class ThemeManager {
     Object.entries(theme.gradients).forEach(([key, value]) => {
       root.style.setProperty(`--terminal-gradient-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`, value as string);
     });
+
+    // Add NvChad-specific CSS variables for TDD compliance
+    root.style.setProperty('--nvchad-primary', theme.colors.primary);
+    root.style.setProperty('--nvchad-secondary', theme.colors.secondary);
+    root.style.setProperty('--nvchad-background', theme.colors.background);
+    root.style.setProperty('--nvchad-accent', theme.colors.accent);
+    root.style.setProperty('--nvchad-text', theme.colors.text);
+    root.style.setProperty('--nvchad-text-secondary', theme.colors.textSecondary);
+    root.style.setProperty('--nvchad-text-muted', theme.colors.textMuted);
+    root.style.setProperty('--nvchad-border', theme.colors.border);
+    root.style.setProperty('--nvchad-neon-green', theme.colors.neonGreen);
+    root.style.setProperty('--nvchad-neon-blue', theme.colors.neonBlue);
+    root.style.setProperty('--nvchad-glow-green', theme.colors.glowGreen);
     
     // Apply theme class to body for additional styling
     document.body.className = document.body.className.replace(/theme-\w+/g, '');

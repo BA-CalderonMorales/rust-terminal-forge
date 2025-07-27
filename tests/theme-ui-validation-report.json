@@ -1,0 +1,95 @@
+{
+  "timestamp": "2025-07-26T05:01:54.971Z",
+  "summary": {
+    "themeTests": {
+      "total": 6,
+      "passed": 6,
+      "failed": 0
+    },
+    "uiTests": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    "responsiveTests": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    "errors": 0
+  },
+  "detailed": {
+    "themeTests": [
+      {
+        "name": "Theme switcher is subtle and professional",
+        "status": "passed",
+        "timestamp": "2025-07-26T05:01:49.204Z"
+      },
+      {
+        "name": "Theme switcher has proper hover states",
+        "status": "passed",
+        "timestamp": "2025-07-26T05:01:49.540Z"
+      },
+      {
+        "name": "Theme dropdown only appears on click",
+        "status": "passed",
+        "timestamp": "2025-07-26T05:01:49.787Z"
+      },
+      {
+        "name": "Theme switching to Cyberpunk Neon",
+        "status": "passed",
+        "timestamp": "2025-07-26T05:01:49.789Z"
+      },
+      {
+        "name": "Theme switching to Matrix Green",
+        "status": "passed",
+        "timestamp": "2025-07-26T05:01:51.109Z"
+      },
+      {
+        "name": "Theme switching to Synthwave Sunset",
+        "status": "passed",
+        "timestamp": "2025-07-26T05:01:52.392Z"
+      }
+    ],
+    "uiTests": [
+      {
+        "name": "NvChad color variables are defined",
+        "status": "passed",
+        "timestamp": "2025-07-26T05:01:54.970Z"
+      },
+      {
+        "name": "Consistent typography system",
+        "status": "passed",
+        "timestamp": "2025-07-26T05:01:54.971Z"
+      }
+    ],
+    "responsiveTests": [
+      {
+        "device": "Mobile Portrait",
+        "status": "passed",
+        "timestamp": "2025-07-26T05:01:52.913Z"
+      },
+      {
+        "device": "Mobile Landscape",
+        "status": "passed",
+        "timestamp": "2025-07-26T05:01:53.430Z"
+      },
+      {
+        "device": "Tablet Portrait",
+        "status": "passed",
+        "timestamp": "2025-07-26T05:01:53.948Z"
+      },
+      {
+        "device": "Tablet Landscape",
+        "status": "passed",
+        "timestamp": "2025-07-26T05:01:54.458Z"
+      },
+      {
+        "device": "Desktop",
+        "status": "passed",
+        "timestamp": "2025-07-26T05:01:54.968Z"
+      }
+    ],
+    "errors": []
+  }
+}

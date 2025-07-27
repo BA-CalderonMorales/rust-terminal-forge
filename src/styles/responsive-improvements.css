@@ -1,0 +1,189 @@
+/**
+ * Responsive Design Improvements for Terminal Application
+ * Mobile and Tablet Optimizations with NvChad Design System
+ */
+
+/* Base responsive container */
+.responsive-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .optimized-for-mobile {
+    /* Larger touch targets */
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .terminal-app {
+    /* Mobile-specific font scaling */
+    font-size: clamp(14px, 3.5vw, 16px);
+    line-height: 1.5;
+  }
+  
+  /* Optimize terminal for mobile */
+  .modern-terminal {
+    border-radius: 0;
+    box-shadow: none;
+  }
+  
+  /* Better mobile scrolling */
+  .terminal-output {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    scroll-behavior: smooth;
+  }
+  
+  /* Mobile theme switcher adjustments */
+  .theme-switcher-subtle {
+    top: 8px !important;
+    right: 8px !important;
+  }
+  
+  /* Mobile tool interfaces */
+  .tool-interface-mobile {
+    padding: 12px;
+    font-size: 14px;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .optimized-for-tablet {
+    /* Tablet-appropriate sizing */
+    min-height: 40px;
+    min-width: 40px;
+  }
+  
+  .terminal-app {
+    font-size: clamp(13px, 2.5vw, 15px);
+    line-height: 1.4;
+  }
+  
+  /* Tablet layout optimizations */
+  .modern-terminal {
+    border-radius: 8px;
+  }
+}
+
+/* Desktop optimizations */
+@media (min-width: 1025px) {
+  .optimized-for-desktop {
+    /* Standard desktop sizing */
+    min-height: 32px;
+    min-width: 32px;
+  }
+  
+  .terminal-app {
+    font-size: clamp(12px, 2vw, 14px);
+    line-height: 1.4;
+  }
+}
+
+/* Universal touch-friendly improvements */
+button, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+}
+
+/* High DPI display optimizations */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .terminal-app {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Dark mode system preference */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (orientation: landscape) and (max-height: 600px) {
+  .terminal-header {
+    min-height: 36px;
+    padding: 6px 12px;
+  }
+  
+  .terminal-status {
+    min-height: 28px;
+    font-size: 11px;
+  }
+}
+
+/* Container queries for modern browsers */
+@container (max-width: 768px) {
+  .tool-interface {
+    padding: 8px;
+    font-size: 13px;
+  }
+}
+
+/* Focus management for accessibility */
+.focus-visible {
+  outline: 2px solid var(--nvchad-accent, #00ff88);
+  outline-offset: 2px;
+}
+
+/* Better text selection on mobile */
+@media (max-width: 768px) {
+  .terminal-output {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
+  
+  .terminal-output::selection {
+    background: rgba(0, 255, 136, 0.3);
+    color: inherit;
+  }
+}
+
+/* Responsive grid system */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 16px;
+}
+
+@media (max-width: 768px) {
+  .responsive-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 12px;
+  }
+}
+
+/* Flexible terminal sizing */
+.flexible-terminal {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  max-height: 100vh;
+  resize: both;
+  overflow: auto;
+}
+
+@media (max-width: 768px) {
+  .flexible-terminal {
+    resize: none;
+    height: calc(100vh - 120px);
+  }
+}

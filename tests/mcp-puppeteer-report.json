@@ -1,0 +1,36 @@
+{
+  "timestamp": "2025-07-26T06:20:51.933Z",
+  "summary": {
+    "total": 8,
+    "passed": 4,
+    "failed": 4,
+    "successRate": "50.00"
+  },
+  "errors": [
+    {
+      "test": "Cursor visibility and blinking",
+      "error": "expect is not defined"
+    },
+    {
+      "test": "Cursor position with typing",
+      "error": "expect is not defined"
+    },
+    {
+      "test": "Single integrated header",
+      "error": "expect is not defined"
+    },
+    {
+      "test": "Responsive layout adaptation",
+      "error": "this.page.waitForTimeout is not a function"
+    }
+  ],
+  "performance": {},
+  "environment": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/138.0.0.0 Safari/537.36",
+    "url": "http://localhost:8082/"
+  }
+}
