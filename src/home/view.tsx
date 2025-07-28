@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { HomeViewModel } from './viewModel';
 import { TerminalTabs } from './components/TerminalTabs';
 import { Terminal } from './components/Terminal';
-import { MultiTabTerminal } from '@/components/MultiTabTerminal';
+import { RealTerminal } from '@/components/RealTerminal';
+import { QuantumLayout, useQuantumLayout } from '@/engine/QuantumLayout';
 import { TerminalCursor } from '@/components/TerminalCursor';
 import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -19,6 +20,14 @@ export const HomeView: React.FC = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [showThemeSwitcher, setShowThemeSwitcher] = useState(false);
   const { viewportHeight, isKeyboardOpen, isStable } = useVisualViewport();
+  
+  // QuantumLayout for collision-free positioning
+  const {
+    registerElement,
+    calculateLayout,
+    updateViewport,
+    getDebugInfo
+  } = useQuantumLayout({ width: window.innerWidth, height: window.innerHeight, x: 0, y: 0 });
 
   useEffect(() => {
     viewModel.onStateChange(() => {
@@ -51,6 +60,31 @@ export const HomeView: React.FC = () => {
       terminalApp.setAttribute('data-viewport-stable', isStable ? '1' : '0');
     }
   }, [isKeyboardOpen, isStable]);
+  
+  // QuantumLayout viewport updates
+  useEffect(() => {
+    updateViewport({ width: window.innerWidth, height: window.innerHeight, x: 0, y: 0 });
+    calculateLayout();
+  }, [viewportHeight, isKeyboardOpen, updateViewport, calculateLayout]);
+  
+  // Register layout elements with QuantumLayout
+  useEffect(() => {
+    const headerElement = document.querySelector('.terminal-header') as HTMLElement;
+    const mainElement = document.querySelector('.terminal-main') as HTMLElement;
+    const terminalElement = document.querySelector('.modern-terminal') as HTMLElement;
+    
+    if (headerElement) {
+      registerElement('header', headerElement, { minHeight: 48, maxHeight: 56 }, 10);
+    }
+    if (mainElement) {
+      registerElement('main', mainElement, { minHeight: 200 }, 8);
+    }
+    if (terminalElement) {
+      registerElement('terminal', terminalElement, { minHeight: 150 }, 9);
+    }
+    
+    calculateLayout();
+  }, [registerElement, calculateLayout]);
 
   const handleExecuteCommand = async (command: string) => {
     await viewModel.executeCommand(command);
@@ -239,8 +273,8 @@ export const HomeView: React.FC = () => {
               }}
             />
             
-            {/* Main terminal component */}
-            <MultiTabTerminal style={{ height: '100%', position: 'relative', zIndex: 2 }} />
+            {/* Main terminal component - RealTerminal with full height */}
+            <RealTerminal className="modern-terminal quantum-layout-element" />
             
             {/* Accessibility helper */}
             <div id="cursor-position" className="screen-reader-only">

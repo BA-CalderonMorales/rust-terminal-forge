@@ -1,0 +1,298 @@
+name: 🚀 Terminal Forge CI/CD Pipeline
+# Rick's Scientific Quality Assurance System
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '18.x'
+  RUST_VERSION: '1.75'
+
+jobs:
+  # 🔍 Quality Gates
+  lint-and-typecheck:
+    name: 🔍 Lint & TypeCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run ESLint
+        run: npm run lint
+        
+      - name: Run TypeScript check
+        run: npm run typecheck
+
+  # 🧪 Unit Tests
+  unit-tests:
+    name: 🧪 Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run unit tests
+        run: npm test
+        
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+
+  # 🎯 Visual Diff Tests  
+  visual-tests:
+    name: 🎯 Visual Regression Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+        
+      - name: Build application
+        run: npm run build
+        
+      - name: Start development server
+        run: |
+          npm run dev &
+          sleep 30 # Wait for server to start
+          
+      - name: Run visual regression tests
+        run: npm run test:visual
+        
+      - name: Upload visual test results
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: visual-test-results
+          path: test-results/
+          
+      - name: Auto-repair layout mismatches
+        if: failure()
+        run: npm run test:visual:repair
+
+  # ⚡ Performance Tests
+  performance-tests:
+    name: ⚡ Performance Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build application
+        run: npm run build
+        
+      - name: Run performance tests
+        run: npm run test:perf
+        
+      - name: Check bundle size
+        run: npm run analyze:bundle
+        
+      - name: Performance budget check
+        run: |
+          BUNDLE_SIZE=$(du -k dist/ | cut -f1)
+          if [ $BUNDLE_SIZE -gt 500 ]; then
+            echo "❌ Bundle size $BUNDLE_SIZE KB exceeds 500KB limit"
+            exit 1
+          fi
+          echo "✅ Bundle size: $BUNDLE_SIZE KB (within 500KB limit)"
+
+  # 🔒 Security Audit
+  security-audit:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+        
+      - name: Run security scan
+        run: npm run security:scan
+        
+      - name: Check for console warnings
+        run: npm run test:console:zero
+
+  # 🛠️ Build Matrix
+  build-matrix:
+    name: 🛠️ Build Matrix
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: ['18.x', '20.x']
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build application
+        run: npm run build
+        
+      - name: Test build artifacts
+        run: |
+          if [ ! -f "dist/index.html" ]; then
+            echo "❌ Build failed - missing index.html"
+            exit 1
+          fi
+          echo "✅ Build successful on ${{ matrix.os }} with Node ${{ matrix.node-version }}"
+
+  # 🚀 Auto-Deploy (on main branch)
+  deploy:
+    name: 🚀 Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, unit-tests, visual-tests, performance-tests, security-audit]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+      
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build for production
+        run: npm run build
+        
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+          
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # 📊 Post-Deploy Monitoring
+  post-deploy-monitoring:
+    name: 📊 Post-Deploy Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Wait for deployment
+        run: sleep 60
+        
+      - name: Run production health checks
+        run: npm run test:production:health
+        
+      - name: Monitor performance metrics
+        run: npm run monitor:performance
+        
+      - name: Setup error tracking
+        run: npm run monitor:errors:setup
+
+  # 🔄 Auto-Repair System
+  auto-repair:
+    name: 🔄 Auto-Repair System
+    runs-on: ubuntu-latest
+    if: failure()
+    needs: [visual-tests, performance-tests]
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run auto-repair
+        run: npm run repair:auto
+        
+      - name: Commit auto-repairs
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action Auto-Repair"
+          git add .
+          if ! git diff --staged --quiet; then
+            git commit -m "🔧 Auto-repair: Fix layout and performance issues"
+            git push
+          fi

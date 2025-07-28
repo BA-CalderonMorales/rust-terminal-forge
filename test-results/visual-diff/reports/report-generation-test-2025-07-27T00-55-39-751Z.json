@@ -1,0 +1,11 @@
+{
+  "reportPath": "/workspaces/rust-terminal-forge/test-results/visual-diff/reports/report-generation-test-2025-07-27T00-55-39-751Z.json",
+  "differences": [],
+  "statistics": {
+    "pixelAccuracy": 99.9245273919753,
+    "totalPixels": 2073600,
+    "changedPixels": 1565,
+    "threshold": 0.1
+  },
+  "timestamp": "2025-07-27T00:55:39.751Z"
+}

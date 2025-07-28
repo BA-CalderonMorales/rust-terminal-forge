@@ -1,32 +1,40 @@
+/**
+ * Enhanced RealTerminal with SingletonCursor Integration
+ * Demonstrates how to integrate the singleton cursor system with existing components
+ */
+
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { AnsiText } from './AnsiText';
 import { SingletonCursor, useSingletonCursor } from './SingletonCursor';
 
-// Mobile device detection utility
+// Mobile device detection utility (copied from original)
 const isMobileDevice = () => {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
     ('ontouchstart' in window) ||
     (navigator.maxTouchPoints > 0);
 };
 
-// Touch capabilities detection
+// Touch capabilities detection (copied from original)
 const getTouchCapabilities = () => {
   return {
     hasTouch: 'ontouchstart' in window,
     maxTouchPoints: navigator.maxTouchPoints || 0,
     isMobile: isMobileDevice(),
     supportsHaptics: 'vibrate' in navigator,
-    // Detect if device supports virtual keyboard
     hasVirtualKeyboard: 'virtualKeyboard' in navigator
   };
 };
 
-interface RealTerminalProps {
+interface EnhancedRealTerminalProps {
   className?: string;
+  terminalId?: string; // Unique ID for this terminal instance
 }
 
-export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) => {
+export const EnhancedRealTerminal: React.FC<EnhancedRealTerminalProps> = ({ 
+  className = '',
+  terminalId = 'real-terminal-1'
+}) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
   const hiddenInputRef = useRef<HTMLInputElement>(null);
@@ -37,15 +45,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
   const [currentInput, setCurrentInput] = useState('');
   const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true);
   const [isAtBottom, setIsAtBottom] = useState(true);
-
-  // Singleton cursor management
-  const {
-    updateTextPosition,
-    updatePixelPosition,
-    show: showCursor,
-    hide: hideCursor,
-    cursorProps
-  } = useSingletonCursor('terminal-main', 'terminal', terminalRef);
+  const [isFocused, setIsFocused] = useState(false);
   
   // Mobile-specific state
   const [touchCapabilities] = useState(getTouchCapabilities());
@@ -55,24 +55,59 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
   const [lastTouchTime, setLastTouchTime] = useState(0);
   const [touchStartPos, setTouchStartPos] = useState({ x: 0, y: 0 });
 
-  // Update cursor position when input changes
+  // SingletonCursor integration
+  const cursor = useSingletonCursor(
+    `terminal-cursor-${terminalId}`,
+    'terminal',
+    outputRef
+  );
+
+  // Calculate cursor position based on current input and terminal state
+  const calculateCursorPosition = useCallback(() => {
+    if (!outputRef.current || !isConnected) return;
+
+    // Get terminal metrics
+    const outputElement = outputRef.current;
+    const style = window.getComputedStyle(outputElement);
+    const lineHeight = parseFloat(style.lineHeight) || 16;
+    const fontSize = parseFloat(style.fontSize) || 14;
+    const charWidth = fontSize * 0.6; // Approximate character width
+
+    // Calculate number of lines in output
+    const outputLines = output.split('\n').length;
+    
+    // Position cursor at end of current input
+    const currentLine = outputLines + 1;
+    const currentCol = currentInput.length;
+
+    cursor.updateTextPosition(currentLine, currentCol);
+  }, [output, currentInput, isConnected, cursor]);
+
+  // Update cursor position when input or output changes
   useEffect(() => {
-    if (terminalRef.current && isConnected) {
-      // Calculate cursor position based on current input
-      const lines = output.split('\n').length;
-      const currentLine = lines;
-      const currentCol = currentInput.length;
+    calculateCursorPosition();
+  }, [calculateCursorPosition]);
+
+  // Handle focus state and cursor visibility
+  useEffect(() => {
+    cursor.updateStyle({ 
+      opacity: isFocused ? 1 : 0.3 
+    });
+  }, [isFocused, cursor]);
+
+  // Pause cursor blinking while typing
+  useEffect(() => {
+    if (currentInput.length > 0) {
+      cursor.pauseBlinking();
       
-      updateTextPosition(currentLine, currentCol);
-      showCursor();
-    } else {
-      hideCursor();
+      // Resume after a delay
+      const timer = setTimeout(() => {
+        cursor.resumeBlinking();
+      }, 1000);
+
+      return () => clearTimeout(timer);
     }
-  }, [currentInput, output, isConnected, updateTextPosition, showCursor, hideCursor]);
-
-  
-
-  
+  }, [currentInput, cursor]);
 
   // Smart auto-scroll detection
   const checkScrollPosition = useCallback(() => {
@@ -100,6 +135,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
   useEffect(() => {
     if (isConnected && terminalRef.current) {
       terminalRef.current.focus();
+      setIsFocused(true);
     }
   }, [isConnected]);
 
@@ -117,9 +153,10 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     if (isAutoScrollEnabled) {
       requestAnimationFrame(() => {
         scrollToBottom();
+        calculateCursorPosition(); // Update cursor after scroll
       });
     }
-  }, [isAutoScrollEnabled, scrollToBottom]);
+  }, [isAutoScrollEnabled, scrollToBottom, calculateCursorPosition]);
 
   // Initialize socket connection
   useEffect(() => {
@@ -149,7 +186,6 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
 
     socket.on('terminal-ready', (data) => {
       console.log('🎯 Terminal ready:', data);
-      // Don't show "terminal ready" message - let the shell show its natural prompt
     });
 
     socket.on('terminal-output', (data) => {
@@ -166,7 +202,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
       console.log('🧹 Cleaning up socket connection');
       socket.disconnect();
     };
-  }, []);
+  }, [processTerminalOutput]);
 
   // Send input to terminal
   const sendInput = useCallback((data: string) => {
@@ -181,18 +217,13 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     if (currentInput.trim()) {
       // Handle special commands locally for better UX
       if (currentInput.trim() === 'clear') {
-        // Clear the terminal display immediately for responsive feel
         setOutput('');
         setCurrentInput('');
-        // Also send to backend for consistency
         sendInput(currentInput + '\r');
         return;
       }
       
-      // Send command to terminal
       sendInput(currentInput + '\r');
-      
-      // Clear current input
       setCurrentInput('');
     }
   }, [currentInput, sendInput]);
@@ -217,52 +248,24 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     }
   }, [touchCapabilities.isMobile]);
 
-  // Viewport and virtual keyboard detection
+  // Virtual keyboard detection
   useEffect(() => {
+    if (!touchCapabilities.isMobile) return;
+
     const handleResize = () => {
       const currentHeight = window.innerHeight;
-      const currentWidth = window.innerWidth;
+      const heightDifference = viewportHeight - currentHeight;
       
-      if (touchCapabilities.isMobile) {
-        const heightDifference = viewportHeight - currentHeight;
-        
-        // If height decreased by more than 150px, assume virtual keyboard is visible
-        const keyboardVisible = heightDifference > 150;
-        setVirtualKeyboardVisible(keyboardVisible);
-        setViewportHeight(currentHeight);
-      }
-      
-      // Update terminal container to fill new viewport
-      const terminalContainer = document.querySelector('.modern-terminal') as HTMLElement;
-      if (terminalContainer) {
-        terminalContainer.style.height = '100%';
-        terminalContainer.style.width = '100%';
-      }
-      
-      // Force layout recalculation
-      if (terminalRef.current) {
-        terminalRef.current.style.height = '100%';
-        terminalRef.current.style.width = '100%';
-      }
+      const keyboardVisible = heightDifference > 150;
+      setVirtualKeyboardVisible(keyboardVisible);
+      setViewportHeight(currentHeight);
     };
 
     window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
-    
-    // Initial resize to set proper dimensions
-    handleResize();
-    
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
-    };
+    return () => window.removeEventListener('resize', handleResize);
   }, [viewportHeight, touchCapabilities.isMobile]);
 
-  
-
-  
-
-  // Touch event handlers with gesture recognition
+  // Touch event handlers
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
     setTouchStartPos({ x: touch.clientX, y: touch.clientY });
@@ -270,14 +273,11 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
   }, []);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    // Prevent default behavior for better scrolling control
     if (e.touches.length === 1) {
       const touch = e.touches[0];
       const deltaY = touch.clientY - touchStartPos.y;
       
-      // If scrolling up/down significantly, ensure proper scroll behavior
       if (Math.abs(deltaY) > 50 && outputRef.current) {
-        // Let the browser handle scrolling naturally
         e.stopPropagation();
       }
     }
@@ -291,37 +291,25 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     const deltaY = changedTouch.clientY - touchStartPos.y;
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     
-    // Tap gesture (short duration, minimal movement)
     if (touchDuration < 300 && distance < 10) {
       triggerHapticFeedback('light');
       focusHiddenInput();
       return;
     }
     
-    // Long press gesture (for context menu simulation)
     if (touchDuration > 500 && distance < 20) {
-      // Long press detected - could trigger context actions
       triggerHapticFeedback('heavy');
       return;
     }
     
-    // Swipe gestures
     if (distance > 50 && touchDuration < 500) {
-      // Horizontal swipe
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        if (deltaX > 0) {
-          // Swipe right - could implement tab switching or other actions
-          triggerHapticFeedback('medium');
-        } else {
-          // Swipe left - could implement back/history
-          triggerHapticFeedback('medium');
-        }
+        triggerHapticFeedback('medium');
       }
-      // Vertical swipe is handled by normal scrolling
     }
   }, [lastTouchTime, touchStartPos, focusHiddenInput, triggerHapticFeedback]);
 
-  // Handle keyboard input for the unified terminal
+  // Handle keyboard input
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     // Handle special key combinations
     if (e.ctrlKey && e.key === 'c') {
@@ -330,33 +318,30 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
       if (socketRef.current) {
         socketRef.current.emit('terminal-interrupt');
       }
-      setCurrentInput(''); // Clear current input on interrupt
+      setCurrentInput('');
       return;
     }
 
     if (e.ctrlKey && e.key === 'l') {
       e.preventDefault();
       console.log('🧹 Ctrl+L pressed (clear)');
-      setOutput(''); // Clear terminal display
-      sendInput('\f'); // Send clear to terminal
+      setOutput('');
+      sendInput('\f');
       return;
     }
 
-    // Handle Enter key
     if (e.key === 'Enter') {
       e.preventDefault();
       executeCommand();
       return;
     }
 
-    // Handle Backspace
     if (e.key === 'Backspace') {
       e.preventDefault();
       setCurrentInput(prev => prev.slice(0, -1));
       return;
     }
 
-    // Handle regular character input
     if (e.key.length === 1) {
       e.preventDefault();
       setCurrentInput(prev => prev + e.key);
@@ -364,10 +349,22 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     }
   }, [executeCommand, sendInput]);
 
+  // Handle focus/blur
+  const handleFocus = useCallback(() => {
+    setIsFocused(true);
+    cursor.show();
+  }, [cursor]);
+
+  const handleBlur = useCallback(() => {
+    setIsFocused(false);
+    cursor.updateStyle({ opacity: 0.3 });
+  }, [cursor]);
+
   // Focus the terminal when clicked
   const handleTerminalClick = useCallback(() => {
     if (terminalRef.current) {
       terminalRef.current.focus();
+      setIsFocused(true);
     }
   }, []);
 
@@ -377,26 +374,36 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
-        width: '100%',
+        height: virtualKeyboardVisible ? `${viewportHeight}px` : '100%',
         backgroundColor: '#0f0f0f',
         color: '#e1e1e1',
         fontFamily: 'ui-monospace, "JetBrains Mono", "Fira Code", "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace',
         fontSize: 'clamp(12px, 2.5vw, 14px)',
         lineHeight: '1.4',
         letterSpacing: '0.02em',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        position: 'relative',
         boxSizing: 'border-box',
         borderRadius: '8px',
         overflow: 'hidden',
         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.6)'
       }}
     >
-      {/* Modern Terminal Header */}
+      {/* SingletonCursor Integration */}
+      <SingletonCursor
+        id={`terminal-cursor-${terminalId}`}
+        context="terminal"
+        position={cursor.position}
+        isActive={isFocused && isConnected}
+        priority={4} // Terminal priority
+        containerRef={outputRef}
+        onActivate={() => console.log(`Terminal ${terminalId} cursor activated`)}
+        onDeactivate={() => console.log(`Terminal ${terminalId} cursor deactivated`)}
+        style={{
+          boxShadow: isFocused ? '0 0 8px rgba(0, 255, 136, 0.6)' : '0 0 4px rgba(0, 255, 136, 0.3)'
+        }}
+      />
+
+      {/* Terminal Header */}
       <div 
         className="terminal-header"
         style={{
@@ -412,7 +419,6 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* macOS-style window controls */}
           <div style={{ display: 'flex', gap: '6px' }}>
             <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#FF5F56' }} />
             <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#FFBD2E' }} />
@@ -430,7 +436,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
               }}
             />
             <span style={{ color: '#e1e1e1', fontSize: '11px', fontWeight: '500' }}>
-              Rust Terminal Forge
+              Enhanced Terminal (ID: {terminalId})
             </span>
           </div>
         </div>
@@ -448,20 +454,9 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
                 fontSize: touchCapabilities.isMobile ? '12px' : '10px',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                backdropFilter: 'blur(10px)',
-                minHeight: touchCapabilities.isMobile ? '44px' : 'auto',
-                minWidth: touchCapabilities.isMobile ? '44px' : 'auto',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+                backdropFilter: 'blur(10px)'
               }}
               title="Scroll to bottom"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 255, 136, 0.3), rgba(0, 255, 136, 0.5))';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.4))';
-              }}
             >
               ↓ Scroll
             </button>
@@ -472,7 +467,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
         </div>
       </div>
 
-      {/* Hidden input for mobile keyboard support */}
+      {/* Hidden input for mobile */}
       {touchCapabilities.isMobile && (
         <input
           ref={hiddenInputRef}
@@ -490,7 +485,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
             border: 'none',
             outline: 'none',
             background: 'transparent',
-            fontSize: '16px', // Prevent zoom on iOS
+            fontSize: '16px',
             transform: 'scale(0)',
             pointerEvents: 'none'
           }}
@@ -503,30 +498,28 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
         />
       )}
 
-      {/* Mobile Input Overlay */}
-      
-
       {/* Main Terminal Area */}
       <div 
         ref={terminalRef}
         className="terminal-main"
         onClick={handleTerminalClick}
         onKeyDown={handleKeyDown}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         tabIndex={0}
         role="textbox"
-        aria-label="Terminal interface - tap to type commands"
+        aria-label={`Enhanced terminal ${terminalId} - tap to type commands`}
         aria-multiline="false"
         aria-describedby="terminal-status"
         style={{
           flex: 1,
           position: 'relative',
-          outline: 'none',
-          minHeight: touchCapabilities.isMobile ? '44px' : 0, // Important for flex child + mobile touch target
+          outline: isFocused ? '2px solid rgba(0, 255, 136, 0.3)' : 'none',
+          minHeight: touchCapabilities.isMobile ? '44px' : 0,
           overflow: 'hidden',
-          // Enhanced touch handling
           touchAction: touchCapabilities.isMobile ? 'manipulation' : 'auto',
           WebkitTouchCallout: 'none',
           WebkitUserSelect: 'none',
@@ -548,24 +541,18 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
             wordBreak: 'break-word',
             scrollBehavior: 'smooth',
             background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%)',
-            // Hardware acceleration
             willChange: 'scroll-position',
             transform: 'translateZ(0)',
-            // Enhanced text rendering
             WebkitFontSmoothing: 'antialiased',
             MozOsxFontSmoothing: 'grayscale',
             textRendering: 'optimizeLegibility',
-            // Mobile-optimized selection styling
             WebkitUserSelect: touchCapabilities.isMobile ? 'none' : 'text',
             userSelect: touchCapabilities.isMobile ? 'none' : 'text',
             cursor: touchCapabilities.isMobile ? 'pointer' : 'text',
-            // Mobile scrolling enhancements
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
-            // Mobile font size adjustments
             fontSize: touchCapabilities.isMobile ? 'clamp(14px, 3vw, 16px)' : 'clamp(12px, 2.5vw, 14px)',
             lineHeight: touchCapabilities.isMobile ? '1.5' : '1.4',
-            // Ensure minimum touch target size
             minHeight: touchCapabilities.isMobile ? '44px' : 'auto'
           }}
         >
@@ -590,7 +577,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
           )}
           {output && <AnsiText>{output}</AnsiText>}
           
-          {/* Input Line */}
+          {/* Input Line - Note: No cursor here, SingletonCursor handles it */}
           {isConnected && (
             <div 
               style={{
@@ -601,7 +588,6 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
               }}
             >
               <span style={{ color: '#d4d4d4' }}>{currentInput}</span>
-              {/* Cursor is now managed by SingletonCursor system */}
               
               {/* Mobile keyboard hint */}
               {touchCapabilities.isMobile && currentInput === '' && (
@@ -621,26 +607,10 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
               )}
             </div>
           )}
-          
-          
         </div>
-        
-        {/* SingletonCursor Component */}
-        <SingletonCursor
-          {...cursorProps}
-          priority={10} // High priority for terminal
-          style={{
-            width: touchCapabilities.isMobile ? '12px' : '10px',
-            height: '1.4em',
-            backgroundColor: '#00ff88',
-            borderRadius: '1px',
-            boxShadow: '0 0 8px rgba(0, 255, 136, 0.6)',
-            blinkDuration: 1000
-          }}
-        />
       </div>
 
-      {/* Modern Status Bar */}
+      {/* Status Bar */}
       <div 
         id="terminal-status"
         className="terminal-status"
@@ -664,25 +634,25 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
             {isConnected ? '● READY' : '● CONNECTING'}
           </span>
           <span style={{ opacity: 0.6 }}>|</span>
-          <span>PTY Session Active</span>
+          <span>SingletonCursor Active</span>
         </div>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center', fontSize: '9px' }}>
           <span style={{ opacity: 0.7 }}>^C Interrupt</span>
           <span style={{ opacity: 0.7 }}>^L Clear</span>
-          <span style={{ color: '#00ff88', opacity: 0.8 }}>Rust Terminal Forge</span>
+          <span style={{ color: '#00ff88', opacity: 0.8 }}>Enhanced Terminal</span>
         </div>
       </div>
 
-      {/* Enhanced CSS Animations */}
+      {/* CSS Animations */}
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.7; transform: scale(0.95); }
         }
         
-        @keyframes blink {
-          0%, 50% { background-color: #00ff88; box-shadow: 0 0 8px rgba(0, 255, 136, 0.6); }
-          51%, 100% { background-color: transparent; box-shadow: none; }
+        @keyframes fadeInOut {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.7; }
         }
         
         .terminal-output::-webkit-scrollbar {
@@ -712,151 +682,9 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
         .modern-terminal:hover {
           box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.9), 0 15px 15px -5px rgba(0, 0, 0, 0.7);
         }
-        
-        .terminal-header {
-          transition: all 0.2s ease;
-        }
-        
-        /* Mobile-specific animations */
-        @keyframes fadeInOut {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 0.7; }
-        }
-        
-        /* Ensure modern-terminal takes full height */
-        .modern-terminal {
-          height: 100% !important;
-          width: 100% !important;
-          position: absolute !important;
-          top: 0 !important;
-          left: 0 !important;
-          right: 0 !important;
-          bottom: 0 !important;
-        }
-        
-        @keyframes mobileKeyboardSlide {
-          from { transform: translateY(100px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        
-        @keyframes mobileFabPulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-        }
-        
-        /* Enhanced mobile optimizations */
-        @media (max-width: 768px) {
-          .modern-terminal {
-            border-radius: 0;
-            box-shadow: none;
-          }
-          
-          .terminal-header {
-            padding: 6px 12px;
-            min-height: 36px;
-          }
-          
-          .terminal-output {
-            padding: 12px 14px;
-            /* Better touch scrolling */
-            -webkit-overflow-scrolling: touch;
-            overscroll-behavior-y: contain;
-            /* Enhanced text selection on mobile */
-            -webkit-touch-callout: default;
-            -webkit-user-select: text;
-            user-select: text;
-          }
-          
-          .terminal-status {
-            padding: 4px 12px;
-            min-height: 28px;
-            font-size: 9px;
-          }
-          
-          /* Mobile keyboard button animations */
-          .mobile-keyboard-fab {
-            animation: mobileFabPulse 2s infinite;
-          }
-          
-          .mobile-keyboard-fab:active {
-            animation: none;
-            transform: scale(0.95);
-          }
-          
-          /* Improved mobile input overlay */
-          .mobile-input-overlay {
-            animation: mobileKeyboardSlide 0.3s ease-out;
-          }
-          
-          /* Better mobile scrollbar */
-          .terminal-output::-webkit-scrollbar {
-            width: 4px;
-          }
-          
-          .terminal-output::-webkit-scrollbar-thumb {
-            background: rgba(0, 255, 136, 0.6);
-            border-radius: 2px;
-          }
-          
-          /* Mobile text selection improvements */
-          .terminal-output::selection {
-            background: rgba(0, 255, 136, 0.3);
-            color: inherit;
-          }
-          
-          .terminal-output::-moz-selection {
-            background: rgba(0, 255, 136, 0.3);
-            color: inherit;
-          }
-        }
-        
-        /* Landscape orientation optimizations */
-        @media (max-width: 768px) and (orientation: landscape) {
-          .terminal-header {
-            min-height: 32px;
-            padding: 4px 12px;
-          }
-          
-          .terminal-status {
-            min-height: 24px;
-            font-size: 8px;
-          }
-          
-          .terminal-output {
-            padding: 8px 12px;
-          }
-        }
-        
-        /* High DPI display optimizations */
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-          .modern-terminal {
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-          }
-        }
-        
-        /* Accessibility improvements for mobile */
-        @media (prefers-reduced-motion: reduce) {
-          .mobile-keyboard-fab {
-            animation: none;
-          }
-          
-          .mobile-input-overlay {
-            animation: none;
-          }
-        }
-        
-        /* Dark mode adjustments for mobile */
-        @media (prefers-color-scheme: dark) and (max-width: 768px) {
-          .modern-terminal {
-            background-color: #000;
-          }
-          
-          .terminal-output {
-            background: linear-gradient(135deg, #000 0%, #111 50%, #000 100%);
-          }
-        }
       `}</style>
     </div>
   );
 };
+
+export default EnhancedRealTerminal;
