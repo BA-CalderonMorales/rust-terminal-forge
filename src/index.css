@@ -8,6 +8,8 @@
 @import './styles/clean-terminal.css';
 @import './styles/clean-layout.css';
 @import './styles/professional-layout.css';
+@import './styles/mobile-fullscreen.css';
+@import './styles/responsive-improvements.css';
 
 /* Tailwind integration for utilities only */
 @tailwind base;

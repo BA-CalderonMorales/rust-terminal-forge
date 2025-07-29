@@ -1,0 +1,225 @@
+/**
+ * Mobile Fullscreen Optimizations for iPhone/iOS
+ * Leverages Visual Viewport API and CSS Environment Variables
+ */
+
+/* iOS Safe Area Support */
+:root {
+  /* Default safe area values */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  
+  /* Dynamic viewport heights */
+  --mobile-vh: 100vh;
+  --mobile-vw: 100vw;
+  --keyboard-height: 0px;
+  --keyboard-open: 0;
+  --is-fullscreen: 0;
+  --orientation: portrait;
+}
+
+/* Full height app container for mobile */
+.mobile-app-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: calc(var(--mobile-vh, 100vh));
+  overflow: hidden;
+  background: var(--background);
+  
+  /* iOS specific optimizations */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-x pan-y;
+  
+  /* Safe area padding */
+  padding-top: var(--safe-area-top);
+  padding-bottom: var(--safe-area-bottom);
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
+}
+
+/* Terminal layout adjustments for mobile */
+.mobile-terminal-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Header adjustments for safe areas */
+.mobile-terminal-header {
+  flex-shrink: 0;
+  min-height: 44px;
+  height: auto;
+  background: rgba(15, 15, 15, 0.95);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+  z-index: 1000;
+}
+
+/* Terminal content area */
+.mobile-terminal-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background: var(--background);
+}
+
+/* Status bar adjustments */
+.mobile-status-bar {
+  flex-shrink: 0;
+  min-height: 32px;
+  height: auto;
+  background: rgba(15, 15, 15, 0.95);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-top: 1px solid rgba(0, 255, 136, 0.2);
+  z-index: 999;
+}
+
+/* Keyboard compensation */
+.mobile-terminal-layout[data-keyboard-open="true"] {
+  height: calc(var(--mobile-vh, 100vh) - var(--keyboard-height, 0px));
+}
+
+.mobile-terminal-layout[data-keyboard-open="true"] .mobile-terminal-content {
+  margin-bottom: var(--keyboard-height, 0px);
+}
+
+/* Landscape optimizations */
+@media (orientation: landscape) and (max-height: 500px) {
+  .mobile-terminal-header {
+    min-height: 36px;
+    padding: 6px 12px;
+  }
+  
+  .mobile-status-bar {
+    min-height: 28px;
+    font-size: 11px;
+  }
+  
+  /* Reduce padding in landscape on small screens */
+  .mobile-app-container {
+    padding-top: max(var(--safe-area-top), 8px);
+    padding-bottom: max(var(--safe-area-bottom), 8px);
+  }
+}
+
+/* Portrait optimizations */
+@media (orientation: portrait) {
+  .mobile-terminal-header {
+    min-height: 48px;
+    padding: 8px 16px;
+  }
+}
+
+/* iPhone X/11/12/13/14/15 specific optimizations */
+@supports (padding: max(0px)) {
+  .mobile-app-container {
+    padding-top: max(var(--safe-area-top), 0px);
+    padding-bottom: max(var(--safe-area-bottom), 0px);
+    padding-left: max(var(--safe-area-left), 0px);
+    padding-right: max(var(--safe-area-right), 0px);
+  }
+}
+
+/* Dynamic Island and Notch support */
+@media (max-width: 430px) and (min-height: 800px) {
+  /* iPhone 14 Pro Max, 15 Pro Max adjustments */
+  .mobile-terminal-header {
+    padding-top: max(var(--safe-area-top), 12px);
+  }
+}
+
+@media (max-width: 390px) and (min-height: 844px) {
+  /* iPhone 12, 13, 14, 15 adjustments */
+  .mobile-terminal-header {
+    padding-top: max(var(--safe-area-top), 10px);
+  }
+}
+
+/* Home indicator area */
+.mobile-app-container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--safe-area-bottom);
+  background: rgba(15, 15, 15, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+  z-index: 1001;
+}
+
+/* Touch optimization for buttons and interactive elements */
+.mobile-touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (pointer: coarse) {
+  .mobile-touch-target {
+    min-height: 48px;
+    min-width: 48px;
+  }
+}
+
+/* Scroll improvements for mobile */
+.mobile-scroll-container {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
+/* Prevent zoom on input focus */
+input, textarea, select {
+  font-size: 16px !important;
+  transform-origin: left top;
+  transform: scale(1);
+}
+
+/* Hide scrollbars on mobile for cleaner look */
+@media (max-width: 768px) {
+  .mobile-hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .mobile-hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Performance optimizations */
+.mobile-app-container * {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000;
+  perspective: 1000;
+}
+
+/* Fullscreen mode detection */
+.mobile-app-container[data-fullscreen="true"] {
+  /* Additional fullscreen optimizations */
+  background: #000;
+}
+
+.mobile-app-container[data-fullscreen="true"] .mobile-terminal-header,
+.mobile-app-container[data-fullscreen="true"] .mobile-status-bar {
+  background: rgba(0, 0, 0, 0.95);
+}
