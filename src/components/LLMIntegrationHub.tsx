@@ -133,8 +133,13 @@ export const LLMIntegrationHub: React.FC<LLMIntegrationHubProps> = ({
     }
 
     return () => {
-      renderer.destroySurface('llm-output');
-      renderer.destroySurface('llm-providers');
+      // Cleanup surfaces - use clearSurface instead of destroySurface
+      try {
+        renderer.clearSurface('llm-output');
+        renderer.clearSurface('llm-providers');
+      } catch (error) {
+        console.warn('Failed to clear surfaces:', error);
+      }
     };
   }, [width, height, renderer]);
 

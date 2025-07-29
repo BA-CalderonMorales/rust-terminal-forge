@@ -104,7 +104,12 @@ export const QuantumTerminal: React.FC<QuantumTerminalProps> = ({
     addLine('', 'input');
 
     return () => {
-      renderer.destroySurface('main-terminal');
+      // Cleanup surface - use clearSurface instead of destroySurface
+      try {
+        renderer.clearSurface('main-terminal');
+      } catch (error) {
+        console.warn('Failed to clear surface:', error);
+      }
     };
   }, [width, height, theme]);
 

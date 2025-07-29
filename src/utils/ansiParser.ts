@@ -121,8 +121,15 @@ export class AnsiParser {
   private static parseEscapeCode(
     escapeCode: string, 
     currentStyles: AnsiSegment['styles']
-  ): AnsiSegment['styles'] {
-    const newStyles = { ...currentStyles };
+  ): { color: string | undefined; backgroundColor: string | undefined; bold: boolean; italic: boolean; underline: boolean; dim: boolean; } {
+    const newStyles = { 
+      color: currentStyles.color,
+      backgroundColor: currentStyles.backgroundColor, 
+      bold: currentStyles.bold || false,
+      italic: currentStyles.italic || false,
+      underline: currentStyles.underline || false,
+      dim: currentStyles.dim || false
+    };
     
     // Extract the numeric codes
     const codes = escapeCode.slice(2, -1).split(';').map(code => parseInt(code) || 0);
