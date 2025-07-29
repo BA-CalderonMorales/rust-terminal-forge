@@ -338,7 +338,7 @@ Examples:
     // Extract prompt from args
     const promptArgs: string[] = [];
     let specifiedLanguage = '';
-    let requireConfirm = args.includes('--confirm');
+    const requireConfirm = args.includes('--confirm');
 
     for (let i = 0; i < args.length; i++) {
       const arg = args[i];

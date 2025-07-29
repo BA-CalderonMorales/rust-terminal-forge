@@ -108,7 +108,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     console.log('🔧 Processing terminal data:', {
       length: data.length,
       preview: data.substring(0, 100),
-      hasAnsi: /\x1b\[/.test(data)
+      hasAnsi: /\u001b\[/.test(data)
     });
     
     setOutput(prev => prev + data);
@@ -217,44 +217,60 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     }
   }, [touchCapabilities.isMobile]);
 
-  // Viewport and virtual keyboard detection
+  // Viewport and virtual keyboard detection - optimized
   useEffect(() => {
+    let resizeTimeout: NodeJS.Timeout;
+    
     const handleResize = () => {
-      const currentHeight = window.innerHeight;
-      const currentWidth = window.innerWidth;
-      
-      if (touchCapabilities.isMobile) {
-        const heightDifference = viewportHeight - currentHeight;
+      // Debounce resize events for performance
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        const currentHeight = window.innerHeight;
         
-        // If height decreased by more than 150px, assume virtual keyboard is visible
-        const keyboardVisible = heightDifference > 150;
-        setVirtualKeyboardVisible(keyboardVisible);
-        setViewportHeight(currentHeight);
-      }
-      
-      // Update terminal container to fill new viewport
-      const terminalContainer = document.querySelector('.modern-terminal') as HTMLElement;
-      if (terminalContainer) {
-        terminalContainer.style.height = '100%';
-        terminalContainer.style.width = '100%';
-      }
-      
-      // Force layout recalculation
-      if (terminalRef.current) {
-        terminalRef.current.style.height = '100%';
-        terminalRef.current.style.width = '100%';
-      }
+        if (touchCapabilities.isMobile) {
+          const heightDifference = viewportHeight - currentHeight;
+          
+          // More reliable keyboard detection
+          const keyboardVisible = heightDifference > 150 && currentHeight < viewportHeight * 0.75;
+          setVirtualKeyboardVisible(keyboardVisible);
+          
+          // Only update if significant change
+          if (Math.abs(heightDifference) > 50) {
+            setViewportHeight(currentHeight);
+          }
+        }
+      }, 100); // 100ms debounce
     };
 
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
+    // Use passive listeners for better performance
+    window.addEventListener('resize', handleResize, { passive: true });
+    window.addEventListener('orientationchange', handleResize, { passive: true });
     
-    // Initial resize to set proper dimensions
-    handleResize();
+    // Use visualViewport API if available (more accurate)
+    if ('visualViewport' in window && window.visualViewport) {
+      const handleViewportChange = () => {
+        if (touchCapabilities.isMobile) {
+          const viewport = window.visualViewport!;
+          const keyboardVisible = viewport.height < window.innerHeight * 0.75;
+          setVirtualKeyboardVisible(keyboardVisible);
+          setViewportHeight(viewport.height);
+        }
+      };
+      
+      window.visualViewport.addEventListener('resize', handleViewportChange, { passive: true });
+      
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('orientationchange', handleResize);
+        window.visualViewport?.removeEventListener('resize', handleViewportChange);
+        clearTimeout(resizeTimeout);
+      };
+    }
     
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
+      clearTimeout(resizeTimeout);
     };
   }, [viewportHeight, touchCapabilities.isMobile]);
 
@@ -393,7 +409,8 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
         boxSizing: 'border-box',
         borderRadius: '8px',
         overflow: 'hidden',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.6)'
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.6)',
+        zIndex: 'var(--z-terminal-main)'
       }}
     >
       {/* Modern Terminal Header */}
@@ -635,7 +652,8 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
             backgroundColor: '#00ff88',
             borderRadius: '1px',
             boxShadow: '0 0 8px rgba(0, 255, 136, 0.6)',
-            blinkDuration: 1000
+            blinkDuration: 1000,
+            zIndex: 'var(--z-terminal-cursor)'
           }}
         />
       </div>
@@ -732,6 +750,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
           left: 0 !important;
           right: 0 !important;
           bottom: 0 !important;
+          z-index: var(--z-terminal-main) !important;
         }
         
         @keyframes mobileKeyboardSlide {

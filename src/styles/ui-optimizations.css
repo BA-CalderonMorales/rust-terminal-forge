@@ -97,13 +97,20 @@
   font-size: 0.9em;
 }
 
-/* Performance Optimizations */
+/* Performance Optimizations - Reduced GPU usage */
 .consistent-loading,
 .consistent-error,
 .consistent-success {
-  will-change: opacity, transform;
+  will-change: auto; /* Only use GPU when animating */
+  transform: none;
+  backface-visibility: visible;
+}
+
+.consistent-loading.animating,
+.consistent-error.animating,
+.consistent-success.animating {
+  will-change: opacity;
   transform: var(--gpu-acceleration);
-  backface-visibility: hidden;
 }
 
 /* Animation Performance */

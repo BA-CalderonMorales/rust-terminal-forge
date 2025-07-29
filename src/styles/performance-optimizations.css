@@ -1,0 +1,178 @@
+/**
+ * PERFORMANCE OPTIMIZATIONS
+ * Reduces GPU usage, eliminates will-change overuse, optimizes animations
+ */
+
+/* Optimize will-change usage - only apply when animating */
+.optimized-animation {
+  will-change: auto; /* Default - no GPU layers unless needed */
+}
+
+.optimized-animation:hover,
+.optimized-animation:focus,
+.optimized-animation.animating {
+  will-change: transform, opacity;
+}
+
+.optimized-animation:not(:hover):not(:focus):not(.animating) {
+  will-change: auto;
+}
+
+/* Reduce backdrop-filter usage on mobile */
+@media (max-width: 768px) {
+  .terminal-header,
+  .theme-switcher-container {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(26, 26, 26, 0.95) !important;
+  }
+}
+
+/* Optimize scrolling performance */
+.terminal-output {
+  /* Remove excessive GPU acceleration */
+  will-change: scroll-position;
+  transform: none;
+  
+  /* Optimize scrolling */
+  scroll-behavior: auto; /* Disable smooth scrolling on mobile for performance */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+@media (min-width: 1024px) {
+  .terminal-output {
+    scroll-behavior: smooth; /* Re-enable smooth scrolling on desktop */
+  }
+}
+
+/* Reduce animation complexity on mobile */
+@media (max-width: 768px) {
+  .terminal-cursor,
+  .singleton-cursor {
+    animation: simple-blink 1s infinite step-end;
+  }
+  
+  /* Disable complex gradients on mobile */
+  .terminal-output {
+    background: #0f0f0f !important;
+  }
+  
+  .terminal-header {
+    background: #1a1a1a !important;
+  }
+}
+
+@keyframes simple-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Optimize text rendering */
+.terminal-content,
+.terminal-output {
+  /* Reduce text rendering overhead */
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
+}
+
+@media (min-resolution: 2dppx) {
+  .terminal-content,
+  .terminal-output {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Containment for performance */
+.terminal-app {
+  contain: layout style paint;
+}
+
+.terminal-main {
+  contain: layout style;
+}
+
+.terminal-output {
+  contain: layout;
+}
+
+/* Reduce paint operations */
+.theme-switcher-dropdown {
+  /* Avoid repaints during scroll */
+  position: fixed;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Memory optimization for long terminal sessions */
+.terminal-output {
+  /* Limit rendering buffer */
+  overflow-anchor: none;
+}
+
+/* Optimize transitions */
+.professional-button,
+.terminal-tab,
+.theme-switcher button {
+  transition: background-color 0.15s ease,
+             border-color 0.15s ease,
+             box-shadow 0.15s ease;
+  /* Remove expensive transform transitions */
+}
+
+/* Reduce complexity of box-shadows */
+@media (max-width: 768px) {
+  .modern-terminal {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+  }
+  
+  .terminal-main {
+    box-shadow: none !important;
+  }
+}
+
+/* Optimize cursor blinking */
+.terminal-cursor,
+.singleton-cursor {
+  /* Use opacity instead of background-color changes */
+  animation: optimized-cursor-blink 1s infinite;
+}
+
+@keyframes optimized-cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Prefers-reduced-motion optimizations */
+@media (prefers-reduced-motion: reduce) {
+  .terminal-cursor,
+  .singleton-cursor {
+    animation: none;
+    opacity: 1;
+  }
+  
+  .professional-button,
+  .terminal-tab,
+  .theme-switcher button {
+    transition: none;
+  }
+}
+
+/* Battery optimization for mobile */
+@media (max-width: 768px) and (prefers-reduced-motion: no-preference) {
+  /* Reduce animation frequency on mobile */
+  .terminal-cursor,
+  .singleton-cursor {
+    animation-duration: 1.5s;
+  }
+}
+
+/* High refresh rate display optimization */
+@media (min-resolution: 120dpi) {
+  .terminal-cursor,
+  .singleton-cursor {
+    animation-duration: 800ms; /* Faster blink on high refresh displays */
+  }
+}

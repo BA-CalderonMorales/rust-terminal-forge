@@ -479,7 +479,7 @@ Examples:
 
     const configInfo = await activeProvider.handleCommand('config', []);
     
-    let output = `Current AI Configuration:
+    const output = `Current AI Configuration:
 
 ${configInfo}
 

@@ -1,0 +1,76 @@
+/**
+ * UNIFIED Z-INDEX SYSTEM
+ * Single source of truth for all z-index values
+ * Eliminates overlapping conflicts across components
+ */
+
+:root {
+  /* Base Z-Index System - Hierarchical Layers */
+  --z-base: 1;          /* Default content layer */
+  --z-content: 5;       /* Terminal content */
+  --z-ui-elements: 10;  /* UI components like cursors */
+  --z-header: 15;       /* App header */
+  --z-navigation: 20;   /* Tab navigation */
+  --z-dropdown: 100;    /* Theme switcher and dropdowns */
+  --z-overlay: 200;     /* Overlays and modals */
+  --z-tooltip: 1000;    /* Tooltips (highest) */
+
+  /* Component-Specific Z-Index Values */
+  --z-terminal-main: var(--z-content);
+  --z-terminal-header: var(--z-header);
+  --z-terminal-cursor: var(--z-ui-elements);
+  --z-theme-switcher: var(--z-dropdown);
+  --z-mobile-input: var(--z-overlay);
+}
+
+/* Apply unified z-index system */
+.terminal-app {
+  z-index: var(--z-base);
+}
+
+.terminal-header {
+  z-index: var(--z-terminal-header) !important;
+}
+
+.terminal-main {
+  z-index: var(--z-terminal-main) !important;
+}
+
+.terminal-tabs {
+  z-index: var(--z-navigation) !important;
+}
+
+.theme-switcher-container,
+.theme-switcher {
+  z-index: var(--z-theme-switcher) !important;
+}
+
+.singleton-cursor,
+.terminal-cursor {
+  z-index: var(--z-terminal-cursor) !important;
+}
+
+.mobile-input-overlay {
+  z-index: var(--z-mobile-input) !important;
+}
+
+.tooltip {
+  z-index: var(--z-tooltip) !important;
+}
+
+/* Debug helper - shows z-index values in dev mode */
+[data-debug="z-index"] * {
+  position: relative;
+}
+
+[data-debug="z-index"] *::after {
+  content: "z: " attr(style);
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  font-size: 10px;
+  padding: 2px 4px;
+  pointer-events: none;
+}

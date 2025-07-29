@@ -623,7 +623,7 @@ class FluidAnimator {
 
       // Simulate memory stress test
       const memoryAnalysis = await page.evaluate(() => {
-        const initialMemory = (performance as any).memory?.usedJSHeapSize || 0;
+        const initialMemory = (performance as any)?.memory?.usedJSHeapSize || 0;
         
         // Simulate heavy usage
         const largeArray = [];

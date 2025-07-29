@@ -176,8 +176,8 @@ describe('Terminal Behavior E2E TDD - RED Phase', () => {
         expect(intellisense).toBeInTheDocument();
         
         // Should support debugging
-        const debugger = codeInterface.querySelector('[data-testid="debugger"]');
-        expect(debugger).toBeInTheDocument();
+        const debuggerElement = codeInterface.querySelector('[data-testid="debugger"]');
+        expect(debuggerElement).toBeInTheDocument();
       }).rejects.toThrow(); // Expected to fail initially
     });
   });

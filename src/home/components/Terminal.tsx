@@ -35,7 +35,7 @@ export const Terminal: React.FC<TerminalProps> = ({
   const renderOutput = (output: string) => {
     // Enhanced rendering for Claude responses with better formatting
     const parts = [];
-    let content = output;
+    const content = output;
 
     // Handle code blocks with warnings
     const codeBlockRegex = /\[Code Block (\d+) - (\w+)\](\s*⚠️ WARNING: Contains potentially dangerous code)?\n={50}\n([\s\S]*?)\n={50}/g;

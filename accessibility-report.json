@@ -1,0 +1,23 @@
+{
+  "timestamp": "2025-07-29T04:27:18.915Z",
+  "score": 89,
+  "summary": {
+    "passed": 8,
+    "violations": 1,
+    "warnings": 2,
+    "totalTests": 9
+  },
+  "violations": [
+    "Only 39.1% of components follow accessibility patterns"
+  ],
+  "warnings": [
+    "Potential issues with focus outlines",
+    "Browser-based tests could not run - ensure app is running on localhost:4173"
+  ],
+  "recommendations": [
+    "Address accessibility violations before production",
+    "Consider addressing accessibility warnings for better UX",
+    "Implement automated accessibility testing in CI/CD",
+    "Conduct user testing with assistive technologies"
+  ]
+}

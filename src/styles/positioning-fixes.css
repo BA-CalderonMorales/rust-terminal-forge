@@ -1,0 +1,140 @@
+/**
+ * POSITIONING SYSTEM FIXES
+ * Resolves conflicts between absolute, fixed, and relative positioning
+ * Ensures proper layout hierarchy without overlaps
+ */
+
+/* Base positioning reset */
+.terminal-app {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height */
+  overflow: hidden;
+}
+
+/* Layout container - flex-based instead of absolute */
+.terminal-layout-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Header - fixed height, no absolute positioning */
+.terminal-header {
+  position: relative;
+  flex-shrink: 0;
+  height: 56px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Main content area - flexible height */
+.terminal-main {
+  position: relative;
+  flex: 1;
+  min-height: 0; /* Important for flex child */
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Terminal content - fill available space */
+.modern-terminal {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* Theme switcher - positioned within header */
+.theme-switcher-container {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  z-index: var(--z-theme-switcher);
+}
+
+/* Fix dropdown positioning */
+.theme-switcher [data-testid="theme-dropdown"] {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: var(--z-dropdown);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Singleton cursor positioning */
+.singleton-cursor {
+  position: absolute;
+  pointer-events: none;
+  z-index: var(--z-terminal-cursor);
+}
+
+/* Mobile-specific positioning fixes */
+@media (max-width: 768px) {
+  .terminal-header {
+    height: 48px;
+  }
+  
+  .theme-switcher-container {
+    right: 12px;
+  }
+  
+  /* Mobile input overlay positioning */
+  .mobile-input-overlay {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--z-mobile-input);
+    transform: translateZ(0); /* Force GPU layer */
+  }
+}
+
+/* Prevent content from escaping bounds */
+.no-overflow {
+  overflow: hidden;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Container query support for positioning */
+@container (max-width: 600px) {
+  .theme-switcher-container {
+    position: static;
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px;
+  }
+}
+
+/* Debug helper for positioning issues */
+[data-debug="positioning"] * {
+  outline: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+[data-debug="positioning"] .terminal-header {
+  outline: 2px solid blue;
+}
+
+[data-debug="positioning"] .terminal-main {
+  outline: 2px solid green;
+}
+
+[data-debug="positioning"] .modern-terminal {
+  outline: 2px solid red;
+}

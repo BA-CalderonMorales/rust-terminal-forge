@@ -144,7 +144,7 @@ export const EnhancedRealTerminal: React.FC<EnhancedRealTerminalProps> = ({
     console.log('🔧 Processing terminal data:', {
       length: data.length,
       preview: data.substring(0, 100),
-      hasAnsi: /\x1b\[/.test(data)
+      hasAnsi: /\u001b\[/.test(data)
     });
     
     setOutput(prev => prev + data);

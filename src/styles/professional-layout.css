@@ -1,0 +1,235 @@
+/**
+ * Professional Terminal Layout Styles
+ * Ensures proper integration between mockup design and existing functionality
+ */
+
+/* Professional layout container */
+.professional-terminal-layout {
+  font-family: ui-monospace, "JetBrains Mono", "Fira Code", "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+/* Ensure proper theme variable cascading */
+.professional-terminal-layout * {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Terminal scrollbar styling */
+.terminal-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.terminal-scrollbar::-webkit-scrollbar-track {
+  background: var(--theme-surface);
+  border-radius: 3px;
+}
+
+.terminal-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--theme-border);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.terminal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-text-muted);
+}
+
+.terminal-scrollbar::-webkit-scrollbar-corner {
+  background: var(--theme-surface);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .professional-terminal-layout {
+    font-size: 14px;
+  }
+  
+  .terminal-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+}
+
+/* Professional focus indicators */
+.professional-focus-outline:focus-visible {
+  outline: 2px solid var(--theme-primary);
+  outline-offset: 2px;
+}
+
+/* Professional button animations */
+.professional-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.professional-button:hover {
+  transform: translateY(-1px);
+}
+
+.professional-button:active {
+  transform: translateY(0);
+}
+
+/* Professional tab animations */
+.professional-tab {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.professional-tab::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--theme-primary);
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.professional-tab.active::after {
+  width: 100%;
+}
+
+/* Professional theme switcher dropdown */
+.professional-dropdown {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--theme-border);
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Touch-friendly mobile interactions */
+@media (max-width: 768px) {
+  .professional-button {
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .professional-tab {
+    min-height: 44px;
+    padding: 12px 16px;
+  }
+}
+
+/* Professional animations */
+@keyframes professionalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes professionalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.professional-slide-in {
+  animation: professionalSlideIn 0.3s ease-out;
+}
+
+.professional-fade-in {
+  animation: professionalFadeIn 0.2s ease-out;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .professional-terminal-layout *,
+  .professional-button,
+  .professional-tab,
+  .professional-dropdown {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .professional-terminal-layout {
+    --theme-border: #ffffff;
+    --theme-text-muted: #cccccc;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .professional-terminal-layout {
+    color-scheme: dark;
+  }
+}
+
+/* Professional loading states */
+.professional-loading {
+  position: relative;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.professional-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid var(--theme-border);
+  border-top: 2px solid var(--theme-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Professional error states */
+.professional-error {
+  border-color: var(--theme-error) !important;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.professional-error::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--theme-error);
+}
+
+/* Professional success states */
+.professional-success {
+  border-color: var(--theme-success) !important;
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.professional-success::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--theme-success);
+}

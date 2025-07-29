@@ -114,8 +114,10 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
               borderRadius: designTokens.borderRadius.lg,
               padding: designTokens.spacing[3],
               minWidth: '200px',
-              zIndex: designTokens.zIndex.dropdown,
-              boxShadow: designTokens.shadows.lg
+              zIndex: 'var(--z-dropdown)',
+              boxShadow: designTokens.shadows.lg,
+              maxHeight: '300px',
+              overflowY: 'auto'
             }}
           >
             <div style={{
@@ -252,10 +254,12 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
               borderRadius: '8px',
               padding: '8px',
               minWidth: '180px',
-              zIndex: 1000,
+              zIndex: 'var(--z-dropdown)',
               backdropFilter: 'blur(20px) saturate(1.2)',
               WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-              boxShadow: '0 8px 20px var(--terminal-shadow-dark), 0 0 0 1px rgba(0, 255, 136, 0.1)'
+              boxShadow: '0 8px 20px var(--terminal-shadow-dark), 0 0 0 1px rgba(0, 255, 136, 0.1)',
+              maxHeight: '300px',
+              overflowY: 'auto'
             }}
           >
             {availableThemes.map((theme) => {

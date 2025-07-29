@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Debug Test</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 20px; 
+            background: #000; 
+            color: #00ff00; 
+            font-family: monospace; 
+        }
+        #terminal { 
+            width: 100%; 
+            height: 400px; 
+            border: 1px solid #333; 
+            padding: 10px; 
+            overflow-y: auto;
+            background: #111;
+        }
+        #input { 
+            width: 100%; 
+            background: #111; 
+            border: 1px solid #333; 
+            color: #00ff00; 
+            padding: 10px; 
+            font-family: monospace;
+        }
+        .log { 
+            color: #888; 
+            font-size: 12px; 
+        }
+    </style>
+</head>
+<body>
+    <h2>Terminal Input Debug Test</h2>
+    <div id="terminal"></div>
+    <input id="input" type="text" placeholder="Type commands here..." />
+    <div id="log" class="log"></div>
+
+    <script>
+        const terminal = document.getElementById('terminal');
+        const input = document.getElementById('input');
+        const log = document.getElementById('log');
+        
+        function addLog(message) {
+            log.innerHTML += `[${new Date().toLocaleTimeString()}] ${message}<br>`;
+            console.log(message);
+        }
+        
+        function addToTerminal(text) {
+            terminal.innerHTML += text;
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+        
+        // Connect to socket
+        addLog('Connecting to socket...');
+        const socket = io('http://localhost:3002');
+        
+        socket.on('connect', () => {
+            addLog('✅ Connected to PTY server');
+            addToTerminal('Connected to terminal server...\n');
+            
+            // Create terminal session
+            socket.emit('create-terminal', { cols: 80, rows: 24 });
+        });
+        
+        socket.on('disconnect', () => {
+            addLog('❌ Disconnected from PTY server');
+            addToTerminal('Disconnected from server\n');
+        });
+        
+        socket.on('terminal-ready', (data) => {
+            addLog('🎯 Terminal ready: ' + JSON.stringify(data));
+        });
+        
+        socket.on('terminal-output', (data) => {
+            addLog('📤 Terminal output: ' + data.replace(/\n/g, '\\n'));
+            addToTerminal(data);
+        });
+        
+        socket.on('terminal-exit', (data) => {
+            addLog('🏁 Terminal exited: ' + JSON.stringify(data));
+            addToTerminal(`\nTerminal exited with code: ${data.exitCode}\n`);
+        });
+        
+        // Handle input
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const command = input.value;
+                addLog('⌨️ Sending command: ' + command);
+                socket.emit('terminal-input', command + '\r');
+                input.value = '';
+            }
+        });
+        
+        // Handle special keys
+        input.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'c') {
+                e.preventDefault();
+                addLog('⛔ Ctrl+C pressed');
+                socket.emit('terminal-interrupt');
+            }
+        });
+        
+        addLog('Debug test initialized');
+    </script>
+</body>
+</html>

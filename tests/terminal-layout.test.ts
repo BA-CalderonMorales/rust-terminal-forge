@@ -105,7 +105,7 @@ describe('Terminal Layout TDD Tests - RED PHASE', () => {
       
       // Get initial height
       let terminalElement = await page.$('.modern-terminal');
-      let initialBox = await terminalElement!.boundingBox();
+      const initialBox = await terminalElement!.boundingBox();
       const initialViewportHeight = 768;
       
       // Change viewport size
@@ -115,7 +115,7 @@ describe('Terminal Layout TDD Tests - RED PHASE', () => {
       
       // Get new height
       terminalElement = await page.$('.modern-terminal');
-      let newBox = await terminalElement!.boundingBox();
+      const newBox = await terminalElement!.boundingBox();
       
       // Terminal should adapt to new viewport height (allow for reasonable tolerance)
       const heightDifference = Math.abs(newBox!.height - initialBox!.height);
@@ -260,7 +260,7 @@ describe('Terminal Layout TDD Tests - RED PHASE', () => {
       
       // Get initial terminal height
       const terminalElement = await page.$('.modern-terminal');
-      let terminalBox = await terminalElement!.boundingBox();
+      const terminalBox = await terminalElement!.boundingBox();
       const initialHeight = terminalBox!.height;
       
       // Simulate virtual keyboard by reducing viewport height
