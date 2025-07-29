@@ -95,7 +95,7 @@ export class SecurityUtils {
   }
 
   /**
-   * Security audit log
+   * Enhanced security audit log with monitoring integration
    */
   static logSecurityEvent(event: string, details: Record<string, unknown>): void {
     const logData = {
@@ -106,5 +106,26 @@ export class SecurityUtils {
     };
     
     console.warn(`Security Event: ${event}`, logData);
+    
+    // Determine severity based on event type
+    let severity: 'low' | 'medium' | 'high' | 'critical' = 'medium';
+    
+    if (event.includes('blocked') || event.includes('attack') || event.includes('breach')) {
+      severity = 'critical';
+    } else if (event.includes('failed') || event.includes('invalid') || event.includes('suspicious')) {
+      severity = 'high';
+    } else if (event.includes('limit') || event.includes('warning')) {
+      severity = 'medium';
+    } else {
+      severity = 'low';
+    }
+
+    // Import SecurityMonitor dynamically to avoid circular dependencies
+    import('./SecurityMonitor').then(({ SecurityMonitor }) => {
+      SecurityMonitor.logEvent(event, severity, details.sessionId as string || 'unknown', details);
+    }).catch(() => {
+      // Fallback if SecurityMonitor is not available
+      console.warn('SecurityMonitor not available for event logging');
+    });
   }
 }

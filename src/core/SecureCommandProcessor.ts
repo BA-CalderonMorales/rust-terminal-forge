@@ -42,22 +42,36 @@ export class SecureCommandProcessor {
       inputLength: input.length
     });
 
-    // Rate limiting check
-    const rateLimitStatus = this.rateLimiter.isAllowed(sessionId);
+    // Enhanced rate limiting check with command analysis
+    const rateLimitStatus = this.rateLimiter.isAllowed(sessionId, input);
     debugLogger.trace(DebugComponent.COMMAND_PROCESSOR, `Rate limit check: ${rateLimitStatus}`, { sessionId });
     
     if (!rateLimitStatus) {
       const remaining = this.rateLimiter.getRemainingCommands(sessionId);
+      const isBlocked = this.rateLimiter.isBlocked(sessionId);
+      
       debugLogger.warn(DebugComponent.COMMAND_PROCESSOR, `Rate limit exceeded for session: ${sessionId}`, {
-        remainingCommands: remaining
+        remainingCommands: remaining,
+        isBlocked
+      });
+      
+      SecurityUtils.logSecurityEvent('rate_limit_exceeded', { 
+        sessionId, 
+        command: input.substring(0, 50),
+        remaining,
+        isBlocked
       });
       
       debugLogger.endTrace(traceId, { success: false, reason: 'Rate limit exceeded' });
       
+      const message = isBlocked 
+        ? 'Session temporarily blocked due to suspicious activity. Please wait before retrying.'
+        : `Rate limit exceeded. Try again later. Remaining commands: ${remaining}`;
+      
       return {
         id: SecurityUtils.generateSecureId(),
         command: input,
-        output: `Rate limit exceeded. Try again later. Remaining commands: ${remaining}`,
+        output: message,
         timestamp: new Date().toISOString(),
         exitCode: 429
       };

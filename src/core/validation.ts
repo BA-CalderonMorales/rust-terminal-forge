@@ -9,11 +9,15 @@ export const ValidationSchemas = {
     .max(50, 'Username too long')
     .regex(/^[a-zA-Z0-9_-]+$/, 'Username contains invalid characters'),
 
-  // Command validation
+  // Command validation (enhanced security)
   command: z.string()
     .min(1, 'Command cannot be empty')
-    .max(1000, 'Command too long')
-    .regex(/^[a-zA-Z0-9\s\-_.~:"']+$/, 'Command contains forbidden characters'),
+    .max(500, 'Command too long')
+    .regex(/^[a-zA-Z0-9\s\-_.~:"'=@/]+$/, 'Command contains forbidden characters')
+    .refine(cmd => !cmd.includes('rm -rf'), 'Dangerous command not allowed')
+    .refine(cmd => !cmd.includes('sudo'), 'Sudo commands not allowed')
+    .refine(cmd => !cmd.includes('..'), 'Path traversal not allowed')
+    .refine(cmd => !/(&&|\|\||;|`|\$\()/g.test(cmd), 'Command chaining not allowed'),
 
   // Path validation
   path: z.string()

@@ -385,23 +385,42 @@ To enable full functionality, implement a backend service that handles:
   }
 
   /**
-   * Validate command for security
+   * Enhanced command validation for security (sandbox mode)
    */
   static validateCommand(command: string, args: string[]): { isValid: boolean; reason?: string } {
+    // Allowlist of safe commands
+    const allowedCommands = new Set([
+      'claude', 'claude-code', 'gemini', 'ai', 'cargo', 'rustc', 'rustup',
+      'ls', 'cat', 'pwd', 'echo', 'which', 'date', 'whoami', 'env',
+      'history', 'alias', 'clear', 'help', 'find', 'grep', 'mkdir',
+      'touch', 'cd', 'uptime', 'hostname', 'rust-dev'
+    ]);
+
+    // Check if command is in allowlist
+    if (!allowedCommands.has(command)) {
+      return { isValid: false, reason: `Command '${command}' is not allowed in sandbox mode` };
+    }
+
     // Basic security checks
     if (!command || command.includes('..') || command.includes('/')) {
       return { isValid: false, reason: 'Invalid command format' };
     }
 
-    // Check for dangerous arguments
+    // Enhanced dangerous patterns
     const dangerousPatterns = [
       /rm\s+-rf/,
       /sudo/,
       /passwd/,
-      />/,  // Redirection
-      /\|/, // Piping
-      /;/,  // Command chaining
-      /&/,  // Background execution
+      />/,         // Redirection
+      /\|/,        // Piping
+      /;/,         // Command chaining
+      /&/,         // Background execution
+      /\$\(/,      // Command substitution
+      /`/,         // Command substitution
+      /eval/,      // Code evaluation
+      /exec/,      // Code execution
+      /<script/i,  // Script injection
+      /javascript:/i
     ];
 
     const fullCommand = [command, ...args].join(' ');
@@ -411,6 +430,33 @@ To enable full functionality, implement a backend service that handles:
       }
     }
 
+    // Validate individual arguments
+    for (const arg of args) {
+      if (arg.includes('..') || arg.length > 500) {
+        return { isValid: false, reason: 'Invalid argument format' };
+      }
+    }
+
     return { isValid: true };
+  }
+
+  /**
+   * Create restricted environment for command execution
+   */
+  static createRestrictedEnvironment(baseEnv: Record<string, string> = {}): Record<string, string> {
+    const restrictedEnv: Record<string, string> = {
+      PATH: '/usr/local/bin:/usr/bin:/bin',
+      HOME: '/tmp/sandbox',
+      USER: 'sandbox',
+      SHELL: '/bin/bash',
+      TERM: 'xterm-256color',
+      ...baseEnv
+    };
+
+    // Remove potentially dangerous environment variables
+    const dangerousEnvVars = ['LD_PRELOAD', 'DYLD_INSERT_LIBRARIES', 'NODE_OPTIONS'];
+    dangerousEnvVars.forEach(key => delete restrictedEnv[key]);
+
+    return restrictedEnv;
   }
 }
