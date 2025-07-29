@@ -97,16 +97,15 @@ export class ClaudeProvider implements IAIProvider {
 
     try {
       // Convert our AIMessage format to Claude's format
-      // Filter out system messages for Claude API compatibility
-      const claudeMessages = messages.filter(msg => msg.role !== 'system').map(msg => ({
-        role: msg.role as 'user' | 'assistant',
+      const claudeMessages = messages.map(msg => ({
+        role: msg.role,
         content: msg.content
       }));
 
       const response = await this.client.sendMessage(claudeMessages);
       
       return {
-        content: response.content?.[0]?.text || '',
+        content: response.content[0].text,
         model: response.model || options?.model || this.config?.defaultModel || 'claude-3-sonnet-20240229',
         usage: response.usage ? {
           inputTokens: response.usage.input_tokens,
@@ -115,8 +114,8 @@ export class ClaudeProvider implements IAIProvider {
         } : undefined,
         finishReason: response.stop_reason === 'end_turn' ? 'stop' : 'length',
         metadata: {
-          id: (response as any).id || 'unknown',
-          type: (response as any).type || 'message'
+          id: response.id,
+          type: response.type
         }
       };
     } catch (error) {

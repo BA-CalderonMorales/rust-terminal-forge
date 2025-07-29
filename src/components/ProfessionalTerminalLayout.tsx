@@ -211,10 +211,16 @@ export function ProfessionalTerminalLayout() {
   const activeTabData = tabs.find(tab => tab.id === activeTab);
 
   return (
-    <>
-      {/* Mobile Terminal Header */}
-      <div className="mobile-terminal-header">
-        <div className="px-4 py-2 flex items-center justify-between mobile-touch-target">
+    <div className="h-screen flex flex-col overflow-hidden" style={{ 
+      backgroundColor: 'var(--theme-background)',
+      color: 'var(--theme-text)'
+    }}>
+      {/* Header */}
+      <div className="border-b transition-colors duration-200" style={{ 
+        backgroundColor: 'var(--theme-surface)', 
+        borderColor: 'var(--theme-border)' 
+      }}>
+        <div className="px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -255,9 +261,7 @@ export function ProfessionalTerminalLayout() {
         </div>
       </div>
 
-      {/* Mobile Terminal Content */}
-      <div className="mobile-terminal-content">
-        <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
         <div className={`${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -363,12 +367,9 @@ export function ProfessionalTerminalLayout() {
           </div>
         </div>
       </div>
-      </div>
 
-      {/* Mobile Status Bar */}
-      <div className="mobile-status-bar">
-        <StatusBar activeSessionsCount={tabs.length} />
-      </div>
+      {/* Status Bar */}
+      <StatusBar activeSessionsCount={tabs.length} />
       
       <style>{`
         .terminal-scrollbar::-webkit-scrollbar {
@@ -389,6 +390,6 @@ export function ProfessionalTerminalLayout() {
           background: var(--theme-text-muted);
         }
       `}</style>
-    </>
+    </div>
   );
 }

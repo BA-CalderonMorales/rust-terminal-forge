@@ -446,8 +446,7 @@ class ConsoleMonitor {
     const originalConsole = { ...console };
 
     ['log', 'warn', 'error', 'info'].forEach(level => {
-      const originalMethod = (console as any)[level];
-      (console as any)[level] = (...args: any[]) => {
+      console[level as keyof Console] = (...args: any[]) => {
         this.messages.push({
           level,
           message: args.join(' '),
@@ -456,7 +455,7 @@ class ConsoleMonitor {
         });
         
         // Call original console method
-        originalMethod?.apply(console, args);
+        (originalConsole[level as keyof Console] as any)(...args);
       };
     });
   }

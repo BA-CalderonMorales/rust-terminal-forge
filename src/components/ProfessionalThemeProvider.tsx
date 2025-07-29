@@ -308,7 +308,7 @@ export function ProfessionalThemeProvider({ children }: { children: React.ReactN
       const existingThemeKey = Object.keys(existingThemes).find(key => {
         const theme = existingThemes[key as keyof typeof existingThemes];
         return theme.colors?.neonGreen === colors.primary ||
-               theme.colors?.background === colors.background;
+               theme.colors?.primaryBg === colors.background;
       });
       
       if (existingThemeKey && themeManager.getCurrentTheme().name !== currentTheme.name) {

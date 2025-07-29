@@ -397,7 +397,7 @@ export class PuppeteerTestManager {
     await page.keyboard.press('Enter');
     
     // Wait for command execution
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await page.waitForTimeout(1000);
   }
 
   /**
