@@ -239,16 +239,16 @@ export function withSingletonCursor<P extends object>(
     const containerRef = useRef<HTMLElement>(null);
     
     const position = cursorConfig.getPosition ? 
-      cursorConfig.getPosition(props) : 
+      cursorConfig.getPosition(props as P) : 
       { x: 0, y: 0 };
     
     const isActive = cursorConfig.getActive ? 
-      cursorConfig.getActive(props) : 
+      cursorConfig.getActive(props as P) : 
       true;
 
     return (
       <>
-        <WrappedComponent {...props} ref={ref} />
+        <WrappedComponent {...(props as P)} ref={ref} />
         <SingletonCursor
           id={cursorConfig.id}
           context={cursorConfig.context}

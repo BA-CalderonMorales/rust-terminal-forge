@@ -205,8 +205,9 @@ export const SessionStateManager: React.FC = () => {
           // Restore basic state like input values
           const inputs = toolInterface.querySelectorAll('input, textarea');
           inputs.forEach((input: any, index) => {
-            if (toolState && toolState.inputs && toolState.inputs[index]) {
-              input.value = toolState.inputs[index];
+            if (toolState && typeof toolState === 'object' && 'inputs' in toolState && 
+                Array.isArray((toolState as any).inputs) && (toolState as any).inputs[index]) {
+              input.value = (toolState as any).inputs[index];
             }
           });
         }

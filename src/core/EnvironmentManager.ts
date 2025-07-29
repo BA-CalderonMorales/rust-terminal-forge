@@ -28,6 +28,13 @@ export class EnvironmentManager {
   }
 
   /**
+   * Get an environment variable (alias for get method for compatibility)
+   */
+  getVariable(key: string): string | undefined {
+    return this.get(key);
+  }
+
+  /**
    * Set an environment variable
    */
   set(key: string, value: string, persist: boolean = true): void {
