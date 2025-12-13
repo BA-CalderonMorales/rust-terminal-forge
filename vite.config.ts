@@ -7,6 +7,16 @@ import path from 'path';
 
 export default defineConfig(({ mode }) => ({
   base: mode === 'development' ? '/' : '/rust-terminal-forge/',
+  // Exclude server-side files from build (they require native modules)
+  build: {
+    rollupOptions: {
+      external: [
+        'node-pty',
+        /persistent-pty-server/,
+        /pty-server/
+      ]
+    }
+  },
   test: {
     globals: true,
     environment: 'jsdom',

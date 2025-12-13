@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { AnsiText } from './AnsiText';
 import { SingletonCursor, useSingletonCursor } from './SingletonCursor';
+import { BrowserTerminal } from './BrowserTerminal';
 
 // Mobile device detection utility
 const isMobileDevice = () => {
@@ -26,6 +27,9 @@ interface RealTerminalProps {
   className?: string;
 }
 
+// Connection timeout for fallback to demo mode
+const CONNECTION_TIMEOUT_MS = 5000;
+
 export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
@@ -33,6 +37,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
   
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionFailed, setConnectionFailed] = useState(false);
   const [output, setOutput] = useState('');
   const [currentInput, setCurrentInput] = useState('');
   const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useState(true);
@@ -121,25 +126,42 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     }
   }, [isAutoScrollEnabled, scrollToBottom]);
 
-  // Initialize socket connection
+  // Initialize socket connection with timeout fallback
   useEffect(() => {
-    console.log('🚀 Connecting to Rick\'s PTY server...');
+    console.log('🚀 Connecting to PTY server...');
     
+    // Set connection timeout
+    const timeoutId = setTimeout(() => {
+      if (!socketRef.current?.connected) {
+        console.log('⏰ Connection timeout - switching to demo mode');
+        setConnectionFailed(true);
+        socketRef.current?.disconnect();
+      }
+    }, CONNECTION_TIMEOUT_MS);
+
     const socket = io('/', {
-      transports: ['websocket']
+      transports: ['websocket'],
+      timeout: CONNECTION_TIMEOUT_MS,
+      reconnectionAttempts: 2
     });
 
     socketRef.current = socket;
 
     socket.on('connect', () => {
       console.log('✅ Connected to PTY server');
+      clearTimeout(timeoutId);
       setIsConnected(true);
+      setConnectionFailed(false);
       
       // Create terminal session
       socket.emit('create-terminal', { 
         cols: 80, 
         rows: 24 
       });
+    });
+
+    socket.on('connect_error', (error) => {
+      console.log('❌ Connection error:', error.message);
     });
 
     socket.on('disconnect', () => {
@@ -149,7 +171,6 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
 
     socket.on('terminal-ready', (data) => {
       console.log('🎯 Terminal ready:', data);
-      // Don't show "terminal ready" message - let the shell show its natural prompt
     });
 
     socket.on('terminal-output', (data) => {
@@ -163,6 +184,7 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
     });
 
     return () => {
+      clearTimeout(timeoutId);
       console.log('🧹 Cleaning up socket connection');
       socket.disconnect();
     };
@@ -386,6 +408,11 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
       terminalRef.current.focus();
     }
   }, []);
+
+  // If connection failed, show browser-based demo terminal
+  if (connectionFailed) {
+    return <BrowserTerminal className={className} />;
+  }
 
   return (
     <div 
