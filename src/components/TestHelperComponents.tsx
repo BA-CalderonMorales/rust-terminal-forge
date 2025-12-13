@@ -198,13 +198,13 @@ export const SessionStateManager: React.FC = () => {
 
     // Restore state for tool interfaces
     const restoreToolStates = () => {
-      const state = loadSessionState();
+      const state = loadSessionState() as Record<string, { inputs?: string[] }>;
       Object.entries(state).forEach(([toolName, toolState]) => {
         const toolInterface = document.querySelector(`[data-testid="${toolName}-interface"]`);
         if (toolInterface) {
           // Restore basic state like input values
           const inputs = toolInterface.querySelectorAll('input, textarea');
-          inputs.forEach((input: any, index) => {
+          inputs.forEach((input: HTMLInputElement | HTMLTextAreaElement, index: number) => {
             if (toolState && toolState.inputs && toolState.inputs[index]) {
               input.value = toolState.inputs[index];
             }

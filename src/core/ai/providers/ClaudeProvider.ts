@@ -96,11 +96,13 @@ export class ClaudeProvider implements IAIProvider {
     }
 
     try {
-      // Convert our AIMessage format to Claude's format
-      const claudeMessages = messages.map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }));
+      // Convert our AIMessage format to Claude's format, filtering out system messages
+      const claudeMessages = messages
+        .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+        .map(msg => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        }));
 
       const response = await this.client.sendMessage(claudeMessages);
       
@@ -114,8 +116,8 @@ export class ClaudeProvider implements IAIProvider {
         } : undefined,
         finishReason: response.stop_reason === 'end_turn' ? 'stop' : 'length',
         metadata: {
-          id: response.id,
-          type: response.type
+          model: response.model,
+          role: response.role
         }
       };
     } catch (error) {

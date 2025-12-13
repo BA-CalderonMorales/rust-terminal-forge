@@ -1,14 +1,16 @@
 // ANSI escape sequence parser for terminal output
+export interface AnsiStyles {
+  color?: string;
+  backgroundColor?: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  dim?: boolean;
+}
+
 export interface AnsiSegment {
   text: string;
-  styles: {
-    color?: string;
-    backgroundColor?: string;
-    bold?: boolean;
-    italic?: boolean;
-    underline?: boolean;
-    dim?: boolean;
-  };
+  styles: AnsiStyles;
 }
 
 export class AnsiParser {
@@ -55,9 +57,9 @@ export class AnsiParser {
    */
   static parseAnsi(text: string): AnsiSegment[] {
     const segments: AnsiSegment[] = [];
-    let currentStyles = {
-      color: undefined as string | undefined,
-      backgroundColor: undefined as string | undefined,
+    let currentStyles: AnsiStyles = {
+      color: undefined,
+      backgroundColor: undefined,
       bold: false,
       italic: false,
       underline: false,
@@ -120,8 +122,8 @@ export class AnsiParser {
    */
   private static parseEscapeCode(
     escapeCode: string, 
-    currentStyles: AnsiSegment['styles']
-  ): AnsiSegment['styles'] {
+    currentStyles: AnsiStyles
+  ): AnsiStyles {
     const newStyles = { ...currentStyles };
     
     // Extract the numeric codes

@@ -480,6 +480,7 @@ export function useASCIIRenderer() {
     clearSurface: renderer.clearSurface.bind(renderer),
     getSurfaceCanvas: renderer.getSurfaceCanvas.bind(renderer),
     resizeSurface: renderer.resizeSurface.bind(renderer),
+    destroySurface: renderer.destroySurface.bind(renderer),
     calculateFontMetrics: renderer.calculateFontMetrics.bind(renderer),
     getCacheStats: () => renderer.getCacheStats(),
   };

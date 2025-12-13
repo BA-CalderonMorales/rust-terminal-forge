@@ -35,7 +35,7 @@ export class KeyDerivation {
     return crypto.subtle.deriveKey(
       {
         name: 'PBKDF2',
-        salt: userSalt,
+        salt: userSalt.buffer as ArrayBuffer,
         iterations: this.ITERATIONS,
         hash: 'SHA-256'
       },

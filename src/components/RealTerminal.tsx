@@ -647,13 +647,14 @@ export const RealTerminal: React.FC<RealTerminalProps> = ({ className = '' }) =>
           {...cursorProps}
           priority={10} // High priority for terminal
           style={{
-            width: touchCapabilities.isMobile ? '12px' : '10px',
-            height: '1.4em',
+            width: touchCapabilities.isMobile ? 12 : 10,
+            height: 20,
             backgroundColor: '#00ff88',
-            borderRadius: '1px',
+            borderRadius: 1,
             boxShadow: '0 0 8px rgba(0, 255, 136, 0.6)',
-            blinkDuration: 1000,
-            zIndex: 'var(--z-terminal-cursor)'
+            blinkSpeed: 1000,
+            mode: 'line',
+            opacity: 1
           }}
         />
       </div>

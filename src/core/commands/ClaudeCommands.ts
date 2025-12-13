@@ -29,9 +29,9 @@ export class ClaudeCommands extends BaseCommandHandler {
   /**
    * Initialize Claude API client with API key
    */
-  private initializeClaudeClient(): boolean {
+  private async initializeClaudeClientAsync(): Promise<boolean> {
     const envManager = EnvironmentManager.getInstance();
-    const apiKey = envManager.getAnthropicApiKey();
+    const apiKey = await envManager.getAnthropicApiKey();
     
     if (!apiKey) {
       return false;
@@ -149,7 +149,7 @@ Examples:
     }
 
     if (args.includes('--status')) {
-      const isInitialized = this.initializeClaudeClient();
+      const isInitialized = await this.initializeClaudeClientAsync();
       const status = isInitialized 
         ? '✅ Authenticated with Claude API'
         : '❌ Not authenticated. Set ANTHROPIC_API_KEY environment variable or use --setup';
@@ -184,7 +184,7 @@ Your API key will be stored securely in browser localStorage.`;
 
       const apiKey = args[args.indexOf('--set-key') + 1];
       const envManager = EnvironmentManager.getInstance();
-      const result = envManager.setAnthropicApiKey(apiKey);
+      const result = await envManager.setAnthropicApiKey(apiKey);
 
       if (result.success) {
         return this.generateCommand(id, command, '✅ API key set successfully! Run "claude auth --test" to verify.', timestamp);
@@ -194,7 +194,7 @@ Your API key will be stored securely in browser localStorage.`;
     }
 
     if (args.includes('--test')) {
-      if (!this.initializeClaudeClient()) {
+      if (!(await this.initializeClaudeClientAsync())) {
         return this.generateCommand(id, command, '❌ API key not found or invalid', timestamp, 1);
       }
 
@@ -259,7 +259,7 @@ Examples:
       return this.generateCommand(id, command, `Conversation Context:\n${context}`, timestamp);
     }
 
-    if (!this.initializeClaudeClient()) {
+    if (!(await this.initializeClaudeClientAsync())) {
       return this.generateCommand(id, command, '❌ Not authenticated. Run "claude auth --setup" first', timestamp, 1);
     }
 
@@ -331,7 +331,7 @@ Examples:
       return this.generateCommand(id, command, helpText, timestamp);
     }
 
-    if (!this.initializeClaudeClient()) {
+    if (!(await this.initializeClaudeClientAsync())) {
       return this.generateCommand(id, command, '❌ Not authenticated. Run "claude auth --setup" first', timestamp, 1);
     }
 
