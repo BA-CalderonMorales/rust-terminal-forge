@@ -162,6 +162,9 @@ jobs:
   build-matrix:
     name: 🛠️ Build Matrix
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
