@@ -170,7 +170,6 @@ export function ProfessionalTerminalLayout() {
   const [activeTab, setActiveTab] = useState<number | null>(0);
   const [nextTabId, setNextTabId] = useState(3);
   const [isMobile, setIsMobile] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   
   const [tabs, setTabs] = useState<Tab[]>([
     { id: 0, name: 'bash', path: '~/projects/terminal-ui' },
@@ -223,12 +222,13 @@ export function ProfessionalTerminalLayout() {
   };
 
   const handleQuickCommand = useCallback(() => {
-    // Quick command functionality - can be expanded
+    // TODO: Implement quick command functionality for agentic work
     console.log('Quick command triggered');
   }, []);
 
   const handleToggleSettings = useCallback(() => {
-    setShowSettings(prev => !prev);
+    // TODO: Implement settings panel for mobile
+    console.log('Settings toggle triggered');
   }, []);
 
   const activeTabData = tabs.find(tab => tab.id === activeTab);

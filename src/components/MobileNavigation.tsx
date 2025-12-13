@@ -11,8 +11,7 @@ import {
   Settings, 
   FolderOpen, 
   Command,
-  ChevronUp,
-  Keyboard
+  ChevronUp
 } from 'lucide-react';
 import { useProfessionalTheme } from './ProfessionalThemeProvider';
 
