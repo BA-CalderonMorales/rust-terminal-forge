@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Menu, X, FolderOpen, Terminal, Plus } from 'lucide-react';
 import { ProfessionalThemeSwitcher } from './ProfessionalThemeSwitcher';
 import { ProfessionalTerminalWindow } from './ProfessionalTerminalWindow';
+import { MobileNavigation } from './MobileNavigation';
 
 interface Tab {
   id: number;
@@ -168,6 +169,8 @@ export function ProfessionalTerminalLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<number | null>(0);
   const [nextTabId, setNextTabId] = useState(3);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   
   const [tabs, setTabs] = useState<Tab[]>([
     { id: 0, name: 'bash', path: '~/projects/terminal-ui' },
@@ -175,7 +178,18 @@ export function ProfessionalTerminalLayout() {
     { id: 2, name: 'server', path: '~/dev/server' }
   ]);
 
-  const createNewTab = () => {
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const createNewTab = useCallback(() => {
     const newTab: Tab = {
       id: nextTabId,
       name: `bash-${nextTabId}`,
@@ -184,7 +198,7 @@ export function ProfessionalTerminalLayout() {
     setTabs(prev => [...prev, newTab]);
     setActiveTab(newTab.id);
     setNextTabId(prev => prev + 1);
-  };
+  }, [nextTabId]);
 
   const closeTab = (tabId: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -208,13 +222,27 @@ export function ProfessionalTerminalLayout() {
     }
   };
 
+  const handleQuickCommand = useCallback(() => {
+    // Quick command functionality - can be expanded
+    console.log('Quick command triggered');
+  }, []);
+
+  const handleToggleSettings = useCallback(() => {
+    setShowSettings(prev => !prev);
+  }, []);
+
   const activeTabData = tabs.find(tab => tab.id === activeTab);
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ 
-      backgroundColor: 'var(--theme-background)',
-      color: 'var(--theme-text)'
-    }}>
+    <div 
+      className="flex flex-col overflow-hidden mobile-layout-container" 
+      style={{ 
+        backgroundColor: 'var(--theme-background)',
+        color: 'var(--theme-text)',
+        height: '100dvh',
+        paddingBottom: isMobile ? 'calc(64px + env(safe-area-inset-bottom))' : 0,
+      }}
+    >
       {/* Header */}
       <div className="border-b transition-colors duration-200" style={{ 
         backgroundColor: 'var(--theme-surface)', 
@@ -368,8 +396,23 @@ export function ProfessionalTerminalLayout() {
         </div>
       </div>
 
-      {/* Status Bar */}
-      <StatusBar activeSessionsCount={tabs.length} />
+      {/* Status Bar - hidden on mobile */}
+      <div className="hidden md:block">
+        <StatusBar activeSessionsCount={tabs.length} />
+      </div>
+      
+      {/* Mobile Navigation */}
+      {isMobile && (
+        <MobileNavigation
+          activeTab="terminal"
+          onNewTerminal={createNewTab}
+          onToggleExplorer={() => setSidebarOpen(!sidebarOpen)}
+          onToggleSettings={handleToggleSettings}
+          onQuickCommand={handleQuickCommand}
+          sessionCount={tabs.length}
+          isExplorerOpen={sidebarOpen}
+        />
+      )}
       
       <style>{`
         .terminal-scrollbar::-webkit-scrollbar {
@@ -388,6 +431,13 @@ export function ProfessionalTerminalLayout() {
         
         .terminal-scrollbar::-webkit-scrollbar-thumb:hover {
           background: var(--theme-text-muted);
+        }
+        
+        /* Mobile-specific layout adjustments */
+        @media (max-width: 768px) {
+          .mobile-layout-container {
+            padding-bottom: calc(64px + env(safe-area-inset-bottom)) !important;
+          }
         }
       `}</style>
     </div>

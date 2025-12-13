@@ -57,17 +57,28 @@ export function ProfessionalThemeSwitcher() {
             onClick={() => setIsOpen(false)}
           />
           
-          {/* Theme Selector */}
+          {/* Theme Selector - Mobile responsive */}
           <div 
-            className="absolute top-full right-0 mt-2 z-50 w-80 rounded-lg shadow-2xl overflow-hidden border"
+            className="fixed md:absolute inset-x-4 md:inset-x-auto bottom-4 md:bottom-auto md:top-full md:right-0 md:mt-2 z-50 md:w-80 rounded-lg shadow-2xl overflow-hidden border"
             style={{ 
               backgroundColor: 'var(--theme-surface)', 
-              borderColor: 'var(--theme-border)' 
+              borderColor: 'var(--theme-border)',
+              maxHeight: 'calc(100vh - 200px)',
             }}
           >
-            <div className="p-3 border-b" style={{ borderColor: 'var(--theme-border)' }}>
-              <h3 className="font-medium text-sm" style={{ color: 'var(--theme-text)' }}>Choose Theme</h3>
-              <p className="text-xs mt-1" style={{ color: 'var(--theme-text-muted)' }}>Select your terminal aesthetic</p>
+            <div className="p-3 border-b flex items-center justify-between" style={{ borderColor: 'var(--theme-border)' }}>
+              <div>
+                <h3 className="font-medium text-sm" style={{ color: 'var(--theme-text)' }}>Choose Theme</h3>
+                <p className="text-xs mt-1" style={{ color: 'var(--theme-text-muted)' }}>Select your terminal aesthetic</p>
+              </div>
+              {/* Close button for mobile */}
+              <button
+                onClick={() => setIsOpen(false)}
+                className="md:hidden p-2 rounded-lg"
+                style={{ backgroundColor: 'var(--theme-surface-hover)' }}
+              >
+                <span className="text-lg" style={{ color: 'var(--theme-text-muted)' }}>×</span>
+              </button>
             </div>
             
             <div className="max-h-80 overflow-y-auto terminal-scrollbar">
@@ -76,7 +87,7 @@ export function ProfessionalThemeSwitcher() {
                   key={theme.id}
                   onClick={() => handleThemeSelect(theme.id)}
                   className="w-full p-3 transition-colors flex items-center gap-3 group"
-                  style={{ backgroundColor: 'transparent' }}
+                  style={{ backgroundColor: 'transparent', minHeight: '56px' }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = 'var(--theme-surface-hover)';
                   }}

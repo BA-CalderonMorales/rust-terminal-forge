@@ -1,12 +1,13 @@
 {
   "name": "Rust Terminal Forge",
-  "short_name": "Terminal Forge",
-  "description": "Web-based Rust terminal development environment",
+  "short_name": "Terminal",
+  "description": "Web-based Rust terminal development environment for agentic work on the go",
   "start_url": "/?standalone=true",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "any",
-  "theme_color": "#0f0f0f",
-  "background_color": "#0f0f0f",
+  "theme_color": "#10b981",
+  "background_color": "#0f172a",
   "scope": "/",
   "icons": [
     {
@@ -21,7 +22,25 @@
       "purpose": "any maskable"
     }
   ],
+  "shortcuts": [
+    {
+      "name": "New Terminal",
+      "short_name": "New",
+      "description": "Open a new terminal session",
+      "url": "/?action=new-terminal"
+    },
+    {
+      "name": "Quick Command",
+      "short_name": "Command",
+      "description": "Run a quick command",
+      "url": "/?action=quick-command"
+    }
+  ],
   "categories": ["developer", "productivity", "utilities"],
   "lang": "en",
-  "dir": "ltr"
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }
