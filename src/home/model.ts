@@ -102,7 +102,15 @@ export class HomeModel {
       currentPath: '/home/user/project',
       history: [],
       isActive: true,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      isRenamable: true,
+      hasUnsavedChanges: false,
+      processCount: 0,
+      lastActivityAt: new Date().toISOString(),
+      environmentVariables: {},
+      workingDirectory: '/home/user/project',
+      terminalSize: { cols: 80, rows: 24 },
+      isDirty: false
     };
 
     // Deactivate other sessions

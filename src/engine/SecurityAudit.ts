@@ -445,8 +445,9 @@ class ConsoleMonitor {
   private initializeConsoleInterception(): void {
     const originalConsole = { ...console };
 
-    ['log', 'warn', 'error', 'info'].forEach(level => {
-      console[level as keyof Console] = (...args: any[]) => {
+    (['log', 'warn', 'error', 'info'] as const).forEach(level => {
+      const originalMethod = originalConsole[level];
+      (console as any)[level] = (...args: any[]) => {
         this.messages.push({
           level,
           message: args.join(' '),
@@ -455,7 +456,7 @@ class ConsoleMonitor {
         });
         
         // Call original console method
-        (originalConsole[level as keyof Console] as any)(...args);
+        originalMethod.apply(console, args);
       };
     });
   }

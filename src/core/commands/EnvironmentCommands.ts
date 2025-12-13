@@ -71,13 +71,13 @@ Note: Sensitive values (API keys, tokens) are masked in output.`;
     return this.generateCommand(id, command, output, timestamp);
   }
 
-  private handleGet(args: string[], id: string, command: string, timestamp: string): TerminalCommand {
+  private async handleGet(args: string[], id: string, command: string, timestamp: string): Promise<TerminalCommand> {
     if (args.length === 0) {
       return this.generateCommand(id, command, 'Usage: env get VAR_NAME', timestamp, 1);
     }
 
     const varName = args[0];
-    const value = this.envManager.get(varName);
+    const value = await this.envManager.get(varName);
 
     if (value === undefined) {
       return this.generateCommand(id, command, `Environment variable '${varName}' not found.`, timestamp, 1);
@@ -88,7 +88,7 @@ Note: Sensitive values (API keys, tokens) are masked in output.`;
     return this.generateCommand(id, command, `${varName}=${displayValue}`, timestamp);
   }
 
-  private handleSet(args: string[], id: string, command: string, timestamp: string): TerminalCommand {
+  private async handleSet(args: string[], id: string, command: string, timestamp: string): Promise<TerminalCommand> {
     if (args.length < 2) {
       return this.generateCommand(id, command, 'Usage: env set VAR_NAME "value"', timestamp, 1);
     }
@@ -98,7 +98,7 @@ Note: Sensitive values (API keys, tokens) are masked in output.`;
 
     // Special handling for Anthropic API key
     if (varName === 'ANTHROPIC_API_KEY') {
-      const result = this.envManager.setAnthropicApiKey(value);
+      const result = await this.envManager.setAnthropicApiKey(value);
       if (result.success) {
         return this.generateCommand(id, command, `✅ ${varName} set successfully.`, timestamp);
       } else {
@@ -106,7 +106,7 @@ Note: Sensitive values (API keys, tokens) are masked in output.`;
       }
     }
 
-    this.envManager.set(varName, value);
+    await this.envManager.set(varName, value);
     return this.generateCommand(id, command, `✅ Environment variable '${varName}' set.`, timestamp);
   }
 

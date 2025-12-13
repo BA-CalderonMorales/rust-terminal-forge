@@ -223,7 +223,7 @@ export class PuppeteerTestManager {
     }
 
     this.browser = await puppeteer.launch({
-      headless: this.config.headless,
+      headless: this.config.headless === 'new' ? true : this.config.headless,
       slowMo: this.config.slowMo,
       devtools: this.config.devtools,
       args: this.config.args,
@@ -299,7 +299,7 @@ export class PuppeteerTestManager {
     });
 
     // Additional wait for any async initialization
-    await page.waitForTimeout(500);
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
 
   /**
@@ -316,18 +316,18 @@ export class PuppeteerTestManager {
     }
   ): Promise<Buffer> {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `${name}-${timestamp}.png`;
+    const filename = `${name}-${timestamp}.png` as `${string}.png`;
     const filepath = join(this.outputDir, filename);
 
     const screenshot = await page.screenshot({
-      path: filepath,
+      path: filepath as `${string}.png`,
       fullPage: options?.fullPage || false,
       clip: options?.clip,
       quality: options?.quality,
       type: options?.type || 'png',
     });
 
-    return screenshot as Buffer;
+    return Buffer.from(screenshot);
   }
 
   /**
@@ -347,7 +347,7 @@ export class PuppeteerTestManager {
     }, themeName);
 
     // Wait for theme application
-    await page.waitForTimeout(300);
+    await new Promise(resolve => setTimeout(resolve, 300));
   }
 
   /**
@@ -370,7 +370,7 @@ export class PuppeteerTestManager {
     }, fontSize);
 
     // Wait for font rendering
-    await page.waitForTimeout(200);
+    await new Promise(resolve => setTimeout(resolve, 200));
   }
 
   /**
@@ -381,7 +381,7 @@ export class PuppeteerTestManager {
     
     // Focus the terminal first
     await page.click(terminalInput);
-    await page.waitForTimeout(100);
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     // Type the text
     await page.type(terminalInput, text, {
@@ -397,7 +397,7 @@ export class PuppeteerTestManager {
     await page.keyboard.press('Enter');
     
     // Wait for command execution
-    await page.waitForTimeout(1000);
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
   /**
@@ -544,7 +544,7 @@ export function createTestMatrix<T>(
  * Wait for network idle
  */
 export async function waitForNetworkIdle(page: Page, timeout: number = 5000): Promise<void> {
-  await page.waitForLoadState('networkidle', { timeout });
+  await page.waitForNetworkIdle({ timeout });
 }
 
 /**
